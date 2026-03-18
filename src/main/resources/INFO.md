@@ -15,10 +15,34 @@ src/
         └── 11greedy
 ```
 
+哈希：整理算法内容，使用java，需要包含以下内容，注意不使用分级标题（可以使用有序列表和无序列表）
+
+1.定义
+
+2.常见操作
+
+
+
+整理算法内容，使用java，需要包含以下内容，注意不使用分级标题（可以使用有序列表和无序列表），不要写总结
+
+1.题目描述
+
+2.算法思想+代码
+
+（如果有多种解法分开写）
+
+
+
 # 模板
-## 1.哈希
-1. 哈希（散列）是一种通过哈希函数将任意长度的输入数据，转换为固定长度的整数输出（哈希值/散列值）的算法，核心作用是建立键（Key）与值（Value） 的快速映射关系；基于哈希算法实现的数据结构称为哈希表，Java中的HashMap、HashSet、HashTable等集合类底层均基于哈希表实现，不同输入数据通过哈希函数得到相同哈希值的现象称为哈希冲突，是哈希算法需要处理的核心问题。
-2. 哈希算法的常见Java实现操作
+
+## 哈希
+
+**定义** 
+
+哈希（散列）是一种通过哈希函数将任意长度的输入数据，转换为固定长度的整数输出（哈希值/散列值）的算法，核心作用是建立键（Key）与值（Value） 的快速映射关系；基于哈希算法实现的数据结构称为哈希表，Java中的HashMap、HashSet、HashTable等集合类底层均基于哈希表实现，不同输入数据通过哈希函数得到相同哈希值的现象称为哈希冲突，是哈希算法需要处理的核心问题。
+
+**常见操作**
+
 ```java
 package com.leetcode.hot100.a_array;
 
@@ -126,3 +150,1315 @@ public class HashMapDemo {
     }
 }
 ```
+
+### [1. 两数之和](https://leetcode.cn/problems/two-sum/)
+
+1. 题目描述
+给定一个整数数组 nums 和一个整数目标值 target，请你在该数组中找出 和为目标值 target 的那两个整数，并返回它们的数组下标。你可以假设每种输入只会对应一个答案，并且你不能使用两次相同的元素。你可以按任意顺序返回答案。
+示例 1：输入：nums = [2,7,11,15], target = 9，输出：[0,1]，解释：因为 nums[0] + nums[1] == 9，返回 [0, 1]
+示例 2：输入：nums = [3,2,4], target = 6，输出：[1,2]
+示例 3：输入：nums = [3,3], target = 6，输出：[0,1]
+提示：2 <= nums.length <= 104，-109 <= nums[i] <= 109，-109 <= target <= 109，只会存在一个有效答案
+进阶：你可以想出一个时间复杂度小于 O(n²) 的算法吗？
+
+2. 解法一：暴力枚举法
+- 算法思想：通过双重for循环遍历数组中的所有元素对，依次计算两个元素的和，判断是否等于目标值target。题目保证仅有一个有效答案，找到符合条件的下标后直接返回即可。该方法实现简单直观，时间复杂度为O(n²)，空间复杂度为O(1)。
+- Java代码：
+```java
+public class TwoSum {
+    public int[] twoSum(int[] nums, int target) {
+        // 双重循环遍历所有元素对
+        for (int i = 0; i < nums.length; i++) {
+            for (int j = i + 1; j < nums.length; j++) {
+                // 判断两数之和是否等于目标值
+                if (nums[i] + nums[j] == target) {
+                    return new int[]{i, j};
+                }
+            }
+        }
+        // 题目保证有解，此处仅为语法完整性
+        return new int[0];
+    }
+}
+```
+
+3. 解法二：哈希表法（最优解）
+- 算法思想：利用HashMap存储数组元素的值（key）和对应的下标（value），仅需一次遍历数组。遍历当前元素时，计算target与当前元素的差值，若差值已存在于HashMap中，说明找到符合条件的两个数，直接返回差值对应的下标和当前下标；若不存在，则将当前元素和下标存入HashMap。该方法时间复杂度为O(n)，空间复杂度为O(n)，满足进阶要求。
+- Java代码：
+```java
+import java.util.HashMap;
+import java.util.Map;
+
+public class TwoSum {
+    public int[] twoSum(int[] nums, int target) {
+        // 初始化哈希表，key：数组元素值，value：元素下标
+        Map<Integer, Integer> map = new HashMap<>();
+        for (int i = 0; i < nums.length; i++) {
+            // 计算需要寻找的差值
+            int diff = target - nums[i];
+            // 判断差值是否存在于哈希表中
+            if (map.containsKey(diff)) {
+                return new int[]{map.get(diff), i};
+            }
+            // 不存在则将当前元素和下标存入哈希表
+            map.put(nums[i], i);
+        }
+        // 题目保证有解，此处仅为语法完整性
+        return new int[0];
+    }
+}
+```
+
+### [49. 字母异位词分组](https://leetcode.cn/problems/group-anagrams/)
+
+1. 题目描述
+给你一个字符串数组，请你将字母异位词组合在一起。可以按任意顺序返回结果列表。
+示例 1:输入: strs = ["eat", "tea", "tan", "ate", "nat", "bat"]，输出: [["bat"],["nat","tan"],["ate","eat","tea"]]
+示例 2:输入: strs = [""]，输出: [[""]]
+示例 3:输入: strs = ["a"]，输出: [["a"]]
+提示：1 <= strs.length <= 104，0 <= strs[i].length <= 100，strs[i] 仅包含小写字母
+
+2. 算法思想+代码
+解法一：排序哈希表法
+- 算法思想：字母异位词的字符种类和数量完全一致，对字符串的字符排序后，所有字母异位词的排序结果完全相同。以排序后的字符串为哈希表的键，原字符串为值存入对应列表，遍历完成后哈希表的值集合即为分组结果。
+- 代码：
+```java
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+public class Solution {
+    public List<List<String>> groupAnagrams(String[] strs) {
+        // 定义哈希表，key为排序后的字符串，value为字母异位词列表
+        Map<String, List<String>> map = new HashMap<>();
+        for (String s : strs) {
+            // 将字符串转为字符数组并排序
+            char[] charArray = s.toCharArray();
+            Arrays.sort(charArray);
+            String key = new String(charArray);
+            // 键不存在则创建新列表，存在则直接添加元素
+            if (!map.containsKey(key)) {
+                map.put(key, new ArrayList<>());
+            }
+            map.get(key).add(s);
+        }
+        // 返回哈希表所有值的集合
+        return new ArrayList<>(map.values());
+    }
+}
+```
+
+解法二：计数哈希表法
+- 算法思想：字符串仅包含小写字母，统计每个字符串26个字母的出现次数，将计数结果拼接为唯一字符串作为哈希表键，字母异位词的计数键完全相同，以此完成分组，该方法无需排序，效率更高。
+- 代码：
+```java
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+public class Solution {
+    public List<List<String>> groupAnagrams(String[] strs) {
+        Map<String, List<String>> map = new HashMap<>();
+        for (String s : strs) {
+            // 数组统计26个小写字母的出现次数
+            int[] count = new int[26];
+            for (char c : s.toCharArray()) {
+                count[c - 'a']++;
+            }
+            // 拼接计数结果为唯一键，用#分隔避免数字拼接歧义
+            StringBuilder sb = new StringBuilder();
+            for (int num : count) {
+                sb.append(num).append('#');
+            }
+            String key = sb.toString();
+            // 简化写法：键不存在则创建列表，并存入当前字符串
+            map.computeIfAbsent(key, k -> new ArrayList<>()).add(s);
+        }
+        return new ArrayList<>(map.values());
+    }
+}
+```
+
+### [128. 最长连续序列](https://leetcode.cn/problems/longest-consecutive-sequence/)
+
+1. 题目描述
+给定一个未排序的整数数组 nums ，找出数字连续的最长序列（不要求序列元素在原数组中连续）的长度。请你设计并实现时间复杂度为 O(n) 的算法解决此问题。
+示例 1：输入：nums = [100,4,200,1,3,2]，输出：4，解释：最长数字连续序列是 [1, 2, 3, 4]，它的长度为 4。
+示例 2：输入：nums = [0,3,7,2,5,8,4,6,0,1]，输出：9。
+示例 3：输入：nums = [1,0,1,2]，输出：3。
+提示：0 <= nums.length <= 105，-109 <= nums[i] <= 109
+
+2. 算法思想+代码
+- 解法一：哈希集合解法（满足O(n)时间复杂度要求）
+  算法思想：
+  1. 首先将数组中的所有元素存入HashSet，完成去重操作，同时利用HashSet实现O(1)时间复杂度的元素查找。
+  2. 遍历HashSet中的每一个元素，仅当元素num的前一个数字num-1不存在于集合中时，判定num为连续序列的起始数字。
+  3. 从起始数字开始，依次向后查找num+1、num+2等连续数字是否存在于集合中，统计当前连续序列的长度。
+  4. 遍历过程中持续更新最长连续序列的长度，最终返回结果。
+  5. 每个元素只会被访问一次，整体时间复杂度为O(n)，空间复杂度为O(n)。
+  Java代码：
+  ```java
+  import java.util.HashSet;
+  import java.util.Set;
+  
+  public class Solution {
+      public int longestConsecutive(int[] nums) {
+          // 定义哈希集合存储数组元素，实现去重和快速查找
+          Set<Integer> numSet = new HashSet<>();
+          for (int num : nums) {
+              numSet.add(num);
+          }
+          // 记录最长连续序列的长度
+          int maxLength = 0;
+          // 遍历集合中的每个元素
+          for (int num : numSet) {
+              // 判断当前数字是否为连续序列的起点（前一个数字不存在）
+              if (!numSet.contains(num - 1)) {
+                  int currentNum = num;
+                  int currentLength = 1;
+                  // 向后查找连续的数字
+                  while (numSet.contains(currentNum + 1)) {
+                      currentNum++;
+                      currentLength++;
+                  }
+                  // 更新最长序列长度
+                  maxLength = Math.max(maxLength, currentLength);
+              }
+          }
+          return maxLength;
+      }
+  }
+  ```
+
+## 双指针
+
+1. 双指针是一种应用在数组、链表、字符串等线性数据结构上的算法思想，通过定义**两个独立的指针**，分别控制不同的遍历位置、移动速度或移动方向，协同完成数据遍历、查找、修改、筛选等操作；该算法无需额外开辟辅助数据结构，时间复杂度通常为O(n)，空间复杂度为O(1)，核心优势是替代暴力枚举法，大幅减少无效遍历次数，是优化线性结构操作的核心方法。
+2. 双指针的常见操作包含四大核心类型，附Java实现代码与适用场景，- 同向快慢指针：两个指针从线性结构的同一侧出发，快指针负责遍历所有元素，慢指针负责记录有效元素的位置，适用于数组去重、链表判环、删除指定元素等场景；Java代码示例（数组去重）：
+```java
+public class DoublePointer {
+    // 有序数组去重，返回去重后数组长度
+    public static int removeDuplicates(int[] nums) {
+        // 边界值判断
+        if (nums == null || nums.length == 0) return 0;
+        // 慢指针：指向当前有效元素的末尾
+        int slow = 0;
+        // 快指针：遍历整个数组
+        for (int fast = 1; fast < nums.length; fast++) {
+            // 遇到不重复元素，慢指针前移并赋值
+            if (nums[fast] != nums[slow]) {
+                slow++;
+                nums[slow] = nums[fast];
+            }
+        }
+        return slow + 1;
+    }
+}
+```
+- 相向双指针：两个指针分别从线性结构的头部、尾部同时出发，向中间方向移动，适用于有序数组两数之和、数组反转、回文字符串判断等场景；Java代码示例（有序数组两数之和）：
+```java
+// 有序数组中查找和为target的两个元素下标
+public static int[] twoSum(int[] nums, int target) {
+    int left = 0; // 左指针：从头部开始
+    int right = nums.length - 1; // 右指针：从尾部开始
+    while (left < right) {
+        int sum = nums[left] + nums[right];
+        if (sum == target) {
+            // 找到目标，返回下标
+            return new int[]{left, right};
+        } else if (sum < target) {
+            // 和过小，左指针右移增大数值
+            left++;
+        } else {
+            // 和过大，右指针左移减小数值
+            right--;
+        }
+    }
+    // 未找到返回默认值
+    return new int[]{-1, -1};
+}
+```
+- 滑动窗口双指针：属于同向双指针的延伸，左右指针动态组成一个滑动窗口，通过移动指针调整窗口的大小与位置，适用于查找最长子串、最短子数组、连续子数组求和等连续区间问题；Java代码示例（长度最小的子数组）：
+```java
+// 寻找和≥target的最短连续子数组长度
+public static int minSubArrayLen(int target, int[] nums) {
+    int left = 0; // 窗口左边界
+    int sum = 0; // 窗口内元素和
+    int minLen = Integer.MAX_VALUE; // 记录最小长度
+    // 右指针：扩展窗口右边界
+    for (int right = 0; right < nums.length; right++) {
+        sum += nums[right];
+        // 满足条件时，收缩左指针缩小窗口
+        while (sum >= target) {
+            minLen = Math.min(minLen, right - left + 1);
+            sum -= nums[left];
+            left++;
+        }
+    }
+    return minLen == Integer.MAX_VALUE ? 0 : minLen;
+}
+```
+- 多指针（双指针扩展）：基于双指针思想扩展为三个及以上指针，适用于三数之和、合并两个有序数组、排序链表合并等多元素协同处理场景；Java代码示例（合并两个有序数组）：
+```java
+// 合并nums2到nums1，最终nums1为有序数组
+public static void merge(int[] nums1, int m, int[] nums2, int n) {
+    // p1：nums1有效元素尾部指针，p2：nums2尾部指针，p：合并后数组尾部指针
+    int p1 = m - 1, p2 = n - 1, p = m + n - 1;
+    // 从后往前遍历，避免覆盖元素
+    while (p1 >= 0 && p2 >= 0) {
+        if (nums1[p1] > nums2[p2]) {
+            nums1[p--] = nums1[p1--];
+        } else {
+            nums1[p--] = nums2[p2--];
+        }
+    }
+    // 处理nums2剩余元素
+    while (p2 >= 0) {
+        nums1[p--] = nums2[p2--];
+    }
+}
+```
+
+### [283. 移动零](https://leetcode.cn/problems/move-zeroes/)
+
+1. 题目描述
+给定一个数组 nums，编写一个函数将所有 0 移动到数组的末尾，同时保持非零元素的相对顺序。请注意 ，必须在不复制数组的情况下原地对数组进行操作。
+示例 1: 输入: nums = [0,1,0,3,12] 输出: [1,3,12,0,0]
+示例 2: 输入: nums = [0] 输出: [0]
+提示: 1 <= nums.length <= 10^4，-2^31 <= nums[i] <= 2^31 - 1
+进阶：你能尽量减少完成的操作次数吗
+
+2. 算法思想+代码
+- 解法一：双指针法（最优解，满足进阶要求）
+  算法思想：定义慢指针记录非零元素的存放位置，快指针遍历数组寻找非零元素；快指针找到非零元素后，将其赋值给慢指针指向的位置，慢指针右移；遍历结束后，将慢指针之后的所有位置赋值为0，实现原地移动零，时间复杂度O(n)，空间复杂度O(1)
+  Java代码：
+  
+  ```java
+  public class Solution {
+      public void moveZeroes(int[] nums) {
+          // 慢指针：标记下一个非零元素要放置的索引位置
+          int left = 0;
+          // 快指针：遍历整个数组，查找非零元素
+          for (int right = 0; right < nums.length; right++) {
+              // 快指针找到非零元素
+              if (nums[right] != 0) {
+                  // 将非零元素赋值给慢指针位置
+                  nums[left] = nums[right];
+                  // 慢指针后移，准备存储下一个非零元素
+                  left++;
+              }
+          }
+          // 将慢指针之后的所有位置赋值为0
+          for (int i = left; i < nums.length; i++) {
+              nums[i] = 0;
+          }
+      }
+  
+      // 测试示例
+      public static void main(String[] args) {
+          Solution solution = new Solution();
+          int[] nums1 = {0,1,0,3,12};
+          solution.moveZeroes(nums1);
+          for (int num : nums1) {
+              System.out.print(num + " ");
+          }
+          System.out.println();
+          int[] nums2 = {0};
+          solution.moveZeroes(nums2);
+          for (int num : nums2) {
+              System.out.print(num + " ");
+          }
+      }
+  }
+  ```
+- 解法二：暴力遍历法
+  算法思想：遍历数组，遇到0元素时，将该元素后方的所有元素依次向前移动一位，最后将数组末尾赋值为0；该方法需要多次遍历数组，操作次数较多，时间复杂度O(n²)，空间复杂度O(1)
+  Java代码：
+  ```java
+  public class Solution {
+      public void moveZeroes(int[] nums) {
+          // 数组长度，动态缩减避免重复处理末尾的0
+          int len = nums.length;
+          for (int i = 0; i < len; i++) {
+              // 找到数组中的0元素
+              if (nums[i] == 0) {
+                  // 将0后方的所有元素向前移动一位
+                  for (int j = i + 1; j < len; j++) {
+                      nums[j - 1] = nums[j];
+                  }
+                  // 数组最后一位赋值为0
+                  nums[len - 1] = 0;
+                  // 元素前移后，当前索引仍为新的0，索引回退
+                  i--;
+                  // 有效长度减一，不再处理已移动到末尾的0
+                  len--;
+              }
+          }
+      }
+  
+      // 测试示例
+      public static void main(String[] args) {
+          Solution solution = new Solution();
+          int[] nums1 = {0,1,0,3,12};
+          solution.moveZeroes(nums1);
+          for (int num : nums1) {
+              System.out.print(num + " ");
+          }
+      }
+  }
+  ```
+
+### [11. 盛最多水的容器](https://leetcode.cn/problems/container-with-most-water/)
+
+1. 题目描述
+给定一个长度为 n 的整数数组 height 。有 n 条垂线，第 i 条线的两个端点是 (i, 0) 和 (i, height[i])。找出其中的两条线，使得它们与 x 轴共同构成的容器可以容纳最多的水。返回容器可以储存的最大水量。说明：你不能倾斜容器。
+示例 1：输入：[1,8,6,2,5,4,8,3,7]，输出：49 ，解释：图中垂直线代表输入数组 [1,8,6,2,5,4,8,3,7]，在此情况下，容器能够容纳水的最大值为 49。
+示例 2：输入：height = [1,1]，输出：1。
+提示：n == height.length，2 <= n <= 105，0 <= height[i] <= 104。
+
+2. 解法一：暴力枚举法
+- 算法思想：通过双重for循环遍历数组中所有两两组合的垂线，对每一组垂线计算其能容纳的水量，水量由两垂线的水平距离（宽度）和两垂线中较短的高度决定，计算公式为 min(height[i], height[j]) * (j - i)，遍历过程中记录最大的水量值。该方法思路简单但时间复杂度较高，无法通过大数据量的测试用例。
+- 代码：
+```java
+public class Solution {
+    public int maxArea(int[] height) {
+        // 记录最大水量
+        int max = 0;
+        int n = height.length;
+        // 遍历所有左边界垂线
+        for (int i = 0; i < n; i++) {
+            // 遍历所有右边界垂线
+            for (int j = i + 1; j < n; j++) {
+                // 计算当前组合的盛水量
+                int area = Math.min(height[i], height[j]) * (j - i);
+                // 更新最大水量
+                max = Math.max(max, area);
+            }
+        }
+        return max;
+    }
+}
+```
+
+3. 解法二：双指针法（最优解法）
+- 算法思想：初始化左指针指向数组起始位置，右指针指向数组末尾位置，循环计算当前指针所指垂线的盛水量并更新最大值。由于水量由较短的垂线高度决定，因此每次将高度较小的指针向中间移动，尝试寻找更高的垂线以增大盛水量，直到左右指针相遇时结束循环。该方法仅需一次遍历，时间效率最优。
+- 代码：
+```java
+public class Solution {
+    public int maxArea(int[] height) {
+        // 左指针初始指向数组头部
+        int left = 0;
+        // 右指针初始指向数组尾部
+        int right = height.length - 1;
+        // 存储最终的最大水量
+        int maxArea = 0;
+        // 左右指针未相遇时持续遍历
+        while (left < right) {
+            // 计算两指针间的宽度
+            int width = right - left;
+            // 计算当前指针组合的盛水量
+            int currentArea = Math.min(height[left], height[right]) * width;
+            // 更新最大水量
+            maxArea = Math.max(maxArea, currentArea);
+            // 移动高度较小的指针
+            if (height[left] < height[right]) {
+                left++;
+            } else {
+                right--;
+            }
+        }
+        return maxArea;
+    }
+}
+```
+
+### [15. 三数之和](https://leetcode.cn/problems/3sum/)
+
+1. 题目描述
+给你一个整数数组 nums ，判断是否存在三元组 [nums[i], nums[j], nums[k]] 满足 i != j、i != k 且 j != k ，同时还满足 nums[i] + nums[j] + nums[k] == 0 。请你返回所有和为 0 且不重复的三元组。
+注意：答案中不可以包含重复的三元组。
+示例 1：
+输入：nums = [-1,0,1,2,-1,-4]
+输出：[[-1,-1,2],[-1,0,1]]
+解释：
+nums[0] + nums[1] + nums[2] = (-1) + 0 + 1 = 0 。
+nums[1] + nums[2] + nums[4] = 0 + 1 + (-1) = 0 。
+nums[0] + nums[3] + nums[4] = (-1) + 2 + (-1) = 0 。
+不同的三元组是 [-1,0,1] 和 [-1,-1,2] 。
+注意，输出的顺序和三元组的顺序并不重要。
+示例 2：
+输入：nums = [0,1,1]
+输出：[]
+解释：唯一可能的三元组和不为 0 。
+示例 3：
+输入：nums = [0,0,0]
+输出：[[0,0,0]]
+解释：唯一可能的三元组和为 0 。
+提示：
+3 <= nums.length <= 3000
+-10^5 <= nums[i] <= 10^5
+
+2. 算法思想+代码
+- 解法一：排序+双指针法（最优解法，时间复杂度O(n²)，空间复杂度O(logn)）
+  算法思想：
+  1. 先对数组进行排序，排序后便于跳过重复元素，同时利用有序数组的特性使用双指针优化查找效率
+  2. 遍历数组，固定第一个元素nums[i]，若当前元素与前一个元素重复，直接跳过，避免生成重复三元组
+  3. 定义左指针left = i + 1，右指针right = nums.length - 1，在左右指针不重合的前提下循环
+  4. 计算三个数的和sum = nums[i] + nums[left] + nums[right]
+  5. 若sum == 0，将三元组加入结果集，然后分别移动左右指针并跳过重复元素，防止结果重复
+  6. 若sum < 0，说明需要增大数值，将左指针右移
+  7. 若sum > 0，说明需要减小数值，将右指针左移
+  Java代码：
+```java
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+
+public class ThreeSum {
+    public List<List<Integer>> threeSum(int[] nums) {
+        List<List<Integer>> res = new ArrayList<>();
+        // 数组为空或长度小于3，直接返回空集合
+        if (nums == null || nums.length < 3) {
+            return res;
+        }
+        // 对数组执行排序
+        Arrays.sort(nums);
+        int len = nums.length;
+        // 遍历固定第一个数
+        for (int i = 0; i < len; i++) {
+            // 排序后第一个数大于0，后续数字均更大，无满足条件的三元组
+            if (nums[i] > 0) {
+                break;
+            }
+            // 跳过重复的第一个元素，避免重复结果
+            if (i > 0 && nums[i] == nums[i - 1]) {
+                continue;
+            }
+            // 定义左右指针
+            int left = i + 1;
+            int right = len - 1;
+            while (left < right) {
+                int sum = nums[i] + nums[left] + nums[right];
+                if (sum == 0) {
+                    // 将符合条件的三元组加入结果集
+                    res.add(Arrays.asList(nums[i], nums[left], nums[right]));
+                    // 跳过左指针重复元素
+                    while (left < right && nums[left] == nums[left + 1]) {
+                        left++;
+                    }
+                    // 跳过右指针重复元素
+                    while (left < right && nums[right] == nums[right - 1]) {
+                        right--;
+                    }
+                    // 移动指针继续查找
+                    left++;
+                    right--;
+                } else if (sum < 0) {
+                    // 三数之和偏小，左指针右移
+                    left++;
+                } else {
+                    // 三数之和偏大，右指针左移
+                    right--;
+                }
+            }
+        }
+        return res;
+    }
+
+    // 测试方法
+    public static void main(String[] args) {
+        ThreeSum solution = new ThreeSum();
+        int[] nums1 = {-1, 0, 1, 2, -1, -4};
+        System.out.println(solution.threeSum(nums1));
+        int[] nums2 = {0,1,1};
+        System.out.println(solution.threeSum(nums2));
+        int[] nums3 = {0,0,0};
+        System.out.println(solution.threeSum(nums3));
+    }
+}
+```
+- 解法二：暴力枚举法（基础解法，时间复杂度O(n³)，大数据量下会超时，仅用于原理理解）
+  算法思想：
+  1. 通过三层for循环遍历数组中所有不重复的三元组组合
+  2. 判断三个数字的和是否等于0，满足条件则将三元组存入集合实现自动去重
+  3. 对存入集合的三元组提前排序，保证相同组合的三元组格式一致，最终将集合转为列表返回
+  Java代码：
+```java
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
+public class ThreeSumBruteForce {
+    public List<List<Integer>> threeSum(int[] nums) {
+        Set<List<Integer>> resultSet = new HashSet<>();
+        int length = nums.length;
+        // 三层循环遍历所有三元组组合
+        for (int i = 0; i < length; i++) {
+            for (int j = i + 1; j < length; j++) {
+                for (int k = j + 1; k < length; k++) {
+                    // 判断三数之和是否为0
+                    if (nums[i] + nums[j] + nums[k] == 0) {
+                        List<Integer> list = new ArrayList<>();
+                        list.add(nums[i]);
+                        list.add(nums[j]);
+                        list.add(nums[k]);
+                        // 排序后存入集合，避免重复三元组
+                        list.sort(Integer::compareTo);
+                        resultSet.add(list);
+                    }
+                }
+            }
+        }
+        // 将去重后的集合转换为列表
+        return new ArrayList<>(resultSet);
+    }
+
+    // 测试方法
+    public static void main(String[] args) {
+        ThreeSumBruteForce solution = new ThreeSumBruteForce();
+        int[] nums1 = {-1, 0, 1, 2, -1, -4};
+        System.out.println(solution.threeSum(nums1));
+        int[] nums2 = {0,1,1};
+        System.out.println(solution.threeSum(nums2));
+        int[] nums3 = {0,0,0};
+        System.out.println(solution.threeSum(nums3));
+    }
+}
+```
+
+### [42. 接雨水](https://leetcode.cn/problems/trapping-rain-water/)
+
+1. 题目描述
+给定 n 个非负整数表示每个宽度为 1 的柱子的高度图，计算按此排列的柱子，下雨之后能接多少雨水
+示例 1：输入：height = [0,1,0,2,1,0,1,3,2,1,2,1]，输出：6，解释：数组对应的高度图可以接 6 个单位的雨水
+示例 2：输入：height = [4,2,0,3,2,5]，输出：9
+提示：n == height.length，1 <= n <= 2 * 104，0 <= height[i] <= 105
+
+2. 算法思想+代码
+- 解法一：暴力法
+  算法思想：遍历数组中的每一个位置，分别查找该位置左侧最高的柱子高度和右侧最高的柱子高度，取两个高度的较小值减去当前柱子高度，得到当前位置能接的雨水量，累加所有位置的有效雨水量即为总雨水量，若计算结果为负则该位置无法接雨水
+  Java代码：
+```java
+public class Solution {
+    public int trap(int[] height) {
+        int res = 0;
+        int n = height.length;
+        // 首尾柱子无法接雨水，跳过
+        for (int i = 1; i < n - 1; i++) {
+            int leftMax = 0, rightMax = 0;
+            // 找左侧最大高度
+            for (int j = 0; j < i; j++) {
+                leftMax = Math.max(leftMax, height[j]);
+            }
+            // 找右侧最大高度
+            for (int j = i + 1; j < n; j++) {
+                rightMax = Math.max(rightMax, height[j]);
+            }
+            // 计算当前位置雨水量
+            int min = Math.min(leftMax, rightMax);
+            res += min > height[i] ? min - height[i] : 0;
+        }
+        return res;
+    }
+}
+```
+
+- 解法二：动态规划法
+  算法思想：暴力法会重复计算每个位置的左右最大高度，动态规划通过预处理优化，创建leftMax数组存储每个位置左侧的最大高度，rightMax数组存储每个位置右侧的最大高度，仅需三次遍历即可完成计算，时间复杂度优化为O(n)，空间复杂度为O(n)
+  Java代码：
+```java
+public class Solution {
+    public int trap(int[] height) {
+        int res = 0;
+        int n = height.length;
+        if (n == 0) return 0;
+        int[] leftMax = new int[n];
+        int[] rightMax = new int[n];
+        // 初始化左侧最大高度数组
+        leftMax[0] = height[0];
+        for (int i = 1; i < n; i++) {
+            leftMax[i] = Math.max(leftMax[i - 1], height[i]);
+        }
+        // 初始化右侧最大高度数组
+        rightMax[n - 1] = height[n - 1];
+        for (int i = n - 2; i >= 0; i--) {
+            rightMax[i] = Math.max(rightMax[i + 1], height[i]);
+        }
+        // 计算总雨水量
+        for (int i = 1; i < n - 1; i++) {
+            res += Math.min(leftMax[i], rightMax[i]) - height[i];
+        }
+        return res;
+    }
+}
+```
+
+- 解法三：双指针法
+  算法思想：在动态规划的基础上进一步优化空间复杂度，使用左右两个指针从数组两端向中间遍历，同时维护左右两侧的最大高度；当左侧最大高度小于右侧最大高度时，当前左指针位置的雨水量由左侧最大高度决定，反之由右侧最大高度决定，逐位计算并累加雨水量，空间复杂度降至O(1)
+  Java代码：
+```java
+public class Solution {
+    public int trap(int[] height) {
+        int res = 0;
+        int left = 0, right = height.length - 1;
+        int leftMax = 0, rightMax = 0;
+        while (left < right) {
+            if (height[left] < height[right]) {
+                // 处理左指针
+                if (height[left] >= leftMax) {
+                    leftMax = height[left];
+                } else {
+                    res += leftMax - height[left];
+                }
+                left++;
+            } else {
+                // 处理右指针
+                if (height[right] >= rightMax) {
+                    rightMax = height[right];
+                } else {
+                    res += rightMax - height[right];
+                }
+                right--;
+            }
+        }
+        return res;
+    }
+}
+```
+
+- 解法四：单调栈法
+  算法思想：采用单调递减栈存储柱子的索引，遍历数组时，若当前柱子高度大于栈顶柱子高度，说明形成了可接雨水的凹槽；弹出栈顶作为凹槽底部，新栈顶为左侧边界，当前柱子为右侧边界，计算凹槽的宽度和有效高度，累加对应雨水量，重复操作直到栈恢复递减状态，再将当前索引入栈
+  Java代码：
+```java
+import java.util.Stack;
+public class Solution {
+    public int trap(int[] height) {
+        int res = 0;
+        Stack<Integer> stack = new Stack<>();
+        int n = height.length;
+        for (int i = 0; i < n; i++) {
+            // 栈不为空且当前高度大于栈顶高度，形成凹槽
+            while (!stack.isEmpty() && height[i] > height[stack.peek()]) {
+                int top = stack.pop();
+                if (stack.isEmpty()) break;
+                // 计算凹槽宽度
+                int width = i - stack.peek() - 1;
+                // 计算有效高度
+                int h = Math.min(height[i], height[stack.peek()]) - height[top];
+                res += width * h;
+            }
+            stack.push(i);
+        }
+        return res;
+    }
+}
+```
+
+## 滑动窗口
+
+滑动窗口算法是处理数组、字符串连续子区间问题的高效线性算法，基于双指针思想实现，核心内容整理如下：
+1. 定义：滑动窗口是通过维护**左指针left**和**右指针right**形成动态连续子区间（窗口）的算法，窗口会随着指针移动实现滑动效果；该算法仅需一次遍历数组/字符串即可完成计算，时间复杂度为O(n)，能替代暴力枚举的O(n²)低效解法；窗口具备连续、边界动态调整、元素不重复遍历的核心特征，专门用于解决连续子数组/子串的最值、长度、求和、字符统计等问题，是Java中处理连续区间类题目的首选算法之一。
+2. 常见操作：滑动窗口的所有操作围绕窗口初始化、扩展、收缩、结果记录展开，Java实现有标准化执行流程，具体操作如下
+   - 初始化参数：定义左指针left初始值为0，声明右指针right用于遍历集合，初始化窗口状态变量（如求和用sum、字符统计用HashMap、结果存储用ans等）
+   - 扩展右窗口边界：通过for/while循环移动右指针right，遍历所有元素，将当前元素加入窗口，同步更新窗口状态变量
+   - 收缩左窗口边界：根据题目条件判断窗口合法性，不满足条件时循环移动左指针left，将当前元素移出窗口并更新状态，直到窗口恢复合法
+   - 记录窗口结果：在窗口合法的前提下，更新目标结果（如最长子串长度、最小子数组和、窗口最大值等）
+   - 遍历终止：右指针完成整个数组/字符串遍历后，算法执行结束，返回最终结果
+   滑动窗口分为固定窗口和动态窗口两类，操作细节存在差异：
+   - 固定长度滑动窗口操作：窗口大小固定不变，右指针移动至指定长度后，同步移动左指针保持窗口尺寸，每滑动一次计算一次窗口状态
+   - 动态长度滑动窗口操作：窗口无固定大小，根据题目约束条件（如和超限、字符重复等）动态收缩左指针，窗口大小实时变化
+   - Java固定窗口示例（求长度为k的连续子数组最大和）：
+```java
+public class SlidingWindow {
+    public static int fixedWindowMaxSum(int[] nums, int k) {
+        int left = 0;
+        int currentSum = 0;
+        int maxSum = 0;
+        // 右指针遍历，扩展窗口
+        for (int right = 0; right < nums.length; right++) {
+            currentSum += nums[right];
+            // 窗口达到固定长度，开始滑动并收缩左边界
+            if (right - left + 1 == k) {
+                maxSum = Math.max(maxSum, currentSum);
+                currentSum -= nums[left];
+                left++;
+            }
+        }
+        return maxSum;
+    }
+}
+```
+   - Java动态窗口示例（求无重复字符的最长子串长度）：
+```java
+import java.util.HashSet;
+public class SlidingWindow {
+    public static int dynamicWindowMaxLength(String s) {
+        int left = 0;
+        int maxLen = 0;
+        HashSet<Character> window = new HashSet<>();
+        // 右指针遍历，扩展窗口
+        for (int right = 0; right < s.length(); right++) {
+            char ch = s.charAt(right);
+            // 字符重复，动态收缩左边界
+            while (window.contains(ch)) {
+                window.remove(s.charAt(left));
+                left++;
+            }
+            window.add(ch);
+            // 记录合法窗口的最大长度
+            maxLen = Math.max(maxLen, right - left + 1);
+        }
+        return maxLen;
+    }
+}
+```
+
+### [3. 无重复字符的最长子串](https://leetcode.cn/problems/longest-substring-without-repeating-characters/)
+
+1. 题目描述：给定一个字符串 s ，请你找出其中不含有重复字符的最长子串的长度。示例 1: 输入: s = "abcabcbb" 输出: 3 解释: 因为无重复字符的最长子串是 "abc"，所以其长度为 3。注意 "bca" 和 "cab" 也是正确答案。示例 2: 输入: s = "bbbbb" 输出: 1 解释: 因为无重复字符的最长子串是 "b"，所以其长度为 1。示例 3: 输入: s = "pwwkew" 输出: 3 解释: 因为无重复字符的最长子串是 "wke"，所以其长度为 3。请注意，你的答案必须是子串的长度，"pwke" 是一个子序列，不是子串。提示：0 <= s.length <= 5 * 104，s 由英文字母、数字、符号和空格组成。
+2. 算法思想+代码
+- 解法一：暴力枚举法
+  算法思想：遍历字符串中所有可能的起始和结束位置，生成所有子串，逐一检查子串是否存在重复字符，记录无重复子串的最大长度。该方法实现简单，但时间复杂度为O(n²)，在字符串长度较大时效率极低。
+  Java代码：
+```java
+public class Solution {
+    public int lengthOfLongestSubstring(String s) {
+        int n = s.length();
+        int maxLen = 0;
+        // 遍历所有起始位置
+        for (int i = 0; i < n; i++) {
+            // 标记当前子串的字符是否重复
+            boolean[] visited = new boolean[128];
+            // 遍历所有结束位置
+            for (int j = i; j < n; j++) {
+                char c = s.charAt(j);
+                // 字符重复，跳出当前循环
+                if (visited[c]) {
+                    break;
+                }
+                visited[c] = true;
+                // 更新最大长度
+                maxLen = Math.max(maxLen, j - i + 1);
+            }
+        }
+        return maxLen;
+    }
+}
+```
+- 解法二：滑动窗口（哈希集合基础版）
+  算法思想：采用滑动窗口模型，用左、右指针界定当前无重复字符的子串窗口，右指针不断向右扩展窗口；当遇到重复字符时，移动左指针缩小窗口，同时用哈希集合存储窗口内的字符，实时更新无重复子串的最大长度。时间复杂度为O(n)，每个字符仅被访问两次。
+  Java代码：
+```java
+import java.util.HashSet;
+import java.util.Set;
+
+public class Solution {
+    public int lengthOfLongestSubstring(String s) {
+        // 哈希集合存储当前窗口的字符
+        Set<Character> set = new HashSet<>();
+        int n = s.length();
+        // 左指针
+        int left = 0;
+        int maxLen = 0;
+        // 右指针遍历字符串
+        for (int right = 0; right < n; right++) {
+            char c = s.charAt(right);
+            // 字符重复，移动左指针并移除字符
+            while (set.contains(c)) {
+                set.remove(s.charAt(left));
+                left++;
+            }
+            set.add(c);
+            // 更新最大长度
+            maxLen = Math.max(maxLen, right - left + 1);
+        }
+        return maxLen;
+    }
+}
+```
+- 解法三：滑动窗口（哈希数组优化版）
+  算法思想：在滑动窗口基础上优化，用长度为128的数组存储字符的最新索引（覆盖所有ASCII字符），遇到重复字符时，左指针直接跳转到重复字符的下一个位置，无需逐步移动，效率更高。时间复杂度O(n)，空间复杂度O(1)。
+  Java代码：
+```java
+public class Solution {
+    public int lengthOfLongestSubstring(String s) {
+        // 存储字符的最新索引，初始值为-1
+        int[] index = new int[128];
+        for (int i = 0; i < 128; i++) {
+            index[i] = -1;
+        }
+        int n = s.length();
+        int maxLen = 0;
+        int left = 0;
+        for (int right = 0; right < n; right++) {
+            char c = s.charAt(right);
+            // 字符重复，更新左指针
+            if (index[c] >= left) {
+                left = index[c] + 1;
+            }
+            // 更新当前字符的索引
+            index[c] = right;
+            // 更新最大长度
+            maxLen = Math.max(maxLen, right - left + 1);
+        }
+        return maxLen;
+    }
+}
+```
+
+### [438. 找到字符串中所有字母异位词](https://leetcode.cn/problems/find-all-anagrams-in-a-string/)
+
+1. 题目描述
+给定两个字符串 s 和 p，找到 s 中所有 p 的 异位词 的子串，返回这些子串的起始索引。不考虑答案输出的顺序。
+示例 1:
+输入: s = "cbaebabacd", p = "abc"
+输出: [0,6]
+解释:
+起始索引等于 0 的子串是 "cba", 它是 "abc" 的异位词。
+起始索引等于 6 的子串是 "bac", 它是 "abc" 的异位词。
+示例 2:
+输入: s = "abab", p = "ab"
+输出: [0,1,2]
+解释:
+起始索引等于 0 的子串是 "ab", 它是 "ab" 的异位词。
+起始索引等于 1 的子串是 "ba", 它是 "ab" 的异位词。
+起始索引等于 2 的子串是 "ab", 它是 "ab" 的异位词。
+提示:
+1 <= s.length, p.length <= 3 * 104
+s 和 p 仅包含小写字母
+
+2. 算法思想+代码
+- 算法思想：解法一为固定大小滑动窗口，窗口长度与字符串p的长度一致。由于字符串仅包含小写字母，使用两个长度为26的整型数组分别统计p的字符频次、s中当前滑动窗口的字符频次。遍历字符串s时，不断更新窗口内的字符频次，每次窗口滑动后对比两个频次数组，若完全相等则当前窗口的起始索引为目标答案。该方法时间复杂度O(n)，n为s的长度，空间复杂度O(1)（使用固定长度的数组，属于常数空间）。
+- Java代码：
+```java
+import java.util.ArrayList;
+import java.util.List;
+
+public class Solution {
+    public List<Integer> findAnagrams(String s, String p) {
+        List<Integer> res = new ArrayList<>();
+        int sLen = s.length();
+        int pLen = p.length();
+        // 边界条件：s长度小于p，直接返回空集合
+        if (sLen < pLen) {
+            return res;
+        }
+
+        // 统计p的字符频次和s窗口的字符频次
+        int[] pCount = new int[26];
+        int[] sCount = new int[26];
+
+        // 初始化第一个窗口
+        for (int i = 0; i < pLen; i++) {
+            pCount[p.charAt(i) - 'a']++;
+            sCount[s.charAt(i) - 'a']++;
+        }
+
+        // 对比初始窗口
+        if (isEqual(pCount, sCount)) {
+            res.add(0);
+        }
+
+        // 滑动窗口遍历剩余位置
+        for (int i = pLen; i < sLen; i++) {
+            // 移除窗口左侧字符
+            sCount[s.charAt(i - pLen) - 'a']--;
+            // 添加窗口右侧新字符
+            sCount[s.charAt(i) - 'a']++;
+            // 对比频次数组
+            if (isEqual(pCount, sCount)) {
+                res.add(i - pLen + 1);
+            }
+        }
+        return res;
+    }
+
+    // 辅助方法：判断两个频次数组是否相等
+    private boolean isEqual(int[] a, int[] b) {
+        for (int i = 0; i < 26; i++) {
+            if (a[i] != b[i]) {
+                return false;
+            }
+        }
+        return true;
+    }
+}
+```
+
+2. 算法思想+代码
+- 算法思想：解法二为优化版滑动窗口，通过双指针动态维护窗口，引入匹配数变量记录窗口中与p字符频次匹配的字符种类数。仅统计p中存在的字符，当匹配数等于p的有效字符种类数，且窗口长度等于p的长度时，记录窗口起始索引。该方法省略了频次数组的全量对比操作，执行效率更高，时间复杂度O(n)，空间复杂度O(1)。
+- Java代码：
+```java
+import java.util.ArrayList;
+import java.util.List;
+
+public class Solution {
+    public List<Integer> findAnagrams(String s, String p) {
+        List<Integer> res = new ArrayList<>();
+        int sLen = s.length();
+        int pLen = p.length();
+        if (sLen < pLen) {
+            return res;
+        }
+
+        int[] count = new int[26];
+        // 统计p中所有字符的频次
+        for (char ch : p.toCharArray()) {
+            count[ch - 'a']++;
+        }
+
+        // 双指针定义窗口左右边界，match记录匹配的字符种类数
+        int left = 0, match = 0;
+        for (int right = 0; right < sLen; right++) {
+            // 处理右侧字符
+            int cur = s.charAt(right) - 'a';
+            count[cur]--;
+            // 该字符频次匹配，匹配数+1
+            if (count[cur] == 0) {
+                match++;
+            }
+
+            // 当窗口长度超过p的长度，收缩左边界
+            while (right - left + 1 > pLen) {
+                int leftCur = s.charAt(left) - 'a';
+                // 该字符原本匹配，移除后匹配数-1
+                if (count[leftCur] == 0) {
+                    match--;
+                }
+                count[leftCur]++;
+                left++;
+            }
+
+            // 所有字符种类匹配，且窗口长度符合要求，记录索引
+            if (match == 26) {
+                res.add(left);
+            }
+        }
+        return res;
+    }
+}
+```
+
+## 子串
+1. 子串定义：字符串的子串是原字符串中连续的一段字符序列，属于字符串的局部连续片段；Java中String类为不可变字符序列，所有子串相关操作都会生成新的String对象，不会修改原始字符串；子串要求字符连续，与不要求连续的子序列是不同概念，子串是特殊的子序列。
+2. 子串常见操作Java实现：编写统一的操作类，将所有子串操作封装在main方法中，包含截取子串、判断包含、查找索引、替换、分割、统计次数、截取首尾子串等全部操作，代码可直接编译运行，完整代码如下
+```java
+public class SubstringOperation {
+    // 自定义方法：统计子串在主串中出现的次数
+    public static int countSubStr(String mainStr, String subStr) {
+        // 边界值校验
+        if (mainStr == null || subStr == null || subStr.isEmpty() || mainStr.length() < subStr.length()) {
+            return 0;
+        }
+        int count = 0;
+        int index = 0;
+        // 循环查找子串并计数
+        while ((index = mainStr.indexOf(subStr, index)) != -1) {
+            count++;
+            // 跳过已匹配的子串，避免重复统计
+            index += subStr.length();
+        }
+        return count;
+    }
+
+    public static void main(String[] args) {
+        // 定义测试用原始字符串
+        String originalStr = "HelloJavaJavaWorld";
+        System.out.println("===== 子串常见操作测试 =====");
+        System.out.println("原始字符串：" + originalStr);
+        System.out.println("------------------------");
+
+        // 操作1：获取指定索引范围的子串
+        String sub1 = originalStr.substring(5);
+        String sub2 = originalStr.substring(0, 5);
+        System.out.println("1. 截取指定范围子串");
+        System.out.println("从索引5截取到末尾：" + sub1);
+        System.out.println("截取索引[0,5)子串：" + sub2);
+        System.out.println("------------------------");
+
+        // 操作2：判断是否包含指定子串
+        boolean contains = originalStr.contains("Java");
+        System.out.println("2. 判断包含子串");
+        System.out.println("是否包含Java：" + contains);
+        System.out.println("------------------------");
+
+        // 操作3：查找子串首次/末次出现的索引
+        int firstIndex = originalStr.indexOf("Java");
+        int lastIndex = originalStr.lastIndexOf("Java");
+        System.out.println("3. 查找子串索引");
+        System.out.println("Java首次索引：" + firstIndex);
+        System.out.println("Java末次索引：" + lastIndex);
+        System.out.println("------------------------");
+
+        // 操作4：替换指定子串
+        String replaceAll = originalStr.replace("Java", "Python");
+        String replaceFirst = originalStr.replaceFirst("Java", "Python");
+        System.out.println("4. 替换子串");
+        System.out.println("替换所有Java：" + replaceAll);
+        System.out.println("替换第一个Java：" + replaceFirst);
+        System.out.println("------------------------");
+
+        // 操作5：按子串分割字符串
+        String splitStr = "123,456,789,Java";
+        String[] strArray = splitStr.split(",");
+        System.out.println("5. 按子串分割字符串");
+        System.out.print("分割结果：");
+        for (String s : strArray) {
+            System.out.print(s + " ");
+        }
+        System.out.println("\n------------------------");
+
+        // 操作6：统计子串出现次数
+        int count = countSubStr(originalStr, "Java");
+        System.out.println("6. 统计子串次数");
+        System.out.println("Java出现次数：" + count);
+        System.out.println("------------------------");
+
+        // 操作7：截取首尾指定长度子串
+        String headSub = originalStr.substring(0, 3);
+        String tailSub = originalStr.substring(originalStr.length() - 3);
+        System.out.println("7. 截取首尾子串");
+        System.out.println("截取前3位：" + headSub);
+        System.out.println("截取后3位：" + tailSub);
+    }
+}
+```
+3. 代码运行说明：直接运行main方法即可执行所有子串操作，控制台会按顺序打印每一步操作的结果；自定义的countSubStr方法用于统计子串次数，补充了Java没有原生统计方法的场景；所有操作都遵循String不可变特性，不会修改原始字符串，仅生成新的字符串对象；代码添加了边界校验，避免空指针等异常。
+
+### [560. 和为 K 的子数组](https://leetcode.cn/problems/subarray-sum-equals-k/)
+
+1. 题目描述：给你一个整数数组 nums 和一个整数 k ，请你统计并返回该数组中和为 k 的子数组的个数。子数组是数组中元素的连续非空序列。示例 1：输入：nums = [1,1,1], k = 2，输出：2；示例 2：输入：nums = [1,2,3], k = 3，输出：2。提示：1 <= nums.length <= 2 * 10^4，-1000 <= nums[i] <= 1000，-10^7 <= k <= 10^7。
+2. 解法一：暴力枚举法，算法思想：通过双层循环遍历数组中所有连续子数组，外层循环指定子数组的起始索引，内层循环从起始索引开始依次累加元素，每累加一次判断当前累加和是否等于k，若相等则将结果计数加1。该方法逻辑直观但时间复杂度为O(n²)，在数据量较大时会出现超时情况。Java代码：
+```java
+public class Solution {
+    public int subarraySum(int[] nums, int k) {
+        int count = 0;
+        // 遍历所有子数组起始位置
+        for (int i = 0; i < nums.length; i++) {
+            int currentSum = 0;
+            // 遍历起始位置后的所有元素，累加计算子数组和
+            for (int j = i; j < nums.length; j++) {
+                currentSum += nums[j];
+                // 和等于k则计数加1
+                if (currentSum == k) {
+                    count++;
+                }
+            }
+        }
+        return count;
+    }
+
+    // 测试主方法
+    public static void main(String[] args) {
+        Solution solution = new Solution();
+        int[] nums1 = {1,1,1};
+        int k1 = 2;
+        System.out.println(solution.subarraySum(nums1, k1));
+        int[] nums2 = {1,2,3};
+        int k2 = 3;
+        System.out.println(solution.subarraySum(nums2, k2));
+    }
+}
+```
+3. 解法二：前缀和+哈希表优化法，算法思想：利用前缀和原理，定义preSum为数组前i个元素的累加和，子数组[j,i-1]的和=preSum[i]-preSum[j]，令其等于k可得preSum[j]=preSum[i]-k。使用哈希表存储前缀和出现的次数，初始时前缀和0出现1次，遍历数组时计算当前前缀和，查询哈希表中preSum[i]-k的出现次数并累加到结果，最后将当前前缀和存入哈希表。该方法时间复杂度O(n)，空间复杂度O(n)，为最优解法。Java代码：
+```java
+import java.util.HashMap;
+import java.util.Map;
+
+public class Solution {
+    public int subarraySum(int[] nums, int k) {
+        // 哈希表：key=前缀和，value=该前缀和出现的次数
+        Map<Integer, Integer> prefixMap = new HashMap<>();
+        // 初始状态：前缀和为0，出现1次
+        prefixMap.put(0, 1);
+        int count = 0;
+        int preSum = 0;
+        for (int num : nums) {
+            // 计算当前前缀和
+            preSum += num;
+            // 查找符合条件的前缀和数量并累加
+            if (prefixMap.containsKey(preSum - k)) {
+                count += prefixMap.get(preSum - k);
+            }
+            // 更新当前前缀和的出现次数
+            prefixMap.put(preSum, prefixMap.getOrDefault(preSum, 0) + 1);
+        }
+        return count;
+    }
+
+    // 测试主方法
+    public static void main(String[] args) {
+        Solution solution = new Solution();
+        int[] nums1 = {1,1,1};
+        int k1 = 2;
+        System.out.println("测试用例1结果：" + solution.subarraySum(nums1, k1));
+        int[] nums2 = {1,2,3};
+        int k2 = 3;
+        System.out.println("测试用例2结果：" + solution.subarraySum(nums2, k2));
+    }
+}
+```
+### [239. 滑动窗口最大值](https://leetcode.cn/problems/sliding-window-maximum/)
+
+1. 题目描述：给你一个整数数组 nums，有一个大小为 k 的滑动窗口从数组的最左侧移动到数组的最右侧。你只可以看到在滑动窗口内的 k 个数字。滑动窗口每次只向右移动一位，返回滑动窗口中的最大值。
+示例 1：输入：nums = [1,3,-1,-3,5,3,6,7], k = 3，输出：[3,3,5,5,6,7]
+示例 2：输入：nums = [1], k = 1，输出：[1]
+提示：1 <= nums.length <= 10^5，-10^4 <= nums[i] <= 10^4，1 <= k <= nums.length
+
+2. 算法思想+代码
+解法一：暴力枚举法
+- 算法思想：遍历数组中所有滑动窗口的起始位置，对每个窗口内的元素逐一遍历查找最大值并记录。该方法逻辑简单易实现，时间复杂度为O(n*k)，在数据量达到题目上限时会超时，仅适用于小规模数据场景。
+- 代码：
+```java
+public class Solution {
+    public int[] maxSlidingWindow(int[] nums, int k) {
+        // 处理空数组特殊情况
+        if (nums == null || nums.length == 0) {
+            return new int[0];
+        }
+        int n = nums.length;
+        // 结果数组的长度为 n - k + 1
+        int[] result = new int[n - k + 1];
+        // 遍历每个滑动窗口的起始索引
+        for (int i = 0; i <= n - k; i++) {
+            int max = nums[i];
+            // 遍历窗口内所有元素找最大值
+            for (int j = i + 1; j < i + k; j++) {
+                if (nums[j] > max) {
+                    max = nums[j];
+                }
+            }
+            result[i] = max;
+        }
+        return result;
+    }
+}
+```
+
+解法二：单调双端队列法（最优解法）
+- 算法思想：使用双端队列维护滑动窗口内元素的索引，保证队列中索引对应的元素严格递减。遍历数组时，先移除队列中超出当前窗口左边界的元素索引；再移除队列尾部所有小于当前元素的索引，维持队列的递减性；将当前元素索引加入队列尾部；当索引大于等于k-1时，窗口正式形成，队列头部索引对应的元素就是当前窗口的最大值，将其存入结果数组。该方法每个元素仅入队和出队一次，时间复杂度为O(n)，空间复杂度为O(k)，可高效处理大规模数据。
+- 代码：
+```java
+import java.util.Deque;
+import java.util.LinkedList;
+
+public class Solution {
+    public int[] maxSlidingWindow(int[] nums, int k) {
+        if (nums == null || nums.length == 0) {
+            return new int[0];
+        }
+        int n = nums.length;
+        int[] result = new int[n - k + 1];
+        // 双端队列存储元素的索引，保证对应元素递减
+        Deque<Integer> deque = new LinkedList<>();
+        
+        for (int i = 0; i < n; i++) {
+            // 移除超出滑动窗口左边界的元素
+            while (!deque.isEmpty() && deque.peekFirst() < i - k + 1) {
+                deque.pollFirst();
+            }
+            // 移除队列尾部小于当前元素的索引，维持递减规则
+            while (!deque.isEmpty() && nums[i] > nums[deque.peekLast()]) {
+                deque.pollLast();
+            }
+            // 将当前元素索引加入队列尾部
+            deque.offerLast(i);
+            // 窗口形成后，记录队列头部的最大值
+            if (i >= k - 1) {
+                result[i - k + 1] = nums[deque.peekFirst()];
+            }
+        }
+        return result;
+    }
+}
+```
+
+### [76. 最小覆盖子串](https://leetcode.cn/problems/minimum-window-substring/)
+
+1.题目描述
+给定两个字符串 s 和 t，长度分别是 m 和 n，返回 s 中的最短窗口子串，使得该子串包含 t 中的每一个字符（包括重复字符）。如果没有这样的子串，返回空字符串 ""。测试用例保证答案唯一。
+示例 1：输入：s = "ADOBECODEBANC", t = "ABC"，输出："BANC"
+示例 2：输入：s = "a", t = "a"，输出："a"
+示例 3: 输入: s = "a", t = "aa"，输出: ""
+提示：m == s.length，n == t.length，1 <= m, n <= 10^5，s 和 t 由英文字母组成
+进阶：设计一个在 O(m + n) 时间内解决此问题的算法
+
+2.算法思想+代码
+解法：滑动窗口（双指针）算法
+
+- 算法思想：使用左右两个指针维护滑动窗口，右指针不断向右扩展窗口，直到窗口包含 t 中所有字符；之后尝试左移左指针缩小窗口，在保证窗口仍包含 t 所有字符的前提下，记录最小窗口的起始位置和长度；通过哈希表/数组统计字符出现次数，判断窗口是否满足条件，整体时间复杂度 O(m + n)，符合进阶要求。
+
+```java
+class Solution {
+    public String minWindow(String s, String t) {
+        // 统计字符串t和滑动窗口中的字符数量
+        int[] need = new int[128];
+        int[] window = new int[128];
+        // 统计t中不同字符的个数
+        int count = 0;
+        for (char c : t.toCharArray()) {
+            if (need[c] == 0) {
+                count++;
+            }
+            need[c]++;
+        }
+
+        // 滑动窗口左右指针
+        int left = 0, right = 0;
+        // 记录窗口中满足t字符数量要求的字符个数
+        int valid = 0;
+        // 记录最小覆盖子串的起始索引和长度
+        int start = 0, minLen = Integer.MAX_VALUE;
+
+        while (right < s.length()) {
+            // 移入窗口的字符
+            char c = s.charAt(right);
+            right++;
+            // 更新窗口内数据
+            if (need[c] != 0) {
+                window[c]++;
+                // 该字符数量达到t中的要求
+                if (window[c] == need[c]) {
+                    valid++;
+                }
+            }
+
+            // 当窗口满足条件时，尝试收缩左边界
+            while (valid == count) {
+                // 更新最小覆盖子串
+                if (right - left < minLen) {
+                    start = left;
+                    minLen = right - left;
+                }
+                // 移出窗口的字符
+                char d = s.charAt(left);
+                left++;
+                // 更新窗口内数据
+                if (need[d] != 0) {
+                    if (window[d] == need[d]) {
+                        valid--;
+                    }
+                    window[d]--;
+                }
+            }
+        }
+        // 返回结果
+        return minLen == Integer.MAX_VALUE ? "" : s.substring(start, start + minLen);
+    }
+}
+```
+
+
+
+
+
+
+
+
+
+
+
+# 结尾
