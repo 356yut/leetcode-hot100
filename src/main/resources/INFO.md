@@ -15,7 +15,7 @@ src/
         └── 11greedy
 ```
 
-哈希：整理算法内容，使用java，需要包含以下内容，注意不使用分级标题（可以使用有序列表和无序列表）
+哈希：整理算法内容，使用java编写一个demo演示常用操作，需要包含以下内容，注意不使用分级标题（可以使用有序列表和无序列表）
 
 1.定义
 
@@ -44,7 +44,7 @@ src/
 **常见操作**
 
 ```java
-package com.leetcode.hot100.a_array;
+package com.leetcode.hot100.a_hash;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -54,100 +54,100 @@ import java.util.stream.Collectors;
  * 包含：增删改查、遍历、判断、排序（key/value）、扩容相关常用方法
  */
 public class HashMapDemo {
-    public static void main(String[] args) {
-        // ============== 1. 创建HashMap对象 ==============
-        HashMap<String, Integer> map = new HashMap<>();
+  public static void main(String[] args) {
+    // ============== 1. 创建HashMap对象 ==============
+    HashMap<String, Integer> map = new HashMap<>();
 
-        // ============== 2. 添加元素 ==============
-        map.put("张三", 18);
-        map.put("李四", 19);
-        map.put("王五", 20);
-        System.out.println("===== 初始添加元素后 =====");
-        System.out.println(map);
+    // ============== 2. 添加元素 ==============
+    map.put("张三", 18);
+    map.put("李四", 19);
+    map.put("王五", 20);
+    System.out.println("===== 初始添加元素后 =====");
+    System.out.println(map);
 
-        // ============== 3. 获取元素（基础+防空指针） ==============
-        // 普通获取
-        System.out.println("获取张三的年龄：" + map.get("张三"));
-        // 推荐：getOrDefault 键不存在时返回默认值，避免空指针
-        System.out.println("获取赵六的年龄（默认值）：" + map.getOrDefault("赵六", 0));
+    // ============== 3. 获取元素（基础+防空指针） ==============
+    // 普通获取
+    System.out.println("获取张三的年龄：" + map.get("张三"));
+    // 推荐：getOrDefault 键不存在时返回默认值，避免空指针
+    System.out.println("获取赵六的年龄（默认值）：" + map.getOrDefault("赵六", 0));
 
-        // ============== 4. 修改元素 ==============
-        // 方式1：put覆盖（原有key存在则修改）
-        map.put("张三", 28);
-        // 方式2：replace 语义化修改（推荐）
-        map.replace("李四", 29);
-        System.out.println("===== 修改元素后 =====");
-        System.out.println(map);
+    // ============== 4. 修改元素 ==============
+    // 方式1：put覆盖（原有key存在则修改）
+    map.put("张三", 28);
+    // 方式2：replace 语义化修改（推荐）
+    map.replace("李四", 29);
+    System.out.println("===== 修改元素后 =====");
+    System.out.println(map);
 
-        // ============== 5. 删除元素 ==============
-        map.remove("张三"); // 根据key删除
-        System.out.println("===== 删除张三后 =====");
-        System.out.println(map);
+    // ============== 5. 删除元素 ==============
+    map.remove("张三"); // 根据key删除
+    System.out.println("===== 删除张三后 =====");
+    System.out.println(map);
 
-        // ============== 6. 遍历元素（3种常用方式） ==============
-        System.out.println("===== 遍历方式1：keySet遍历（原代码） =====");
-        for (String key : map.keySet()) {
-            System.out.println(key + ":" + map.get(key));
-        }
-
-        System.out.println("===== 遍历方式2：entrySet遍历（推荐，效率最高） =====");
-        for (Map.Entry<String, Integer> entry : map.entrySet()) {
-            System.out.println(entry.getKey() + ":" + entry.getValue());
-        }
-
-        System.out.println("===== 遍历方式3：仅遍历所有value（会保留重复的value） =====");
-        for (Integer value : map.values()) {
-            System.out.println("年龄：" + value);
-        }
-
-        // 恢复数据，用于后续排序演示
-        map.put("张三", 18);
-
-        // ============== 7. 按Key排序（核心完善） ==============
-        // HashMap无序，TreeMap天然支持Key升序排序
-        System.out.println("===== 按Key升序排序 =====");
-        TreeMap<String, Integer> sortedByKeyMap = new TreeMap<>(map);
-        System.out.println(sortedByKeyMap);
-
-        // ============== 8. 按Value排序（核心完善，升序+降序） ==============
-        System.out.println("===== 按Value升序排序 =====");
-        // 1. 转成List<Entry> 2. 排序 3. 放入LinkedHashMap保持顺序
-        LinkedHashMap<String, Integer> sortedByValueAsc = map.entrySet().stream()
-                .sorted(Map.Entry.comparingByValue())
-                .collect(Collectors.toMap(
-                        Map.Entry::getKey,
-                        Map.Entry::getValue,
-                        (oldVal, newVal) -> oldVal,
-                        LinkedHashMap::new
-                ));
-        System.out.println(sortedByValueAsc);
-
-        System.out.println("===== 按Value降序排序 =====");
-        LinkedHashMap<String, Integer> sortedByValueDesc = map.entrySet().stream()
-                .sorted(Collections.reverseOrder(Map.Entry.comparingByValue()))
-                .collect(Collectors.toMap(
-                        Map.Entry::getKey,
-                        Map.Entry::getValue,
-                        (oldVal, newVal) -> oldVal,
-                        LinkedHashMap::new
-                ));
-        System.out.println(sortedByValueDesc);
-
-        // ============== 9. 判断元素 ==============
-        System.out.println("===== 判断操作 =====");
-        System.out.println("是否包含key：张三 → " + map.containsKey("张三"));
-        System.out.println("是否包含value：18 → " + map.containsValue(18));
-
-        // ============== 10. 集合信息 ==============
-        System.out.println("HashMap大小：" + map.size());
-        System.out.println("是否为空：" + map.isEmpty());
-
-        // ============== 11. 清空HashMap ==============
-        map.clear();
-        System.out.println("===== 清空后 =====");
-        System.out.println("是否为空：" + map.isEmpty());
-        System.out.println("HashMap大小：" + map.size());
+    // ============== 6. 遍历元素（3种常用方式） ==============
+    System.out.println("===== 遍历方式1：keySet遍历（原代码） =====");
+    for (String key : map.keySet()) {
+      System.out.println(key + ":" + map.get(key));
     }
+
+    System.out.println("===== 遍历方式2：entrySet遍历（推荐，效率最高） =====");
+    for (Map.Entry<String, Integer> entry : map.entrySet()) {
+      System.out.println(entry.getKey() + ":" + entry.getValue());
+    }
+
+    System.out.println("===== 遍历方式3：仅遍历所有value（会保留重复的value） =====");
+    for (Integer value : map.values()) {
+      System.out.println("年龄：" + value);
+    }
+
+    // 恢复数据，用于后续排序演示
+    map.put("张三", 18);
+
+    // ============== 7. 按Key排序（核心完善） ==============
+    // HashMap无序，TreeMap天然支持Key升序排序
+    System.out.println("===== 按Key升序排序 =====");
+    TreeMap<String, Integer> sortedByKeyMap = new TreeMap<>(map);
+    System.out.println(sortedByKeyMap);
+
+    // ============== 8. 按Value排序（核心完善，升序+降序） ==============
+    System.out.println("===== 按Value升序排序 =====");
+    // 1. 转成List<Entry> 2. 排序 3. 放入LinkedHashMap保持顺序
+    LinkedHashMap<String, Integer> sortedByValueAsc = map.entrySet().stream()
+            .sorted(Map.Entry.comparingByValue())
+            .collect(Collectors.toMap(
+                    Map.Entry::getKey,
+                    Map.Entry::getValue,
+                    (oldVal, newVal) -> oldVal,
+                    LinkedHashMap::new
+            ));
+    System.out.println(sortedByValueAsc);
+
+    System.out.println("===== 按Value降序排序 =====");
+    LinkedHashMap<String, Integer> sortedByValueDesc = map.entrySet().stream()
+            .sorted(Collections.reverseOrder(Map.Entry.comparingByValue()))
+            .collect(Collectors.toMap(
+                    Map.Entry::getKey,
+                    Map.Entry::getValue,
+                    (oldVal, newVal) -> oldVal,
+                    LinkedHashMap::new
+            ));
+    System.out.println(sortedByValueDesc);
+
+    // ============== 9. 判断元素 ==============
+    System.out.println("===== 判断操作 =====");
+    System.out.println("是否包含key：张三 → " + map.containsKey("张三"));
+    System.out.println("是否包含value：18 → " + map.containsValue(18));
+
+    // ============== 10. 集合信息 ==============
+    System.out.println("HashMap大小：" + map.size());
+    System.out.println("是否为空：" + map.isEmpty());
+
+    // ============== 11. 清空HashMap ==============
+    map.clear();
+    System.out.println("===== 清空后 =====");
+    System.out.println("是否为空：" + map.isEmpty());
+    System.out.println("HashMap大小：" + map.size());
+  }
 }
 ```
 
@@ -1450,6 +1450,1179 @@ class Solution {
     }
 }
 ```
+
+## 普通数组
+
+1. 数组定义：Java中的普通数组是存储相同数据类型元素的有序集合，属于引用数据类型，数组创建后长度固定不可修改，元素通过整数索引访问，索引起始值为0，最后一个元素的索引为数组长度减1
+2. 数组常见操作
+- 数组初始化（静态初始化、动态初始化）
+- 数组元素遍历（普通for循环、增强for循环）
+- 访问与修改指定索引的元素
+- 线性查找指定目标元素
+- 插入元素（数组长度固定，通过新建数组实现）
+- 删除元素（通过新建数组实现）
+- 数组基础排序（冒泡排序）
+- 查找数组最大值、最小值
+- 数组元素反转
+
+```java
+public class ArrayDemo {
+    public static void main(String[] args) {
+        // ==================== 1. 数组初始化 ====================
+        // 静态初始化：直接指定元素值
+        int[] staticArray = {10, 20, 30, 40, 50};
+        // 动态初始化：指定数组长度，元素默认赋值（int类型默认0）
+        int[] dynamicArray = new int[5];
+        System.out.println("===== 数组初始化 =====");
+        System.out.print("静态初始化数组：");
+        printArray(staticArray);
+        System.out.print("动态初始化数组（默认值）：");
+        printArray(dynamicArray);
+
+        // ==================== 2. 访问与修改元素 ====================
+        System.out.println("\n===== 访问与修改元素 =====");
+        // 访问索引为2的元素
+        System.out.println("访问索引2的元素：" + staticArray[2]);
+        // 修改索引为2的元素
+        staticArray[2] = 33;
+        System.out.print("修改后数组：");
+        printArray(staticArray);
+
+        // ==================== 3. 数组遍历 ====================
+        System.out.println("\n===== 数组遍历 =====");
+        // 普通for循环遍历
+        System.out.print("普通for循环遍历：");
+        for (int i = 0; i < staticArray.length; i++) {
+            System.out.print(staticArray[i] + " ");
+        }
+        // 增强for循环遍历
+        System.out.print("\n增强for循环遍历：");
+        for (int num : staticArray) {
+            System.out.print(num + " ");
+        }
+
+        // ==================== 4. 线性查找元素 ====================
+        System.out.println("\n\n===== 线性查找元素 =====");
+        int target = 40;
+        int index = linearSearch(staticArray, target);
+        if (index != -1) {
+            System.out.println("元素" + target + "的索引：" + index);
+        } else {
+            System.out.println("未找到元素" + target);
+        }
+
+        // ==================== 5. 插入元素 ====================
+        System.out.println("\n===== 插入元素 =====");
+        int insertIndex = 2;
+        int insertValue = 25;
+        int[] insertArray = insertElement(staticArray, insertIndex, insertValue);
+        System.out.print("插入元素后数组：");
+        printArray(insertArray);
+
+        // ==================== 6. 删除元素 ====================
+        System.out.println("\n===== 删除元素 =====");
+        int deleteIndex = 3;
+        int[] deleteArray = deleteElement(insertArray, deleteIndex);
+        System.out.print("删除索引" + deleteIndex + "后数组：");
+        printArray(deleteArray);
+
+        // ==================== 7. 数组排序（冒泡排序） ====================
+        System.out.println("\n===== 冒泡排序 =====");
+        int[] unSortArray = {5, 2, 9, 1, 5, 6};
+        System.out.print("排序前数组：");
+        printArray(unSortArray);
+        bubbleSort(unSortArray);
+        System.out.print("排序后数组：");
+        printArray(unSortArray);
+
+        // ==================== 8. 查找最大/最小值 ====================
+        System.out.println("\n===== 查找最大/最小值 =====");
+        int[] numArray = {12, 35, 99, 7, 54};
+        System.out.println("数组最大值：" + getMax(numArray));
+        System.out.println("数组最小值：" + getMin(numArray));
+
+        // ==================== 9. 数组反转 ====================
+        System.out.println("\n===== 数组反转 =====");
+        int[] reverseArray = {1, 2, 3, 4, 5};
+        System.out.print("反转前数组：");
+        printArray(reverseArray);
+        reverseArray(reverseArray);
+        System.out.print("反转后数组：");
+        printArray(reverseArray);
+    }
+
+    // 工具方法：打印数组
+    public static void printArray(int[] arr) {
+        for (int num : arr) {
+            System.out.print(num + " ");
+        }
+        System.out.println();
+    }
+
+    // 线性查找：返回元素索引，未找到返回-1
+    public static int linearSearch(int[] arr, int target) {
+        for (int i = 0; i < arr.length; i++) {
+            if (arr[i] == target) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
+    // 插入元素：新建数组实现插入
+    public static int[] insertElement(int[] arr, int index, int value) {
+        // 校验索引合法性
+        if (index < 0 || index > arr.length) {
+            throw new RuntimeException("索引不合法");
+        }
+        int[] newArr = new int[arr.length + 1];
+        for (int i = 0; i < newArr.length; i++) {
+            if (i < index) {
+                newArr[i] = arr[i];
+            } else if (i == index) {
+                newArr[i] = value;
+            } else {
+                newArr[i] = arr[i - 1];
+            }
+        }
+        return newArr;
+    }
+
+    // 删除元素：新建数组实现删除
+    public static int[] deleteElement(int[] arr, int index) {
+        if (index < 0 || index >= arr.length) {
+            throw new RuntimeException("索引不合法");
+        }
+        int[] newArr = new int[arr.length - 1];
+        int count = 0;
+        for (int i = 0; i < arr.length; i++) {
+            if (i != index) {
+                newArr[count++] = arr[i];
+            }
+        }
+        return newArr;
+    }
+
+    // 冒泡排序
+    public static void bubbleSort(int[] arr) {
+        for (int i = 0; i < arr.length - 1; i++) {
+            for (int j = 0; j < arr.length - 1 - i; j++) {
+                if (arr[j] > arr[j + 1]) {
+                    int temp = arr[j];
+                    arr[j] = arr[j + 1];
+                    arr[j + 1] = temp;
+                }
+            }
+        }
+    }
+
+    // 获取最大值
+    public static int getMax(int[] arr) {
+        int max = arr[0];
+        for (int num : arr) {
+            if (num > max) {
+                max = num;
+            }
+        }
+        return max;
+    }
+
+    // 获取最小值
+    public static int getMin(int[] arr) {
+        int min = arr[0];
+        for (int num : arr) {
+            if (num < min) {
+                min = num;
+            }
+        }
+        return min;
+    }
+
+    // 数组反转
+    public static void reverseArray(int[] arr) {
+        for (int i = 0; i < arr.length / 2; i++) {
+            int temp = arr[i];
+            arr[i] = arr[arr.length - 1 - i];
+            arr[arr.length - 1 - i] = temp;
+        }
+    }
+}
+```
+
+1. 数组核心特性：同数据类型、长度固定、索引从0开始，修改/插入/删除需通过新建数组实现
+2. 代码覆盖数组全量常用操作，工具方法封装可直接复用，运行后可直观看到每一步操作的执行结果
+
+### [53. 最大子数组和](https://leetcode.cn/problems/maximum-subarray/)
+
+1. 题目描述
+给你一个整数数组 nums ，请你找出一个具有最大和的连续子数组（子数组最少包含一个元素），返回其最大和。子数组是数组中的一个连续部分。
+示例 1：输入：nums = [-2,1,-3,4,-1,2,1,-5,4]，输出：6，解释：连续子数组 [4,-1,2,1] 的和最大，为 6 。
+示例 2：输入：nums = [1]，输出：1
+示例 3：输入：nums = [5,4,-1,7,8]，输出：23
+提示：1 <= nums.length <= 10^5，-10^4 <= nums[i] <= 10^4
+进阶：如果你已经实现复杂度为 O(n) 的解法，尝试使用更为精妙的分治法求解。
+
+2. 解法一：Kadane算法（动态规划）
+- 算法思想：该算法是求解最大子数组和的最优解法，时间复杂度为O(n)，空间复杂度为O(1)。核心逻辑是遍历数组时，维护两个关键变量，currentMax表示以当前元素结尾的连续子数组的最大和，maxSum表示全局的最大子数组和。对于数组中的每个元素，判断将其加入前一个子数组，还是以该元素作为新子数组的起点，取两者的较大值更新currentMax；同时用currentMax更新全局最大值maxSum，遍历完成后maxSum即为结果。
+- Java代码：
+```java
+class Solution {
+    public int maxSubArray(int[] nums) {
+        // 初始化当前最大和与全局最大和为数组第一个元素
+        int currentMax = nums[0];
+        int maxSum = nums[0];
+        // 从第二个元素开始遍历数组
+        for (int i = 1; i < nums.length; i++) {
+            // 更新当前最大和：要么重新开始，要么延续之前子数组
+            currentMax = Math.max(nums[i], currentMax + nums[i]);
+            // 更新全局最大和
+            maxSum = Math.max(maxSum, currentMax);
+        }
+        return maxSum;
+    }
+}
+```
+
+3. 解法二：分治法
+- 算法思想：采用分治的思想将问题拆解，时间复杂度为O(nlogn)，空间复杂度为O(logn)。将数组从中间位置拆分为左、右两个子数组，最大子数组和存在三种可能：完全位于左子数组、完全位于右子数组、跨越中间节点。递归求解左、右子数组的最大和，再单独计算跨越中间节点的最大子数组和，最终取三种情况的最大值作为结果。计算跨中间的和时，分别从中间向左、向右遍历累加，找到两侧的最大和后相加。
+- Java代码：
+```java
+class Solution {
+    public int maxSubArray(int[] nums) {
+        return divideAndConquer(nums, 0, nums.length - 1);
+    }
+
+    // 分治递归函数：计算nums[left...right]的最大子数组和
+    private int divideAndConquer(int[] nums, int left, int right) {
+        // 递归终止条件：子数组只有一个元素
+        if (left == right) {
+            return nums[left];
+        }
+        // 计算中间位置
+        int mid = left + (right - left) / 2;
+        // 递归求左半部分最大和
+        int leftMax = divideAndConquer(nums, left, mid);
+        // 递归求右半部分最大和
+        int rightMax = divideAndConquer(nums, mid + 1, right);
+        // 计算跨越中间的最大和
+        int crossMax = crossSum(nums, left, mid, right);
+        // 返回三种情况的最大值
+        return Math.max(Math.max(leftMax, rightMax), crossMax);
+    }
+
+    // 计算跨越中间节点的最大子数组和
+    private int crossSum(int[] nums, int left, int mid, int right) {
+        // 计算左半部分（从mid向左）的最大和
+        int leftSum = Integer.MIN_VALUE;
+        int currentSum = 0;
+        for (int i = mid; i >= left; i--) {
+            currentSum += nums[i];
+            leftSum = Math.max(leftSum, currentSum);
+        }
+        // 计算右半部分（从mid+1向右）的最大和
+        int rightSum = Integer.MIN_VALUE;
+        currentSum = 0;
+        for (int i = mid + 1; i <= right; i++) {
+            currentSum += nums[i];
+            rightSum = Math.max(rightSum, currentSum);
+        }
+        // 跨越和为左右之和
+        return leftSum + rightSum;
+    }
+}
+```
+
+### [56. 合并区间](https://leetcode.cn/problems/merge-intervals/)
+
+1. 题目描述
+以数组 intervals 表示若干个区间的集合，其中单个区间为 intervals[i] = [starti, endi] 。请你合并所有重叠的区间，并返回一个不重叠的区间数组，该数组需恰好覆盖输入中的所有区间。
+示例 1：输入：intervals = [[1,3],[2,6],[8,10],[15,18]]，输出：[[1,6],[8,10],[15,18]]，解释：区间 [1,3] 和 [2,6] 重叠, 将它们合并为 [1,6]
+示例 2：输入：intervals = [[1,4],[4,5]]，输出：[[1,5]]，解释：区间 [1,4] 和 [4,5] 可被视为重叠区间
+示例 3：输入：intervals = [[4,7],[1,4]]，输出：[[1,7]]，解释：区间 [1,4] 和 [4,7] 可被视为重叠区间
+提示：1 <= intervals.length <= 104，intervals[i].length == 2，0 <= starti <= endi <= 104
+
+2. 算法思想+代码
+- 算法思想：
+  1. 对区间数组按照区间的起始元素进行升序排序，保证相邻区间按起始点有序排列，能够快速判断区间是否重叠
+  2. 创建列表用于存储合并后的最终区间，遍历排序后的每一个区间
+  3. 若结果列表为空，直接将当前区间加入列表；若列表不为空，取出列表中最后一个已合并的区间
+  4. 判断当前区间与最后一个合并区间是否重叠：当前区间的起始值 ≤ 最后一个区间的结束值则判定为重叠，更新最后一个区间的结束值为两个区间结束值的最大值；若不重叠则直接将当前区间加入结果列表
+  5. 遍历完成后，将存储合并区间的列表转换为二维数组返回
+- Java代码：
+```java
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+
+public class MergeIntervals {
+    public int[][] merge(int[][] intervals) {
+        // 处理空数组边界情况
+        if (intervals == null || intervals.length == 0) {
+            return new int[0][];
+        }
+        // 按照区间的起始值升序排序
+        Arrays.sort(intervals, (a, b) -> a[0] - b[0]);
+        // 定义列表存储合并后的区间
+        List<int[]> result = new ArrayList<>();
+        // 遍历排序后的所有区间
+        for (int[] interval : intervals) {
+            int currentStart = interval[0];
+            int currentEnd = interval[1];
+            // 结果列表为空，直接添加第一个区间
+            if (result.isEmpty()) {
+                result.add(new int[]{currentStart, currentEnd});
+            } else {
+                // 获取结果列表中最后一个已合并的区间
+                int[] lastInterval = result.get(result.size() - 1);
+                int lastStart = lastInterval[0];
+                int lastEnd = lastInterval[1];
+                // 判断两个区间是否重叠，重叠则合并
+                if (currentStart <= lastEnd) {
+                    // 更新最后一个区间的结束值为最大值
+                    lastInterval[1] = Math.max(lastEnd, currentEnd);
+                } else {
+                    // 不重叠，直接添加当前区间
+                    result.add(new int[]{currentStart, currentEnd});
+                }
+            }
+        }
+        // 将列表转换为二维数组返回
+        return result.toArray(new int[result.size()][]);
+    }
+}
+```
+
+### [189. 轮转数组](https://leetcode.cn/problems/rotate-array/)
+
+1. 题目描述
+给定一个整数数组 nums，将数组中的元素向右轮转 k 个位置，其中 k 是非负数。
+示例 1: 输入: nums = [1,2,3,4,5,6,7], k = 3 输出: [5,6,7,1,2,3,4]
+示例 2: 输入：nums = [-1,-100,3,99], k = 2 输出：[3,99,-1,-100]
+提示：1 <= nums.length <= 10^5，-2^31 <= nums[i] <= 2^31 - 1，0 <= k <= 10^5
+
+2. 解法一：额外数组法
+- 算法思想：创建一个与原数组长度相同的新数组，先对k取模数组长度（避免k大于数组长度导致无效轮转），遍历原数组，将原数组索引i的元素放置到新数组的(i + k) % 数组长度位置，最后将新数组的元素复制到原数组中完成轮转，空间复杂度为O(n)，时间复杂度为O(n)
+- 代码：
+```java
+public class Solution {
+    public void rotate(int[] nums, int k) {
+        int n = nums.length;
+        int[] newArr = new int[n];
+        k = k % n;
+        for (int i = 0; i < n; i++) {
+            newArr[(i + k) % n] = nums[i];
+        }
+        System.arraycopy(newArr, 0, nums, 0, n);
+    }
+}
+```
+
+3. 解法二：环状替换法
+- 算法思想：采用原地替换方式，数组元素的轮转形成多个环状链路，从起始索引开始，将当前元素移动到目标位置，再将目标位置的原元素作为下一个要移动的元素，循环执行直到回到起始索引；统计已替换的元素个数，个数等于数组长度时结束，空间复杂度为O(1)，时间复杂度为O(n)
+- 代码：
+```java
+public class Solution {
+    public void rotate(int[] nums, int k) {
+        int n = nums.length;
+        k = k % n;
+        int count = 0;
+        for (int start = 0; count < n; start++) {
+            int current = start;
+            int prev = nums[start];
+            do {
+                int next = (current + k) % n;
+                int temp = nums[next];
+                nums[next] = prev;
+                prev = temp;
+                current = next;
+                count++;
+            } while (start != current);
+        }
+    }
+}
+```
+
+4. 解法三：三次反转法
+- 算法思想：通过三次原地反转实现最优原地轮转，步骤为反转整个数组、反转前k个元素、反转从k到末尾的元素，先对k取模数组长度，空间复杂度为O(1)，时间复杂度为O(n)
+- 代码：
+```java
+public class Solution {
+    public void rotate(int[] nums, int k) {
+        int n = nums.length;
+        k = k % n;
+        reverse(nums, 0, n - 1);
+        reverse(nums, 0, k - 1);
+        reverse(nums, k, n - 1);
+    }
+    private void reverse(int[] nums, int start, int end) {
+        while (start < end) {
+            int temp = nums[start];
+            nums[start] = nums[end];
+            nums[end] = temp;
+            start++;
+            end--;
+        }
+    }
+}
+```
+
+### [238. 除了自身以外数组的乘积](https://leetcode.cn/problems/product-of-array-except-self/)
+
+1. 题目描述
+给你一个整数数组 nums，返回 数组 answer ，其中 answer[i] 等于 nums 中除 nums[i] 之外其余各元素的乘积。题目数据 保证 数组 nums之中任意元素的全部前缀元素和后缀的乘积都在 32 位 整数范围内。请 不要使用除法，且在 O(n) 时间复杂度内完成此题。
+示例 1:输入: nums = [1,2,3,4] 输出: [24,12,8,6]
+示例 2:输入: nums = [-1,1,0,-3,3] 输出: [0,0,9,0,0]
+提示：2 <= nums.length <= 105，-30 <= nums[i] <= 30，输入 保证 数组 answer[i] 在 32 位 整数范围内
+进阶：你可以在 O(1) 的额外空间复杂度内完成这个题目吗？（ 出于对空间复杂度分析的目的，输出数组 不被视为 额外空间。）
+
+2. 算法思想+代码
+- 解法一：左右乘积数组法（空间复杂度O(n)）
+  算法思想：分别构建左乘积数组和右乘积数组，左乘积数组left[i]存储nums数组中索引i左侧所有元素的乘积，右乘积数组right[i]存储nums数组中索引i右侧所有元素的乘积；最终结果数组answer[i]等于left[i]与right[i]的乘积。该方法时间复杂度为O(n)，需要遍历数组三次，空间复杂度为O(n)，需要额外开辟两个数组存储左右乘积。
+  Java代码：
+  
+  ```java
+  class Solution {
+      public int[] productExceptSelf(int[] nums) {
+          int n = nums.length;
+          // 定义左乘积数组、右乘积数组、结果数组
+          int[] left = new int[n];
+          int[] right = new int[n];
+          int[] answer = new int[n];
+          
+          // 初始化左数组第一个元素为1（左侧无元素）
+          left[0] = 1;
+          // 正向遍历填充左乘积数组
+          for (int i = 1; i < n; i++) {
+              left[i] = left[i-1] * nums[i-1];
+          }
+          
+          // 初始化右数组最后一个元素为1（右侧无元素）
+          right[n-1] = 1;
+          // 反向遍历填充右乘积数组
+          for (int i = n-2; i >= 0; i--) {
+              right[i] = right[i+1] * nums[i+1];
+          }
+          
+          // 计算最终结果
+          for (int i = 0; i < n; i++) {
+              answer[i] = left[i] * right[i];
+          }
+          return answer;
+      }
+  }
+  ```
+  
+- 解法二：原地修改法（进阶，O(1)额外空间）
+  算法思想：利用结果数组作为左乘积数组，先正向遍历存储每个位置的左侧乘积；再定义一个变量存储右侧实时乘积，反向遍历数组，将变量与结果数组当前值相乘，更新为最终结果，同时更新变量为当前元素与变量的乘积。输出数组不视为额外空间，因此额外空间复杂度为O(1)，时间复杂度为O(n)，仅需遍历数组两次。
+  Java代码：
+  ```java
+  class Solution {
+      public int[] productExceptSelf(int[] nums) {
+          int n = nums.length;
+          // 结果数组，用于存储左乘积，最终存储答案
+          int[] answer = new int[n];
+          
+          // 正向遍历，填充左乘积
+          answer[0] = 1;
+          for (int i = 1; i < n; i++) {
+              answer[i] = answer[i-1] * nums[i-1];
+          }
+          
+          // 反向遍历，用变量存储右乘积，更新结果
+          int right = 1;
+          for (int i = n-1; i >= 0; i--) {
+              answer[i] = answer[i] * right;
+              // 更新右乘积，包含当前nums元素，供左侧元素使用
+              right = right * nums[i];
+          }
+          
+          return answer;
+      }
+  }
+  ```
+
+### [41. 缺失的第一个正数](https://leetcode.cn/problems/first-missing-positive/)
+
+1. 题目描述
+给你一个未排序的整数数组 nums ，请你找出其中没有出现的最小的正整数。请你实现时间复杂度为 O(n) 并且只使用常数级别额外空间的解决方案。
+示例 1：输入：nums = [1,2,0]，输出：3，解释：范围 [1,2] 中的数字都在数组中。
+示例 2：输入：nums = [3,4,-1,1]，输出：2，解释：1 在数组中，但 2 没有。
+示例 3：输入：nums = [7,8,9,11,12]，输出：1，解释：最小的正数 1 没有出现。
+提示：1 <= nums.length <= 105，-2^31 <= nums[i] <= 2^31 - 1
+
+2. 算法思想+代码
+- 解法一：哈希表法（时间复杂度O(n)，空间复杂度O(n)）
+  算法思想：缺失的最小正整数一定在区间 [1, 数组长度n+1] 内，首先遍历数组将所有正整数存入哈希集合，再从1开始依次校验正整数是否存在于集合中，第一个不存在的正整数即为最终答案。
+  Java代码：
+```java
+import java.util.HashSet;
+import java.util.Set;
+
+public class Solution {
+    public int firstMissingPositive(int[] nums) {
+        int n = nums.length;
+        Set<Integer> set = new HashSet<>();
+        // 存储数组中的所有正整数
+        for (int num : nums) {
+            if (num > 0) {
+                set.add(num);
+            }
+        }
+        // 从1开始查找缺失的最小正整数
+        for (int i = 1; i <= n + 1; i++) {
+            if (!set.contains(i)) {
+                return i;
+            }
+        }
+        return -1;
+    }
+}
+```
+
+- 解法二：原地哈希法（时间复杂度O(n)，空间复杂度O(1)，满足题目最优要求）
+  算法思想：直接将原数组作为哈希表，规定数值为i的正整数应存放在下标i-1的位置。遍历数组，把1~n范围内的正整数交换到对应下标位置；完成交换后再次遍历数组，第一个下标i对应元素不等于i+1的，i+1就是答案；若所有元素都匹配，答案为数组长度+1。该方法无需额外辅助空间，满足常数空间要求。
+  Java代码：
+```java
+public class Solution {
+    public int firstMissingPositive(int[] nums) {
+        int n = nums.length;
+        // 将符合条件的正整数交换到对应下标位置
+        for (int i = 0; i < n; i++) {
+            // 仅处理1~n的数，且目标位置元素不重复时交换
+            while (nums[i] > 0 && nums[i] <= n && nums[nums[i] - 1] != nums[i]) {
+                int temp = nums[nums[i] - 1];
+                nums[nums[i] - 1] = nums[i];
+                nums[i] = temp;
+            }
+        }
+        // 查找第一个缺失的正整数
+        for (int i = 0; i < n; i++) {
+            if (nums[i] != i + 1) {
+                return i + 1;
+            }
+        }
+        // 数组包含1~n所有数时，返回n+1
+        return n + 1;
+    }
+}
+```
+##  矩阵
+
+1. 矩阵定义：矩阵是由m×n个数值按照行和列排列组成的矩形数表，称为m行n列矩阵（m×n矩阵），矩阵中的每个数值称为元素，Java中使用二维数组存储矩阵元素，行下标和列下标从0开始计数；当m=n时，该矩阵为n阶方阵，是常用的特殊矩阵形式。
+2. 矩阵常见操作
+- 矩阵的创建与初始化
+- 矩阵格式化打印输出
+- 同型矩阵加法运算
+- 同型矩阵减法运算
+- 矩阵乘法运算（前行数与后列数匹配）
+- 矩阵转置运算
+- 二阶方阵行列式计算
+- 二阶方阵逆矩阵求解
+- 矩阵元素的修改、遍历与查找
+
+以下代码完整实现上述所有矩阵操作，包含异常校验和测试用例，可直接运行：
+```java
+public class MatrixOperationDemo {
+
+    // 1. 打印矩阵（格式化输出）
+    public static void printMatrix(int[][] matrix) {
+        if (matrix == null || matrix.length == 0) {
+            System.out.println("矩阵为空");
+            return;
+        }
+        for (int[] row : matrix) {
+            for (int num : row) {
+                System.out.print(num + "\t");
+            }
+            System.out.println();
+        }
+        System.out.println("------------------------");
+    }
+
+    // 2. 矩阵加法（仅同型矩阵可运算）
+    public static int[][] addMatrix(int[][] a, int[][] b) {
+        // 校验矩阵维度
+        if (a.length != b.length || a[0].length != b[0].length) {
+            throw new IllegalArgumentException("加法要求两个矩阵为同型矩阵");
+        }
+        int rows = a.length;
+        int cols = a[0].length;
+        int[][] res = new int[rows][cols];
+        for (int i = 0; i < rows; i++) {
+            for (int j = 0; j < cols; j++) {
+                res[i][j] = a[i][j] + b[i][j];
+            }
+        }
+        return res;
+    }
+
+    // 3. 矩阵减法（仅同型矩阵可运算）
+    public static int[][] subMatrix(int[][] a, int[][] b) {
+        if (a.length != b.length || a[0].length != b[0].length) {
+            throw new IllegalArgumentException("减法要求两个矩阵为同型矩阵");
+        }
+        int rows = a.length;
+        int cols = a[0].length;
+        int[][] res = new int[rows][cols];
+        for (int i = 0; i < rows; i++) {
+            for (int j = 0; j < cols; j++) {
+                res[i][j] = a[i][j] - b[i][j];
+            }
+        }
+        return res;
+    }
+
+    // 4. 矩阵乘法（第一个矩阵列数 = 第二个矩阵行数）
+    public static int[][] mulMatrix(int[][] a, int[][] b) {
+        if (a[0].length != b.length) {
+            throw new IllegalArgumentException("乘法要求第一个矩阵列数等于第二个矩阵行数");
+        }
+        int rows = a.length;
+        int cols = b[0].length;
+        int mid = b.length;
+        int[][] res = new int[rows][cols];
+        for (int i = 0; i < rows; i++) {
+            for (int j = 0; j < cols; j++) {
+                for (int k = 0; k < mid; k++) {
+                    res[i][j] += a[i][k] * b[k][j];
+                }
+            }
+        }
+        return res;
+    }
+
+    // 5. 矩阵转置（行变列、列变行）
+    public static int[][] transposeMatrix(int[][] matrix) {
+        int rows = matrix.length;
+        int cols = matrix[0].length;
+        int[][] res = new int[cols][rows];
+        for (int i = 0; i < rows; i++) {
+            for (int j = 0; j < cols; j++) {
+                res[j][i] = matrix[i][j];
+            }
+        }
+        return res;
+    }
+
+    // 6. 二阶方阵行列式计算
+    public static int calcDeterminant2Order(int[][] matrix) {
+        if (matrix.length != 2 || matrix[0].length != 2) {
+            throw new IllegalArgumentException("仅支持二阶方阵行列式计算");
+        }
+        // 二阶行列式公式：ad - bc
+        return matrix[0][0] * matrix[1][1] - matrix[0][1] * matrix[1][0];
+    }
+
+    // 7. 二阶方阵求逆（行列式≠0时可逆）
+    public static double[][] inverse2Order(int[][] matrix) {
+        int det = calcDeterminant2Order(matrix);
+        if (det == 0) {
+            throw new IllegalArgumentException("行列式为0，矩阵不可逆");
+        }
+        double[][] res = new double[2][2];
+        // 二阶逆矩阵公式：1/|A| * [[d, -b], [-c, a]]
+        res[0][0] = (double) matrix[1][1] / det;
+        res[0][1] = (double) -matrix[0][1] / det;
+        res[1][0] = (double) -matrix[1][0] / det;
+        res[1][1] = (double) matrix[0][0] / det;
+        return res;
+    }
+
+    // 8. 修改矩阵指定位置元素
+    public static void updateElement(int[][] matrix, int row, int col, int value) {
+        if (row < 0 || row >= matrix.length || col < 0 || col >= matrix[0].length) {
+            throw new IllegalArgumentException("下标越界");
+        }
+        matrix[row][col] = value;
+    }
+
+    // 打印浮点型矩阵（用于逆矩阵输出）
+    public static void printDoubleMatrix(double[][] matrix) {
+        for (double[] row : matrix) {
+            for (double num : row) {
+                System.out.printf("%.2f\t", num);
+            }
+            System.out.println();
+        }
+        System.out.println("------------------------");
+    }
+
+    // 主方法：测试所有矩阵操作
+    public static void main(String[] args) {
+        // 初始化测试矩阵
+        int[][] matrixA = {{1, 2}, {3, 4}};
+        int[][] matrixB = {{5, 6}, {7, 8}};
+        int[][] matrixC = {{1, 2, 3}, {4, 5, 6}};
+
+        System.out.println("矩阵A：");
+        printMatrix(matrixA);
+
+        System.out.println("矩阵B：");
+        printMatrix(matrixB);
+
+        // 加法运算
+        System.out.println("A + B：");
+        printMatrix(addMatrix(matrixA, matrixB));
+
+        // 减法运算
+        System.out.println("A - B：");
+        printMatrix(subMatrix(matrixA, matrixB));
+
+        // 乘法运算
+        System.out.println("A * B：");
+        printMatrix(mulMatrix(matrixA, matrixB));
+
+        // 矩阵转置
+        System.out.println("矩阵C转置：");
+        printMatrix(transposeMatrix(matrixC));
+
+        // 二阶行列式
+        System.out.println("矩阵A的行列式值：" + calcDeterminant2Order(matrixA));
+        System.out.println("------------------------");
+
+        // 二阶逆矩阵
+        System.out.println("矩阵A的逆矩阵：");
+        printDoubleMatrix(inverse2Order(matrixA));
+
+        // 修改元素
+        updateElement(matrixA, 0, 0, 10);
+        System.out.println("修改A[0][0]为10后的矩阵A：");
+        printMatrix(matrixA);
+    }
+}
+```
+
+### [73. 矩阵置零](https://leetcode.cn/problems/set-matrix-zeroes/)
+
+1. 题目描述
+给定一个 m x n 的矩阵，如果一个元素为 0 ，则将其所在行和列的所有元素都设为 0 。请使用原地算法。
+示例 1：
+输入：matrix = [[1,1,1],[1,0,1],[1,1,1]]
+输出：[[1,0,1],[0,0,0],[1,0,1]]
+示例 2：
+输入：matrix = [[0,1,2,0],[3,4,5,2],[1,3,1,5]]
+输出：[[0,0,0,0],[0,4,5,0],[0,3,1,0]]
+提示：m == matrix.length，n == matrix[0].length，1 <= m, n <= 200，-2³¹ <= matrix[i][j] <= 2³¹ - 1
+进阶：一个直观的解决方案是使用 O(mn) 的额外空间，一个简单的改进方案是使用 O(m + n) 的额外空间，需实现仅使用常量空间的解决方案
+
+2. 解法一：O(m + n) 额外空间解法
+- 算法思想：创建两个布尔类型的标记数组，分别记录需要置零的行和列。第一次遍历矩阵，将存在0元素的行和列在标记数组中标记为true；第二次遍历矩阵，根据标记数组将对应行和列的所有元素置为0。该方法时间复杂度为O(mn)，空间复杂度为O(m+n)，逻辑简单易理解。
+- Java代码：
+```java
+public class Solution {
+    public void setZeroes(int[][] matrix) {
+        // 获取矩阵的行数和列数
+        int m = matrix.length;
+        int n = matrix[0].length;
+        // 标记需要置零的行
+        boolean[] row = new boolean[m];
+        // 标记需要置零的列
+        boolean[] col = new boolean[n];
+
+        // 第一次遍历：标记所有含0的行和列
+        for (int i = 0; i < m; i++) {
+            for (int j = 0; j < n; j++) {
+                if (matrix[i][j] == 0) {
+                    row[i] = true;
+                    col[j] = true;
+                }
+            }
+        }
+
+        // 第二次遍历：根据标记置零
+        for (int i = 0; i < m; i++) {
+            for (int j = 0; j < n; j++) {
+                // 当前行或列被标记，则置为0
+                if (row[i] || col[j]) {
+                    matrix[i][j] = 0;
+                }
+            }
+        }
+    }
+}
+```
+
+3. 解法二：O(1) 常量空间原地解法
+- 算法思想：利用矩阵自身的第一行和第一列作为标记空间，替代额外的数组，实现常量级空间复杂度。首先单独标记第一行和第一列是否存在0；遍历矩阵除第一行第一列外的所有元素，若元素为0，将对应第一行的列位置、第一列的行位置标记为0；根据第一行和第一列的标记，将对应行和列置零；最后根据初始标记，决定是否将第一行和第一列整体置零。该方法时间复杂度为O(mn)，空间复杂度为O(1)，满足进阶的原地最优要求。
+- Java代码：
+```java
+public class Solution {
+    public void setZeroes(int[][] matrix) {
+        int m = matrix.length;
+        int n = matrix[0].length;
+        // 标记第一行是否有0
+        boolean row0 = false;
+        // 标记第一列是否有0
+        boolean col0 = false;
+
+        // 检查第一行是否存在0
+        for (int j = 0; j < n; j++) {
+            if (matrix[0][j] == 0) {
+                row0 = true;
+                break;
+            }
+        }
+
+        // 检查第一列是否存在0
+        for (int i = 0; i < m; i++) {
+            if (matrix[i][0] == 0) {
+                col0 = true;
+                break;
+            }
+        }
+
+        // 遍历除第一行第一列外的元素，标记对应行和列
+        for (int i = 1; i < m; i++) {
+            for (int j = 1; j < n; j++) {
+                if (matrix[i][j] == 0) {
+                    matrix[i][0] = 0;
+                    matrix[0][j] = 0;
+                }
+            }
+        }
+
+        // 根据第一列的标记，置零对应行
+        for (int i = 1; i < m; i++) {
+            if (matrix[i][0] == 0) {
+                for (int j = 1; j < n; j++) {
+                    matrix[i][j] = 0;
+                }
+            }
+        }
+
+        // 根据第一行的标记，置零对应列
+        for (int j = 1; j < n; j++) {
+            if (matrix[0][j] == 0) {
+                for (int i = 1; i < m; i++) {
+                    matrix[i][j] = 0;
+                }
+            }
+        }
+
+        // 若第一行有0，置零第一行
+        if (row0) {
+            for (int j = 0; j < n; j++) {
+                matrix[0][j] = 0;
+            }
+        }
+
+        // 若第一列有0，置零第一列
+        if (col0) {
+            for (int i = 0; i < m; i++) {
+                matrix[i][0] = 0;
+            }
+        }
+    }
+}
+```
+
+### [54. 螺旋矩阵](https://leetcode.cn/problems/spiral-matrix/)
+
+1. 题目描述
+给你一个 m 行 n 列的矩阵 matrix，请按照 顺时针螺旋顺序 ，返回矩阵中的所有元素。
+示例 1：
+输入：matrix = [[1,2,3],[4,5,6],[7,8,9]]
+输出：[1,2,3,6,9,8,7,4,5]
+示例 2：
+输入：matrix = [[1,2,3,4],[5,6,7,8],[9,10,11,12]]
+输出：[1,2,3,4,8,12,11,10,9,5,6,7]
+提示：
+m == matrix.length
+n == matrix[i].length
+1 <= m, n <= 10
+-100 <= matrix[i][j] <= 100
+
+2. 解法一：边界模拟法
+- 算法思想：通过定义矩阵的上、下、左、右四个边界，按照顺时针方向依次遍历矩阵的四条边，每遍历完一条边就收缩对应的边界，当边界发生交叉时停止遍历。具体遍历顺序：从左到右遍历上边界，上边界向下收缩；从上到下遍历右边界，右边界向左收缩；若上下边界未交叉，从右到左遍历下边界，下边界向上收缩；若左右边界未交叉，从下到上遍历左边界，左边界向右收缩，循环执行该过程直至所有元素被遍历。
+- 代码
+```java
+import java.util.ArrayList;
+import java.util.List;
+
+public class SpiralMatrix {
+    public List<Integer> spiralOrder(int[][] matrix) {
+        List<Integer> res = new ArrayList<>();
+        // 矩阵为空的边界处理
+        if (matrix == null || matrix.length == 0 || matrix[0].length == 0) {
+            return res;
+        }
+        // 初始化上下左右四个边界
+        int top = 0;
+        int bottom = matrix.length - 1;
+        int left = 0;
+        int right = matrix[0].length - 1;
+
+        while (true) {
+            // 从左到右遍历上边界
+            for (int i = left; i <= right; i++) {
+                res.add(matrix[top][i]);
+            }
+            top++;
+            // 边界交叉则退出循环
+            if (top > bottom) break;
+
+            // 从上到下遍历右边界
+            for (int i = top; i <= bottom; i++) {
+                res.add(matrix[i][right]);
+            }
+            right--;
+            if (left > right) break;
+
+            // 从右到左遍历下边界
+            for (int i = right; i >= left; i--) {
+                res.add(matrix[bottom][i]);
+            }
+            bottom--;
+            if (top > bottom) break;
+
+            // 从下到上遍历左边界
+            for (int i = bottom; i >= top; i--) {
+                res.add(matrix[i][left]);
+            }
+            left++;
+            if (left > right) break;
+        }
+        return res;
+    }
+
+    // 测试方法
+    public static void main(String[] args) {
+        SpiralMatrix solution = new SpiralMatrix();
+        int[][] matrix1 = {{1,2,3},{4,5,6},{7,8,9}};
+        System.out.println(solution.spiralOrder(matrix1));
+        int[][] matrix2 = {{1,2,3,4},{5,6,7,8},{9,10,11,12}};
+        System.out.println(solution.spiralOrder(matrix2));
+    }
+}
+```
+
+3. 解法二：方向数组法
+- 算法思想：定义顺时针的四个移动方向（右、下、左、上），用二维数组存储行和列的偏移量；初始化当前遍历的行、列索引和方向索引，创建标记数组记录元素是否被访问过；循环遍历矩阵元素，将当前元素加入结果集并标记为已访问，判断下一个位置是否越界或已访问，若是则切换方向，否则移动到下一个位置，直至遍历完所有元素。
+- 代码
+```java
+import java.util.ArrayList;
+import java.util.List;
+
+public class SpiralMatrix2 {
+    public List<Integer> spiralOrder(int[][] matrix) {
+        List<Integer> res = new ArrayList<>();
+        // 矩阵为空的边界处理
+        if (matrix == null || matrix.length == 0 || matrix[0].length == 0) {
+            return res;
+        }
+        int m = matrix.length;
+        int n = matrix[0].length;
+        // 标记数组：记录元素是否被访问过
+        boolean[][] visited = new boolean[m][n];
+        // 定义四个方向：右、下、左、上，存储行和列的偏移量
+        int[][] dirs = {{0, 1}, {1, 0}, {0, -1}, {-1, 0}};
+        int total = m * n;
+        // 当前遍历的行、列索引
+        int row = 0, col = 0;
+        // 当前方向索引
+        int dirIndex = 0;
+
+        for (int i = 0; i < total; i++) {
+            // 将当前元素加入结果集
+            res.add(matrix[row][col]);
+            visited[row][col] = true;
+            // 计算下一个要遍历的位置
+            int nextRow = row + dirs[dirIndex][0];
+            int nextCol = col + dirs[dirIndex][1];
+            // 判断下一个位置是否越界或已访问，若是则切换方向
+            if (nextRow < 0 || nextRow >= m || nextCol < 0 || nextCol >= n || visited[nextRow][nextCol]) {
+                dirIndex = (dirIndex + 1) % 4;
+            }
+            // 移动到下一个合法位置
+            row += dirs[dirIndex][0];
+            col += dirs[dirIndex][1];
+        }
+        return res;
+    }
+
+    // 测试方法
+    public static void main(String[] args) {
+        SpiralMatrix2 solution = new SpiralMatrix2();
+        int[][] matrix1 = {{1,2,3},{4,5,6},{7,8,9}};
+        System.out.println(solution.spiralOrder(matrix1));
+        int[][] matrix2 = {{1,2,3,4},{5,6,7,8},{9,10,11,12}};
+        System.out.println(solution.spiralOrder(matrix2));
+    }
+}
+```
+
+### [48. 旋转图像](https://leetcode.cn/problems/rotate-image/)
+
+1. 题目描述
+    给定一个 n × n 的二维矩阵 matrix 表示一个图像。请你将图像顺时针旋转 90 度。你必须在 原地 旋转图像，这意味着你需要直接修改输入的二维矩阵。请不要 使用另一个矩阵来旋转图像。
+    输入：matrix = [[1,2,3],[4,5,6],[7,8,9]]
+    输出：[[7,4,1],[8,5,2],[9,6,3]]
+    输入：matrix = [[5,1,9,11],[2,4,8,10],[13,3,6,7],[15,14,12,16]]
+    输出：[[15,13,2,5],[14,3,4,1],[12,6,8,9],[16,7,10,11]]
+    提示：n == matrix.length == matrix[i].length，1 <= n <= 20，-1000 <= matrix[i][j] <= 1000
+
+1. 算法思想+代码
+
+- 解法一：转置矩阵后反转每行
+  算法思想：顺时针旋转90度可通过两步原地操作实现，第一步对矩阵进行转置（将matrix[i][j]与matrix[j][i]交换），第二步将转置后的矩阵每一行元素反转，两步完成后即为旋转结果，时间复杂度O(n²)，空间复杂度O(1)
+  代码
+  
+  ```java
+  public class RotateImage {
+      public void rotate(int[][] matrix) {
+          int n = matrix.length;
+          // 矩阵转置：行和列互换
+          for (int i = 0; i < n; i++) {
+              for (int j = i; j < n; j++) {
+                  int temp = matrix[i][j];
+                  matrix[i][j] = matrix[j][i];
+                  matrix[j][i] = temp;
+              }
+          }
+          // 反转每一行元素
+          for (int i = 0; i < n; i++) {
+              for (int j = 0; j < n / 2; j++) {
+                  int temp = matrix[i][j];
+                  matrix[i][j] = matrix[i][n - 1 - j];
+                  matrix[i][n - 1 - j] = temp;
+              }
+          }
+      }
+  }
+  ```
+  测试用例1：matrix = [[1,2,3],[4,5,6],[7,8,9]]
+  测试用例2：matrix = [[5,1,9,11],[2,4,8,10],[13,3,6,7],[15,14,12,16]]
+  测试结果1：[[7,4,1],[8,5,2],[9,6,3]]
+  测试结果2：[[15,13,2,5],[14,3,4,1],[12,6,8,9],[16,7,10,11]]
+  
+- 解法二：分层原地交换元素
+  算法思想：将矩阵按层划分，从最外层到最内层依次处理，每层中按顺时针方向交换四个对应位置的元素，直接原地修改矩阵，无需额外空间，时间复杂度O(n²)，空间复杂度O(1)
+  代码
+  ```java
+  public class RotateImage {
+      public void rotate(int[][] matrix) {
+          int n = matrix.length;
+          // 遍历矩阵的每一层，从外层到内层
+          for (int i = 0; i < n / 2; i++) {
+              int start = i;
+              int end = n - 1 - i;
+              // 遍历当前层的元素，执行四个位置的交换
+              for (int j = start; j < end; j++) {
+                  // 保存顶部元素
+                  int temp = matrix[start][j];
+                  // 左侧元素赋值到顶部
+                  matrix[start][j] = matrix[end - j + start][start];
+                  // 底部元素赋值到左侧
+                  matrix[end - j + start][start] = matrix[end][end - j + start];
+                  // 右侧元素赋值到底部
+                  matrix[end][end - j + start] = matrix[j][end];
+                  // 顶部元素赋值到右侧
+                  matrix[j][end] = temp;
+              }
+          }
+      }
+  }
+  ```
+  测试用例1：matrix = [[1,2,3],[4,5,6],[7,8,9]]
+  测试用例2：matrix = [[5,1,9,11],[2,4,8,10],[13,3,6,7],[15,14,12,16]]
+  测试结果1：[[7,4,1],[8,5,2],[9,6,3]]
+  测试结果2：[[15,13,2,5],[14,3,4,1],[12,6,8,9],[16,7,10,11]]
+
+### [240. 搜索二维矩阵 II](https://leetcode.cn/problems/search-a-2d-matrix-ii/)
+
+1. 题目描述
+编写一个高效的算法来搜索 m x n 矩阵 matrix 中的一个目标值 target 。该矩阵具有以下特性：每行的元素从左到右升序排列，每列的元素从上到下升序排列。
+示例 1：输入：matrix = [[1,4,7,11,15],[2,5,8,12,19],[3,6,9,16,22],[10,13,14,17,24],[18,21,23,26,30]], target = 5 输出：true
+示例 2：输入：matrix = [[1,4,7,11,15],[2,5,8,12,19],[3,6,9,16,22],[10,13,14,17,24],[18,21,23,26,30]], target = 20 输出：false
+提示：m == matrix.length，n == matrix[i].length，1 <= n, m <= 300，-10^9 <= matrix[i][j] <= 10^9 ，每行的所有元素从左到右升序排列，每列的所有元素从上到下升序排列，-10^9 <= target <= 10^9
+2. 算法思想+代码
+- 解法一：暴力遍历法
+  算法思想：通过双重for循环遍历矩阵中的每一个元素，将每个元素与目标值target进行比对，若找到相等元素则返回true，遍历完成后未找到则返回false，该方法实现简单但时间复杂度较高。
+  Java代码：
+  ```java
+  class Solution {
+      public boolean searchMatrix(int[][] matrix, int target) {
+          // 获取矩阵的行数
+          int m = matrix.length;
+          // 矩阵为空直接返回false
+          if (m == 0) return false;
+          // 获取矩阵的列数
+          int n = matrix[0].length;
+          // 双重循环遍历所有元素
+          for (int i = 0; i < m; i++) {
+              for (int j = 0; j < n; j++) {
+                  // 找到目标值返回true
+                  if (matrix[i][j] == target) {
+                      return true;
+                  }
+              }
+          }
+          // 遍历结束未找到返回false
+          return false;
+      }
+  }
+  ```
+- 解法二：每行二分查找法
+  算法思想：利用矩阵每行元素从左到右升序的特性，对矩阵的每一行单独执行二分查找算法，逐行判断目标值是否存在，相比暴力法减少了查找次数，时间复杂度为O(m log n)。
+  Java代码：
+  ```java
+  class Solution {
+      public boolean searchMatrix(int[][] matrix, int target) {
+          int m = matrix.length;
+          if (m == 0) return false;
+          int n = matrix[0].length;
+          // 遍历每一行
+          for (int[] row : matrix) {
+              // 对当前行执行二分查找
+              int left = 0, right = n - 1;
+              while (left <= right) {
+                  int mid = left + (right - left) / 2;
+                  if (row[mid] == target) {
+                      return true;
+                  } else if (row[mid] < target) {
+                      // 目标值更大，查找右半部分
+                      left = mid + 1;
+                  } else {
+                      // 目标值更小，查找左半部分
+                      right = mid - 1;
+                  }
+              }
+          }
+          return false;
+      }
+  }
+  ```
+- 解法三：线性查找法（最优解）
+  算法思想：利用矩阵行升序、列升序的双重有序特性，选择矩阵右上角元素作为查找起点，若当前元素大于target，说明目标值在当前元素左侧，列索引减一；若当前元素小于target，说明目标值在当前元素下方，行索引加一；若相等则找到目标值，该方法时间复杂度为O(m+n)，空间复杂度为O(1)。
+  Java代码：
+  ```java
+  class Solution {
+      public boolean searchMatrix(int[][] matrix, int target) {
+          int m = matrix.length;
+          if (m == 0) return false;
+          int n = matrix[0].length;
+          // 初始化起点为右上角：行索引0，列索引n-1
+          int row = 0, col = n - 1;
+          // 边界条件：行不超过总行数，列不小于0
+          while (row < m && col >= 0) {
+              if (matrix[row][col] == target) {
+                  // 找到目标值
+                  return true;
+              } else if (matrix[row][col] > target) {
+                  // 当前值过大，向左移动
+                  col--;
+              } else {
+                  // 当前值过小，向下移动
+                  row++;
+              }
+          }
+          // 遍历结束未找到
+          return false;
+      }
+  }
+  ```
+
+
 
 
 

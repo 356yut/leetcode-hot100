@@ -1,4 +1,4 @@
-package com.leetcode.hot100.a_array;
+package com.leetcode.hot100.a_hash;
 
 import java.util.ArrayList;
 import java.util.Arrays;
