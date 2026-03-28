@@ -3034,9 +3034,509 @@ public class ReverseLinkedList {
 5 4 3 2 1 
 2 1 
 
-===== 递归法测试 =====
-5 4 3 2 1 
-2 1
+### [234. 回文链表](https://leetcode.cn/problems/palindrome-linked-list/)
+
+1. 题目描述
+给你一个单链表的头节点 head ，请你判断该链表是否为回文链表。如果是，返回 true ；否则，返回 false 。
+示例 1：输入：head = [1,2,2,1]，输出：true
+示例 2：输入：head = [1,2]，输出：false
+提示：链表中节点数目在范围[1, 10^5] 内，0 <= Node.val <= 9
+进阶：你能否用 O(n) 时间复杂度和 O(1) 空间复杂度解决此题？
+
+2. 解法一：数组转换+双指针法
+- 算法思想：将单链表的所有节点值依次存入数组，借助数组可随机访问的特性，用左指针指向数组头部、右指针指向数组尾部，双指针向中间移动并逐一比较元素值，全部相等则为回文链表。时间复杂度O(n)，空间复杂度O(n)。
+```java
+import java.util.ArrayList;
+import java.util.List;
+
+// 链表节点定义
+class ListNode {
+    int val;
+    ListNode next;
+    ListNode() {}
+    ListNode(int val) { this.val = val; }
+    ListNode(int val, ListNode next) { this.val = val; this.next = next; }
+}
+
+public class PalindromeLinkedList {
+    public boolean isPalindrome(ListNode head) {
+        // 存储链表节点值
+        List<Integer> list = new ArrayList<>();
+        ListNode cur = head;
+        // 遍历链表，将节点值加入集合
+        while (cur != null) {
+            list.add(cur.val);
+            cur = cur.next;
+        }
+        // 双指针比较
+        int left = 0;
+        int right = list.size() - 1;
+        while (left < right) {
+            if (!list.get(left).equals(list.get(right))) {
+                return false;
+            }
+            left++;
+            right--;
+        }
+        return true;
+    }
+}
+```
+
+3. 解法二：快慢指针+反转后半链表（进阶最优解）
+- 算法思想：通过快慢指针定位链表中间节点（快指针走两步、慢指针走一步），反转链表后半部分，再同时遍历前半部分和反转后的后半部分，逐一比较节点值，全部相等则为回文链表。时间复杂度O(n)，空间复杂度O(1)，满足进阶要求。
+```java
+import java.util.ArrayList;
+import java.util.List;
+
+// 链表节点定义
+class ListNode {
+    int val;
+    ListNode next;
+    ListNode() {}
+    ListNode(int val) { this.val = val; }
+    ListNode(int val, ListNode next) { this.val = val; this.next = next; }
+}
+
+public class PalindromeLinkedList {
+    public boolean isPalindrome(ListNode head) {
+        if (head == null || head.next == null) {
+            return true;
+        }
+        // 快慢指针找中间节点
+        ListNode slow = head;
+        ListNode fast = head;
+        while (fast.next != null && fast.next.next != null) {
+            slow = slow.next;
+            fast = fast.next.next;
+        }
+        // 反转后半部分链表
+        ListNode secondHalf = reverseList(slow.next);
+        ListNode firstHalf = head;
+        // 比较前后两部分
+        while (secondHalf != null) {
+            if (firstHalf.val != secondHalf.val) {
+                return false;
+            }
+            firstHalf = firstHalf.next;
+            secondHalf = secondHalf.next;
+        }
+        return true;
+    }
+
+    // 反转链表辅助方法
+    private ListNode reverseList(ListNode head) {
+        ListNode prev = null;
+        ListNode cur = head;
+        while (cur != null) {
+            ListNode next = cur.next;
+            cur.next = prev;
+            prev = cur;
+            cur = next;
+        }
+        return prev;
+    }
+}
+```
+
+### [141. 环形链表](https://leetcode.cn/problems/linked-list-cycle/)
+
+1. 题目描述
+给你一个链表的头节点 head ，判断链表中是否有环。如果链表中有某个节点，可以通过连续跟踪 next 指针再次到达，则链表中存在环。 为了表示给定链表中的环，评测系统内部使用整数 pos 来表示链表尾连接到链表中的位置（索引从 0 开始）。注意：pos 不作为参数进行传递 ，仅仅是为了标识链表的实际情况。如果链表中存在环 ，则返回 true ，否则返回 false 。
+示例 1：输入：head = [3,2,0,-4], pos = 1，输出：true，解释：链表中有一个环，其尾部连接到第二个节点。
+示例 2：输入：head = [1,2], pos = 0，输出：true，解释：链表中有一个环，其尾部连接到第一个节点。
+示例 3：输入：head = [1], pos = -1，输出：false，解释：链表中没有环。
+提示：链表中节点的数目范围是 [0, 104]，-105 <= Node.val <= 105，pos 为 -1 或者链表中的一个有效索引。
+进阶：你能用 O(1)（即常量）内存解决此问题吗？
+
+2. 解法一：哈希表法
+- 算法思想：遍历链表的所有节点，使用哈希集合存储已经访问过的节点，每遍历一个节点就判断该节点是否存在于集合中。若存在，说明链表有环；若遍历到节点为null，说明链表无环。该方法时间复杂度为O(n)，空间复杂度为O(n)。
+- Java代码：
+```java
+import java.util.HashSet;
+import java.util.Set;
+
+// 链表节点定义
+class ListNode {
+    int val;
+    ListNode next;
+    ListNode(int x) {
+        val = x;
+        next = null;
+    }
+}
+
+public class Solution {
+    public boolean hasCycle(ListNode head) {
+        // 存储已访问的节点
+        Set<ListNode> visited = new HashSet<>();
+        while (head != null) {
+            // 当前节点已访问过，存在环
+            if (visited.contains(head)) {
+                return true;
+            }
+            // 将当前节点加入集合
+            visited.add(head);
+            // 移动到下一个节点
+            head = head.next;
+        }
+        // 遍历到链表尾部，无环
+        return false;
+    }
+}
+```
+
+3. 解法二：快慢指针法（双指针法）
+- 算法思想：定义两个指针，慢指针每次移动1步，快指针每次移动2步，同时从链表头节点开始遍历。如果链表存在环，快指针最终会追上慢指针并相遇；如果快指针或快指针的下一个节点为null，说明链表到达尾部，无环。该方法时间复杂度为O(n)，空间复杂度为O(1)，满足进阶的常量内存要求。
+- Java代码：
+```java
+// 链表节点定义
+class ListNode {
+    int val;
+    ListNode next;
+    ListNode(int x) {
+        val = x;
+        next = null;
+    }
+}
+
+public class Solution {
+    public boolean hasCycle(ListNode head) {
+        // 链表为空或只有一个节点，无环
+        if (head == null || head.next == null) {
+            return false;
+        }
+        // 慢指针
+        ListNode slow = head;
+        // 快指针
+        ListNode fast = head.next;
+        while (slow != fast) {
+            // 快指针到达链表尾部，无环
+            if (fast == null || fast.next == null) {
+                return false;
+            }
+            // 慢指针走1步
+            slow = slow.next;
+            // 快指针走2步
+            fast = fast.next.next;
+        }
+        // 指针相遇，存在环
+        return true;
+    }
+}
+```
+
+### [142. 环形链表 II](https://leetcode.cn/problems/linked-list-cycle-ii/)
+
+1. 题目描述
+给定一个链表的头节点 head，返回链表开始入环的第一个节点。如果链表无环，则返回 null。如果链表中有某个节点，可以通过连续跟踪 next 指针再次到达，则链表中存在环。为了表示给定链表中的环，评测系统内部使用整数 pos 来表示链表尾连接到链表中的位置（索引从 0 开始）。如果 pos 是 -1，则在该链表中没有环。注意：pos 不作为参数进行传递，仅仅是为了标识链表的实际情况。不允许修改链表。
+示例 1：输入：head = [3,2,0,-4], pos = 1 输出：返回索引为 1 的链表节点 解释：链表中有一个环，其尾部连接到第二个节点。
+示例 2：输入：head = [1,2], pos = 0 输出：返回索引为 0 的链表节点 解释：链表中有一个环，其尾部连接到第一个节点。
+示例 3：输入：head = [1], pos = -1 输出：返回 null 解释：链表中没有环。
+提示：链表中节点的数目范围在范围 [0, 104] 内 -105 <= Node.val <= 105 pos 的值为 -1 或者链表中的一个有效索引
+进阶：你是否可以使用 O(1) 空间解决此题？
+
+2. 解法一：哈希表法
+- 算法思想：遍历链表的所有节点，使用哈希集合记录已经访问过的节点。每遍历一个节点，先判断该节点是否存在于哈希集合中，若存在则为环的入口节点，直接返回该节点；若遍历至节点为null，说明链表无环，返回null。该方法时间复杂度为O(n)，空间复杂度为O(n)。
+- Java代码
+```java
+import java.util.HashSet;
+import java.util.Set;
+
+// 链表节点定义
+class ListNode {
+    int val;
+    ListNode next;
+    ListNode(int x) {
+        val = x;
+        next = null;
+    }
+}
+
+public class Solution {
+    public ListNode detectCycle(ListNode head) {
+        // 存储已经访问过的节点
+        Set<ListNode> visited = new HashSet<>();
+        ListNode current = head;
+        while (current != null) {
+            // 节点已存在，为环的入口节点
+            if (visited.contains(current)) {
+                return current;
+            }
+            visited.add(current);
+            current = current.next;
+        }
+        // 遍历到链表末尾，无环
+        return null;
+    }
+}
+```
+
+3. 解法二：快慢指针法（双指针法，O(1)空间）
+- 算法思想：1. 初始化快指针和慢指针均指向链表头节点，慢指针每次移动1步，快指针每次移动2步；2. 若快慢指针相遇，证明链表存在环，若快指针指向null则链表无环；3. 指针相遇后将慢指针移回头节点，快慢指针均改为每次移动1步，两指针再次相遇的节点即为环的入口节点。该方法基于数学公式推导，时间复杂度O(n)，空间复杂度O(1)。
+- Java代码
+```java
+// 链表节点定义
+class ListNode {
+    int val;
+    ListNode next;
+    ListNode(int x) {
+        val = x;
+        next = null;
+    }
+}
+
+public class Solution {
+    public ListNode detectCycle(ListNode head) {
+        // 初始化快慢指针
+        ListNode slow = head;
+        ListNode fast = head;
+        // 判断链表是否存在环
+        while (fast != null && fast.next != null) {
+            slow = slow.next;
+            fast = fast.next.next;
+            // 快慢指针相遇，证明有环
+            if (slow == fast) {
+                // 慢指针移回链表头节点
+                slow = head;
+                // 双指针同速移动，再次相遇即为环入口
+                while (slow != fast) {
+                    slow = slow.next;
+                    fast = fast.next;
+                }
+                return slow;
+            }
+        }
+        // 无环返回null
+        return null;
+    }
+}
+```
+
+### [21. 合并两个有序链表](https://leetcode.cn/problems/merge-two-sorted-lists/)
+
+1. 题目描述
+将两个升序链表合并为一个新的升序链表并返回，新链表通过拼接给定两个链表的所有节点组成
+示例1：输入l1 = [1,2,4]，l2 = [1,3,4]，输出[1,1,2,3,4,4]
+示例2：输入l1 = []，l2 = []，输出[]
+示例3：输入l1 = []，l2 = [0]，输出[0]
+提示：两个链表的节点数目范围是 [0, 50]，-100 <= Node.val <= 100，l1和l2均按非递减顺序排列
+
+2. 算法思想+代码
+- 通用链表节点定义
+```java
+public class ListNode {
+    int val;
+    ListNode next;
+    ListNode() {}
+    ListNode(int val) { this.val = val; }
+    ListNode(int val, ListNode next) { this.val = val; this.next = next; }
+}
+```
+- 解法一：迭代法
+  算法思想：创建哑节点作为新链表的起始节点，使用指针遍历两个有序链表，每次比较两个链表当前节点的值，将值较小的节点拼接到新链表后，同时移动对应链表的指针；当其中一个链表遍历完毕后，直接将另一个链表的剩余节点拼接至新链表末尾，最终返回哑节点的下一个节点即为合并后的链表
+  代码实现：
+```java
+class Solution {
+    public ListNode mergeTwoLists(ListNode list1, ListNode list2) {
+        // 创建哑节点，方便操作新链表
+        ListNode dummy = new ListNode(0);
+        ListNode cur = dummy;
+        // 遍历两个链表，直到其中一个为空
+        while (list1 != null && list2 != null) {
+            if (list1.val <= list2.val) {
+                cur.next = list1;
+                list1 = list1.next;
+            } else {
+                cur.next = list2;
+                list2 = list2.next;
+            }
+            cur = cur.next;
+        }
+        // 拼接剩余未遍历完的链表节点
+        cur.next = list1 == null ? list2 : list1;
+        return dummy.next;
+    }
+}
+```
+- 解法二：递归法
+  算法思想：设定递归终止条件，当其中一个链表为空时，直接返回另一个链表；每次递归比较两个链表头节点的值，将值较小的节点作为当前合并节点，递归处理该节点的下一个节点与另一个链表，通过回溯实现节点拼接，最终得到合并后的链表
+  代码实现：
+```java
+class Solution {
+    public ListNode mergeTwoLists(ListNode list1, ListNode list2) {
+        // 递归终止条件：一个链表为空，返回另一个链表
+        if (list1 == null) {
+            return list2;
+        }
+        if (list2 == null) {
+            return list1;
+        }
+        // 比较节点值，递归拼接
+        if (list1.val < list2.val) {
+            list1.next = mergeTwoLists(list1.next, list2);
+            return list1;
+        } else {
+            list2.next = mergeTwoLists(list1, list2.next);
+            return list2;
+        }
+    }
+}
+```
+
+### [2. 两数相加](https://leetcode.cn/problems/add-two-numbers/)
+
+1. 题目描述：给你两个非空的链表，表示两个非负的整数。它们每位数字都是按照逆序的方式存储的，并且每个节点只能存储一位数字。请你将两个数相加，并以相同形式返回一个表示和的链表。你可以假设除了数字0之外，这两个数都不会以0开头。输入示例：l1 = [2,4,3]，l2 = [5,6,4]，输出[7,0,8]，对应计算342 + 465 = 807；l1 = [0]，l2 = [0]，输出[0]；l1 = [9,9,9,9,9,9,9]，l2 = [9,9,9,9]，输出[8,9,9,9,0,0,0,1]。提示：每个链表中的节点数在范围[1, 100]内，0 <= Node.val <= 9，题目数据保证列表表示的数字不含前导零。
+2. 算法思想+代码
+- 核心思路为模拟数学中的竖式加法运算，从两个链表的头部（对应数字的个位）开始逐位相加
+- 定义进位变量carry，初始值为0，用于存储每一位相加后产生的进位
+- 创建哑节点（哨兵节点）dummy，用于简化结果链表的构建操作，避免处理头节点的特殊情况
+- 循环遍历两个链表，当任意一个链表未遍历完成，或进位值不为0时，持续执行相加逻辑
+- 每次循环中，获取当前两个链表节点的数值（节点为空则取0），计算当前位的总和：当前值1 + 当前值2 + 进位carry
+- 计算当前位的结果值（总和对10取余），并更新进位值（总和除以10取整）
+- 创建新的链表节点存储当前位结果，将其连接到结果链表的末尾
+- 依次移动两个链表的指针，直到循环结束，最终返回哑节点的下一个节点作为结果链表的头节点
+- 时间复杂度：O(max(n, m))，n和m分别为两个链表的长度，只需遍历最长链表一次
+- 空间复杂度：O(max(n, m))，结果链表的长度最多为最长链表长度加1
+```java
+/**
+ * 链表节点定义
+ */
+class ListNode {
+    int val;
+    ListNode next;
+    ListNode() {}
+    ListNode(int val) { this.val = val; }
+    ListNode(int val, ListNode next) { this.val = val; this.next = next; }
+}
+
+class Solution {
+    public ListNode addTwoNumbers(ListNode l1, ListNode l2) {
+        // 创建哑节点，作为结果链表的前驱节点
+        ListNode dummy = new ListNode(0);
+        // 定义指针，用于构建结果链表
+        ListNode current = dummy;
+        // 进位变量，初始为0
+        int carry = 0;
+
+        // 循环条件：两个链表未遍历完 或 存在进位
+        while (l1 != null || l2 != null || carry != 0) {
+            // 获取当前节点的值，节点为空则取0
+            int val1 = l1 == null ? 0 : l1.val;
+            int val2 = l2 == null ? 0 : l2.val;
+
+            // 计算当前位的总和
+            int sum = val1 + val2 + carry;
+            // 更新进位
+            carry = sum / 10;
+            // 当前位的结果
+            int resVal = sum % 10;
+
+            // 创建新节点，拼接至结果链表
+            current.next = new ListNode(resVal);
+            // 移动结果链表指针
+            current = current.next;
+
+            // 移动两个输入链表的指针
+            if (l1 != null) l1 = l1.next;
+            if (l2 != null) l2 = l2.next;
+        }
+
+        // 返回结果链表的头节点
+        return dummy.next;
+    }
+}
+```
+
+### [19. 删除链表的倒数第 N 个结点](https://leetcode.cn/problems/remove-nth-node-from-end-of-list/)
+
+1. 题目描述
+给你一个链表，删除链表的倒数第 n 个结点，并且返回链表的头结点。
+示例 1：输入：head = [1,2,3,4,5], n = 2 输出：[1,2,3,5]
+示例 2：输入：head = [1], n = 1 输出：[]
+示例 3：输入：head = [1,2], n = 1 输出：[1]
+提示：链表中结点的数目为 sz，1 <= sz <= 30，0 <= Node.val <= 100，1 <= n <= sz
+进阶：你能尝试使用一趟扫描实现吗？
+
+2. 解法一：两次遍历法
+- 算法思想：首先遍历整个链表获取总长度sz，计算出待删除节点为正数第sz-n个节点；再次遍历链表，找到待删除节点的前一个节点并修改指针完成删除；引入哑节点指向头节点，解决删除头节点的边界问题。
+- 代码：
+```java
+// 定义链表节点类
+class ListNode {
+    int val;
+    ListNode next;
+    ListNode() {}
+    ListNode(int val) { this.val = val; }
+    ListNode(int val, ListNode next) { this.val = val; this.next = next; }
+}
+
+class Solution {
+    public ListNode removeNthFromEnd(ListNode head, int n) {
+        // 哑节点，避免头节点删除的空指针问题
+        ListNode dummy = new ListNode(0, head);
+        int length = 0;
+        ListNode cur = head;
+        // 第一次遍历：计算链表总长度
+        while (cur != null) {
+            length++;
+            cur = cur.next;
+        }
+        // 找到待删除节点的前一个节点
+        cur = dummy;
+        for (int i = 1; i <= length - n; i++) {
+            cur = cur.next;
+        }
+        // 执行删除操作
+        cur.next = cur.next.next;
+        return dummy.next;
+    }
+}
+```
+
+3. 解法二：快慢指针法（一趟扫描）
+- 算法思想：定义快慢指针初始均指向哑节点，快指针先向前移动n步，随后快慢指针同步移动，直至快指针到达链表末尾；此时慢指针的下一个节点即为待删除节点，修改指针完成删除，仅需一趟扫描链表。
+- 代码：
+```java
+// 链表节点类与上文一致
+class ListNode {
+    int val;
+    ListNode next;
+    ListNode() {}
+    ListNode(int val) { this.val = val; }
+    ListNode(int val, ListNode next) { this.val = val; this.next = next; }
+}
+
+class Solution {
+    public ListNode removeNthFromEnd(ListNode head, int n) {
+        ListNode dummy = new ListNode(0, head);
+        // 初始化快慢指针
+        ListNode fast = dummy;
+        ListNode slow = dummy;
+        // 快指针先移动n步
+        for (int i = 0; i < n; i++) {
+            fast = fast.next;
+        }
+        // 快慢指针同步移动，直到快指针指向最后一个节点
+        while (fast.next != null) {
+            fast = fast.next;
+            slow = slow.next;
+        }
+        // 删除目标节点
+        slow.next = slow.next.next;
+        return dummy.next;
+    }
+}
+```
+
+
+
+
+
+
+
+
+
 
 
 
