@@ -39,8 +39,30 @@ public class ReverseNodesInKGroup {
         System.out.println();
     }
     public static ListNode reverseKGroup(ListNode head, int k) {
-        ListNode prev = new ListNode(0);
-        prev.next = head;
-        while (true)
+        if (head == null || head.next == null) return head;
+        ListNode tail = head;
+        for (int i = 0; i < k; i++) {
+            if (tail == null) return head;
+            tail = tail.next;
+        }
+        ListNode newHead = reverse(head, k);
+        head.next = reverseKGroup(tail, k);
+
+        return newHead;
+
+    }
+
+    // 翻转前k个节点
+    private static ListNode reverse(ListNode head, int k) {
+        ListNode prev = null;
+        ListNode cur = head;
+        for (int i = 0; i < k; i++) {
+            ListNode next = cur.next;
+            cur.next = prev;
+            prev = cur;
+            cur = next;
+        }
+        return prev;
+
     }
 }

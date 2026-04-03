@@ -3529,13 +3529,391 @@ class Solution {
 }
 ```
 
+### [24. 两两交换链表中的节点](https://leetcode.cn/problems/swap-nodes-in-pairs/)
 
+1. 题目描述
+给你一个链表，两两交换其中相邻的节点，并返回交换后链表的头节点。你必须在不修改节点内部的值的情况下完成本题（即，只能进行节点交换）。
+示例 1：输入：head = [1,2,3,4]，输出：[2,1,4,3]
+示例 2：输入：head = []，输出：[]
+示例 3：输入：head = [1]，输出：[1]
+提示：链表中节点的数目在范围 [0, 100] 内，0 <= Node.val <= 100
 
+2. 算法思想+代码
+- 链表节点定义（公共基础代码）
+```java
+public class ListNode {
+    int val;
+    ListNode next;
+    ListNode() {}
+    ListNode(int val) { this.val = val; }
+    ListNode(int val, ListNode next) { this.val = val; this.next = next; }
+}
+```
+- 解法一：递归法
+  算法思想：递归通过分解子问题实现交换，终止条件为链表为空或仅有一个节点。每次递归处理当前两个相邻节点，将第一个节点的后继指向后续递归处理的结果，再将第二个节点指向第一个节点，完成交换后返回第二个节点作为当前子链表的头节点。
+  代码：
+```java
+class Solution {
+    public ListNode swapPairs(ListNode head) {
+        // 递归终止条件：无节点或只有一个节点，无需交换
+        if (head == null || head.next == null) {
+            return head;
+        }
+        // 定义待交换的两个节点
+        ListNode first = head;
+        ListNode second = head.next;
+        // 第一个节点指向后续链表交换后的头节点
+        first.next = swapPairs(second.next);
+        // 第二个节点指向第一个节点，完成交换
+        second.next = first;
+        // 返回交换后的新头节点
+        return second;
+    }
+}
+```
+- 解法二：迭代法
+  算法思想：借助虚拟头节点规避头节点交换的边界问题，通过前驱指针遍历链表，循环交换相邻两个节点。每次定位待交换的两个节点，调整指针指向完成交换后，移动前驱指针继续处理后续节点，最终返回虚拟头节点的后继节点作为结果。
+  代码：
+```java
+class Solution {
+    public ListNode swapPairs(ListNode head) {
+        // 创建虚拟头节点，指向原链表头
+        ListNode dummy = new ListNode(0);
+        dummy.next = head;
+        // 前驱指针，用于绑定交换后的节点
+        ListNode prev = dummy;
+        // 存在两个可交换的节点时循环
+        while (prev.next != null && prev.next.next != null) {
+            ListNode first = prev.next;
+            ListNode second = prev.next.next;
+            // 节点交换操作
+            first.next = second.next;
+            second.next = first;
+            prev.next = second;
+            // 前驱指针后移，准备下一轮交换
+            prev = first;
+        }
+        // 返回交换后的链表头节点
+        return dummy.next;
+    }
+}
+```
 
+### [25. K 个一组翻转链表](https://leetcode.cn/problems/reverse-nodes-in-k-group/)
 
+1. 题目描述
+给你链表的头节点 head ，每 k 个节点一组进行翻转，请你返回修改后的链表。k 是一个正整数，它的值小于或等于链表的长度。如果节点总数不是 k 的整数倍，那么请将最后剩余的节点保持原有顺序。你不能只是单纯的改变节点内部的值，而是需要实际进行节点交换。
+示例 1：输入：head = [1,2,3,4,5], k = 2 输出：[2,1,4,3,5]
+示例 2：输入：head = [1,2,3,4,5], k = 3 输出：[3,2,1,4,5]
+提示：链表中的节点数目为 n，1 <= k <= n <= 5000，0 <= Node.val <= 1000
+进阶：你可以设计一个只用 O(1) 额外内存空间的算法解决此问题吗？
 
+2. 算法思想+代码
+- 解法一：迭代法（O(1)额外空间，满足进阶要求）
+  算法思想：1. 定义虚拟头节点，统一处理链表头节点翻转后的指向问题；2. 维护前驱节点、当前组起始节点、当前组结束节点、后继节点四个关键节点；3. 遍历链表，每次找到k个节点的组，若剩余节点不足k个则终止循环；4. 翻转当前组内的k个节点，重新建立前驱节点、翻转后组、后继节点的连接关系；5. 更新前驱节点为当前组的原起始节点，继续处理下一组节点。
+  Java代码：
+```java
+class ListNode {
+    int val;
+    ListNode next;
+    ListNode() {}
+    ListNode(int val) { this.val = val; }
+    ListNode(int val, ListNode next) { this.val = val; this.next = next; }
+}
 
+class Solution {
+    public ListNode reverseKGroup(ListNode head, int k) {
+        // 虚拟头节点，简化边界处理
+        ListNode dummy = new ListNode(0);
+        dummy.next = head;
+        // 前驱节点：记录当前组的前一个节点
+        ListNode pre = dummy;
+        // 结束节点：记录当前组的最后一个节点
+        ListNode end = dummy;
 
+        while (end.next != null) {
+            // 找到当前组的结束节点
+            for (int i = 0; i < k && end != null; i++) {
+                end = end.next;
+            }
+            // 剩余节点不足k个，直接退出
+            if (end == null) {
+                break;
+            }
+            // 记录当前组的起始节点
+            ListNode start = pre.next;
+            // 记录下一组的起始节点
+            ListNode next = end.next;
+            // 断开当前组与后续节点的连接
+            end.next = null;
+            // 翻转当前组
+            pre.next = reverse(start);
+            // 连接翻转后的组与后续节点
+            start.next = next;
+            // 更新前驱节点和结束节点
+            pre = start;
+            end = pre;
+        }
+        return dummy.next;
+    }
+
+    // 翻转单组链表
+    private ListNode reverse(ListNode head) {
+        ListNode pre = null;
+        ListNode curr = head;
+        while (curr != null) {
+            ListNode next = curr.next;
+            curr.next = pre;
+            pre = curr;
+            curr = next;
+        }
+        return pre;
+    }
+}
+```
+
+- 解法二：递归法
+  算法思想：1. 递归的终止条件：找到的节点不足k个，直接返回当前头节点；2. 先遍历找到当前组的k个节点，确定翻转范围；3. 翻转当前k个节点，得到新的组头节点；4. 递归处理剩余未翻转的链表；5. 将当前组翻转后的尾节点指向递归返回的后续链表头节点，最终返回当前组的新头节点。
+  Java代码：
+```java
+class ListNode {
+    int val;
+    ListNode next;
+    ListNode() {}
+    ListNode(int val) { this.val = val; }
+    ListNode(int val, ListNode next) { this.val = val; this.next = next; }
+}
+
+class Solution {
+    public ListNode reverseKGroup(ListNode head, int k) {
+        if (head == null || head.next == null) {
+            return head;
+        }
+        // 找到当前组的尾节点
+        ListNode tail = head;
+        for (int i = 0; i < k; i++) {
+            // 剩余节点不足k个，直接返回原头节点
+            if (tail == null) {
+                return head;
+            }
+            tail = tail.next;
+        }
+        // 翻转当前k个节点
+        ListNode newHead = reverse(head, k);
+        // 原头节点变为尾节点，指向后续递归翻转的结果
+        head.next = reverseKGroup(tail, k);
+        return newHead;
+    }
+
+    // 翻转前k个节点
+    private ListNode reverse(ListNode head, int k) {
+        ListNode pre = null;
+        ListNode curr = head;
+        for (int i = 0; i < k; i++) {
+            ListNode next = curr.next;
+            curr.next = pre;
+            pre = curr;
+            curr = next;
+        }
+        return pre;
+    }
+}
+```
+
+### [138. 随机链表的复制](https://leetcode.cn/problems/copy-list-with-random-pointer/)
+
+1. 题目描述
+给你一个长度为 n 的链表，每个节点包含一个额外增加的随机指针 random ，该指针可以指向链表中的任何节点或空节点。构造这个链表的 深拷贝。 深拷贝应该正好由 n 个 全新 节点组成，其中每个新节点的值都设为其对应的原节点的值。新节点的 next 指针和 random 指针也都应指向复制链表中的新节点，并使原链表和复制链表的这些指针能够表示相同的链表状态。复制链表中的指针都不应指向原链表中的节点。例如，如果原链表中有 X 和 Y 两个节点，其中 X.random --> Y 。那么在复制链表中对应的两个节点 x 和 y ，同样有 x.random --> y 。返回复制链表的头节点。用一个由 n 个节点组成的链表来表示输入/输出中的链表。每个节点用一个 [val, random_index] 表示：val：一个表示 Node.val 的整数。random_index：随机指针指向的节点索引（范围从 0 到 n-1）；如果不指向任何节点，则为  null 。你的代码 只 接受原链表的头节点 head 作为传入参数。
+示例 1：输入：head = [[7,null],[13,0],[11,4],[10,2],[1,0]] 输出：[[7,null],[13,0],[11,4],[10,2],[1,0]]
+示例 2：输入：head = [[1,1],[2,1]] 输出：[[1,1],[2,1]]
+示例 3：输入：head = [[3,null],[3,0],[3,null]] 输出：[[3,null],[3,0],[3,null]]
+提示：0 <= n <= 1000，-104 <= Node.val <= 104，Node.random 为 null 或指向链表中的节点。
+
+2. 算法思想+代码
+- 解法一：哈希表法
+  - 算法思想：通过哈希表建立原链表节点与新复制节点的一一映射关系，第一次遍历原链表创建所有新节点并存储映射关系；第二次遍历原链表，通过哈希表的映射为新节点赋值next和random指针，最终得到深拷贝链表。
+  - 代码：
+```java
+// 随机链表节点定义
+class Node {
+    int val;
+    Node next;
+    Node random;
+    public Node(int val) {
+        this.val = val;
+        this.next = null;
+        this.random = null;
+    }
+}
+
+class Solution {
+    public Node copyRandomList(Node head) {
+        // 哈希表存储原节点与新节点的映射
+        HashMap<Node, Node> nodeMap = new HashMap<>();
+        Node current = head;
+        // 第一次遍历：创建所有新节点并存入哈希表
+        while (current != null) {
+            nodeMap.put(current, new Node(current.val));
+            current = current.next;
+        }
+        current = head;
+        // 第二次遍历：设置新节点的next和random指针
+        while (current != null) {
+            nodeMap.get(current).next = nodeMap.get(current.next);
+            nodeMap.get(current).random = nodeMap.get(current.random);
+            current = current.next;
+        }
+        // 返回复制链表的头节点
+        return nodeMap.get(head);
+    }
+}
+```
+- 解法二：原地复制法
+  - 算法思想：分三步实现深拷贝，第一步在原链表每个节点后方插入对应复制节点，形成原节点与复制节点交替的链表；第二步遍历链表，为复制节点设置random指针；第三步拆分原链表和复制链表，分离出独立的深拷贝新链表，无需额外哈希表存储空间。
+  - 代码：
+```java
+// 随机链表节点定义
+class Node {
+    int val;
+    Node next;
+    Node random;
+    public Node(int val) {
+        this.val = val;
+        this.next = null;
+        this.random = null;
+    }
+}
+
+class Solution {
+    public Node copyRandomList(Node head) {
+        // 处理空链表边界情况
+        if (head == null) {
+            return null;
+        }
+        Node current = head;
+        // 第一步：在原节点后插入复制节点
+        while (current != null) {
+            Node copyNode = new Node(current.val);
+            copyNode.next = current.next;
+            current.next = copyNode;
+            current = copyNode.next;
+        }
+        current = head;
+        // 第二步：为复制节点设置random指针
+        while (current != null) {
+            Node copyNode = current.next;
+            copyNode.random = (current.random != null) ? current.random.next : null;
+            current = copyNode.next;
+        }
+        current = head;
+        Node newHead = head.next;
+        // 第三步：拆分原链表和复制链表
+        while (current != null) {
+            Node copyNode = current.next;
+            current.next = copyNode.next;
+            copyNode.next = (copyNode.next != null) ? copyNode.next.next : null;
+            current = current.next;
+        }
+        return newHead;
+    }
+}
+```
+
+### [148. 排序链表](https://leetcode.cn/problems/sort-list/)
+
+1. 题目描述
+给你链表的头结点 head ，请将其按 升序 排列并返回 排序后的链表 。
+示例 1：输入：head = [4,2,1,3]，输出：[1,2,3,4]
+示例 2：输入：head = [-1,5,3,4,0]，输出：[-1,0,3,4,5]
+示例 3：输入：head = []，输出：[]
+提示：链表中节点的数目在范围 [0, 5 * 104] 内，-105 <= Node.val <= 105
+进阶：你可以在 O(n log n) 时间复杂度和常数级空间复杂度下，对链表进行排序吗？
+
+2. 算法思想+代码
+- 算法思想：采用自底向上的归并排序，满足O(n log n)时间复杂度和常数级空间复杂度的进阶要求。链表的结构特性适配归并排序，无需数组的随机访问操作；自底向上通过迭代实现，避免了递归调用栈的空间开销，实现常数空间。核心步骤：1. 遍历计算链表的总长度；2. 从子链表长度为1开始，两两合并有序子链表；3. 每次将子链表长度翻倍，重复合并操作，直至合并为完整的有序链表；4. 实现链表切分和两个有序链表合并的辅助逻辑。
+- Java代码实现
+```java
+// 链表节点定义
+class ListNode {
+    int val;
+    ListNode next;
+    ListNode() {}
+    ListNode(int val) { this.val = val; }
+    ListNode(int val, ListNode next) { this.val = val; this.next = next; }
+}
+
+public class Solution {
+    public ListNode sortList(ListNode head) {
+        // 处理空链表或单节点链表
+        if (head == null || head.next == null) {
+            return head;
+        }
+        // 计算链表总长度
+        int length = 0;
+        ListNode node = head;
+        while (node != null) {
+            length++;
+            node = node.next;
+        }
+        // 哑节点，简化链表头节点的处理
+        ListNode dummy = new ListNode(0, head);
+        // 自底向上归并，子链表长度从1开始，每次翻倍
+        for (int subLength = 1; subLength < length; subLength <<= 1) {
+            ListNode prev = dummy;
+            ListNode curr = dummy.next;
+            // 遍历合并所有当前长度的子链表
+            while (curr != null) {
+                // 截取第一个长度为subLength的子链表
+                ListNode head1 = curr;
+                for (int i = 1; i < subLength && curr.next != null; i++) {
+                    curr = curr.next;
+                }
+                // 截取第二个长度为subLength的子链表
+                ListNode head2 = curr.next;
+                curr.next = null;
+                curr = head2;
+                for (int i = 1; i < subLength && curr != null && curr.next != null; i++) {
+                    curr = curr.next;
+                }
+                // 记录剩余未处理的节点
+                ListNode next = null;
+                if (curr != null) {
+                    next = curr.next;
+                    curr.next = null;
+                }
+                // 合并两个有序子链表
+                prev.next = merge(head1, head2);
+                // 移动指针到已排序链表的尾部
+                while (prev.next != null) {
+                    prev = prev.next;
+                }
+                curr = next;
+            }
+        }
+        return dummy.next;
+    }
+
+    // 合并两个有序链表
+    private ListNode merge(ListNode head1, ListNode head2) {
+        ListNode dummy = new ListNode(0);
+        ListNode cur = dummy;
+        // 双指针合并
+        while (head1 != null && head2 != null) {
+            if (head1.val <= head2.val) {
+                cur.next = head1;
+                head1 = head1.next;
+            } else {
+                cur.next = head2;
+                head2 = head2.next;
+            }
+            cur = cur.next;
+        }
+        // 拼接剩余节点
+        cur.next = head1 != null ? head1 : head2;
+        return dummy.next;
+    }
+}
+```
 
 
 
