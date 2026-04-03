@@ -3915,11 +3915,1037 @@ public class Solution {
 }
 ```
 
+```java
+class Solution {
+    // 归并排序在链表上的实现
+    public ListNode sortList(ListNode head) {
+        // 递归终止条件
+        if (head == null || head.next == null) {
+            return head;
+        }
 
+        // 1. 找中点
+        ListNode slow = head, fast = head;
+        while (fast.next!= null && fast.next.next != null) {
+            slow = slow.next;
+            fast = fast.next.next;
+        }
+        // 断开链表
+        ListNode slownext=slow.next;
+        slow.next = null;
+        
 
+        // 2. 递归排序左右两部分
+        ListNode left = sortList(head);
+        ListNode right = sortList(slownext);
 
+        // 3. 合并两个有序链表
+        return merge(left, right);
+    }
 
+    // 合并两个有序链表
+    private ListNode merge(ListNode l1, ListNode l2) {
+        ListNode dummy = new ListNode(0);
+        ListNode cur = dummy;
 
+        while (l1 != null && l2 != null) {
+            if (l1.val <= l2.val) {
+                cur.next = l1;
+                l1 = l1.next;
+            } else {
+                cur.next = l2;
+                l2 = l2.next;
+            }
+            cur = cur.next;
+        }
+
+        cur.next = (l1 != null) ? l1 : l2;
+        return dummy.next;
+    }
+}
+```
+
+### [23. 合并 K 个升序链表](https://leetcode.cn/problems/merge-k-sorted-lists/)
+
+1.题目描述
+给你一个链表数组，每个链表都已经按升序排列。请你将所有链表合并到一个升序链表中，返回合并后的链表。
+示例 1：
+输入：lists = [[1,4,5],[1,3,4],[2,6]]
+输出：[1,1,2,3,4,4,5,6]
+解释：链表数组如下：
+[
+  1->4->5,
+  1->3->4,
+  2->6
+]
+将它们合并到一个有序链表中得到。1->1->2->3->4->4->5->6
+示例 2：
+输入：lists = []
+输出：[]
+示例 3：
+输入：lists = [[]]
+输出：[]
+提示：
+k == lists.length
+0 <= k <= 10^4
+0 <= lists[i].length <= 500
+-10^4 <= lists[i][j] <= 10^4
+lists[i] 按升序排列
+lists[i].length 的总和不超过 10^4
+
+2.算法思想+代码
+- 解法一：顺序合并
+  算法思想：基于合并两个升序链表的基础方法，依次将链表数组中的每一个链表与当前已合并完成的链表进行合并，重复执行k-1次合并操作，最终得到所有链表合并后的升序链表。该方法实现简单，适合理解基础合并逻辑，但时间复杂度较高。
+  代码：
+```java
+// 链表节点定义
+class ListNode {
+    int val;
+    ListNode next;
+    ListNode() {}
+    ListNode(int val) { this.val = val; }
+    ListNode(int val, ListNode next) { this.val = val; this.next = next; }
+}
+
+class Solution {
+    // 合并K个升序链表
+    public ListNode mergeKLists(ListNode[] lists) {
+        ListNode ans = null;
+        // 遍历所有链表，依次合并
+        for (ListNode list : lists) {
+            ans = mergeTwoLists(ans, list);
+        }
+        return ans;
+    }
+
+    // 合并两个升序链表的辅助方法
+    private ListNode mergeTwoLists(ListNode l1, ListNode l2) {
+        ListNode dummy = new ListNode(0);
+        ListNode cur = dummy;
+        // 双指针遍历两个链表，拼接较小节点
+        while (l1 != null && l2 != null) {
+            if (l1.val < l2.val) {
+                cur.next = l1;
+                l1 = l1.next;
+            } else {
+                cur.next = l2;
+                l2 = l2.next;
+            }
+            cur = cur.next;
+        }
+        // 拼接剩余未遍历完的节点
+        cur.next = l1 == null ? l2 : l1;
+        return dummy.next;
+    }
+}
+```
+
+- 解法二：分治合并
+  算法思想：采用分治策略，将k个链表两两分组，递归地合并每组内的两个链表，不断缩小合并的规模，直到所有链表合并为一个链表。该方法通过分治降低了合并的次数，时间复杂度优于顺序合并，是高效的合并方式。
+  代码：
+```java
+// 链表节点定义
+class ListNode {
+    int val;
+    ListNode next;
+    ListNode() {}
+    ListNode(int val) { this.val = val; }
+    ListNode(int val, ListNode next) { this.val = val; this.next = next; }
+}
+
+class Solution {
+    public ListNode mergeKLists(ListNode[] lists) {
+        // 边界条件处理
+        if (lists == null || lists.length == 0) {
+            return null;
+        }
+        return merge(lists, 0, lists.length - 1);
+    }
+
+    // 分治递归合并指定区间的链表
+    private ListNode merge(ListNode[] lists, int left, int right) {
+        // 区间内只有一个链表，直接返回
+        if (left == right) {
+            return lists[left];
+        }
+        int mid = left + (right - left) / 2;
+        // 递归合并左半区和右半区
+        ListNode leftList = merge(lists, left, mid);
+        ListNode rightList = merge(lists, mid + 1, right);
+        // 合并两个子链表
+        return mergeTwoLists(leftList, rightList);
+    }
+
+    // 合并两个升序链表的辅助方法
+    private ListNode mergeTwoLists(ListNode l1, ListNode l2) {
+        ListNode dummy = new ListNode(0);
+        ListNode cur = dummy;
+        while (l1 != null && l2 != null) {
+            if (l1.val < l2.val) {
+                cur.next = l1;
+                l1 = l1.next;
+            } else {
+                cur.next = l2;
+                l2 = l2.next;
+            }
+            cur = cur.next;
+        }
+        cur.next = l1 == null ? l2 : l1;
+        return dummy.next;
+    }
+}
+```
+
+- 解法三：优先队列（小顶堆）
+  算法思想：利用小顶堆的特性，将所有链表的头节点加入优先队列中，每次取出堆顶的最小节点作为结果链表的节点，随后将该最小节点的下一个节点加入堆中，循环执行操作直到堆为空。该方法时间复杂度最优，代码实现简洁高效。
+  代码：
+```java
+// 链表节点定义
+class ListNode {
+    int val;
+    ListNode next;
+    ListNode() {}
+    ListNode(int val) { this.val = val; }
+    ListNode(int val, ListNode next) { this.val = val; this.next = next; }
+}
+
+import java.util.PriorityQueue;
+
+class Solution {
+    public ListNode mergeKLists(ListNode[] lists) {
+        // 边界条件处理
+        if (lists == null || lists.length == 0) {
+            return null;
+        }
+        // 定义小顶堆，按节点值升序排列
+        PriorityQueue<ListNode> minHeap = new PriorityQueue<>((a, b) -> a.val - b.val);
+        // 将所有非空链表的头节点入堆
+        for (ListNode node : lists) {
+            if (node != null) {
+                minHeap.offer(node);
+            }
+        }
+        ListNode dummy = new ListNode(0);
+        ListNode cur = dummy;
+        // 循环取出堆顶最小节点构建结果链表
+        while (!minHeap.isEmpty()) {
+            ListNode minNode = minHeap.poll();
+            cur.next = minNode;
+            cur = cur.next;
+            // 将当前最小节点的下一个节点入堆
+            if (minNode.next != null) {
+                minHeap.offer(minNode.next);
+            }
+        }
+        return dummy.next;
+    }
+}
+```
+
+### [146. LRU 缓存](https://leetcode.cn/problems/lru-cache/)
+
+1. 题目描述
+请你设计并实现一个满足 LRU (最近最少使用) 缓存 约束的数据结构。实现 LRUCache 类：LRUCache(int capacity) 以正整数作为容量 capacity 初始化 LRU 缓存；int get(int key) 如果关键字 key 存在于缓存中，则返回关键字的值，否则返回 -1；void put(int key, int value) 如果关键字 key 已经存在，则变更其数据值 value；如果不存在，则向缓存中插入该组 key-value。如果插入操作导致关键字数量超过 capacity，则应该逐出最久未使用的关键字。函数 get 和 put 必须以 O(1) 的平均时间复杂度运行。
+示例：输入["LRUCache", "put", "put", "get", "put", "get", "put", "get", "get", "get"]，[[2], [1, 1], [2, 2], [1], [3, 3], [2], [4, 4], [1], [3], [4]]；输出[null, null, null, 1, null, -1, null, -1, 3, 4]
+提示：1 <= capacity <= 3000，0 <= key <= 10000，0 <= value <= 105，最多调用 2 * 105 次 get 和 put
+
+2. 解法一：哈希表+双向链表（手动实现）
+- 算法思想：核心采用哈希表+双向链表组合实现，哈希表保证O(1)时间复杂度查找键对应的节点；双向链表用于维护节点的使用顺序，链表头部为最近使用的节点，尾部为最久未使用的节点。get操作：若key存在，将对应节点移动到链表头部标记为最近使用，返回节点值；若不存在返回-1。put操作：若key存在，更新节点值并移动到头部；若key不存在，新建节点加入哈希表和链表头部，若缓存容量超限，删除链表尾部的最久未使用节点，并同步移除哈希表中的对应键。
+- Java代码
+```java
+import java.util.HashMap;
+import java.util.Map;
+
+// 双向链表节点类
+class DLinkedNode {
+    int key;
+    int value;
+    DLinkedNode prev;
+    DLinkedNode next;
+    public DLinkedNode() {}
+    public DLinkedNode(int key, int value) {
+        this.key = key;
+        this.value = value;
+    }
+}
+
+public class LRUCache {
+    // 哈希表：存储key和对应节点，实现O(1)查找
+    private Map<Integer, DLinkedNode> cache;
+    // 双向链表哨兵头、尾节点，简化边界操作
+    private DLinkedNode head, tail;
+    // 缓存最大容量
+    private int capacity;
+    // 当前缓存元素数量
+    private int size;
+
+    // 构造方法初始化缓存
+    public LRUCache(int capacity) {
+        this.capacity = capacity;
+        this.size = 0;
+        cache = new HashMap<>();
+        // 初始化哨兵节点
+        head = new DLinkedNode();
+        tail = new DLinkedNode();
+        head.next = tail;
+        tail.prev = head;
+    }
+
+    // 获取key对应的值
+    public int get(int key) {
+        DLinkedNode node = cache.get(key);
+        // 键不存在返回-1
+        if (node == null) {
+            return -1;
+        }
+        // 将节点移到头部，标记为最近使用
+        moveToHead(node);
+        return node.value;
+    }
+
+    // 插入或更新键值对
+    public void put(int key, int value) {
+        DLinkedNode node = cache.get(key);
+        if (node == null) {
+            // 新建节点并加入缓存
+            DLinkedNode newNode = new DLinkedNode(key, value);
+            cache.put(key, newNode);
+            addToHead(newNode);
+            size++;
+            // 超出容量，删除最久未使用的尾节点
+            if (size > capacity) {
+                DLinkedNode tailNode = removeTail();
+                cache.remove(tailNode.key);
+                size--;
+            }
+        } else {
+            // 更新节点值并移到头部
+            node.value = value;
+            moveToHead(node);
+        }
+    }
+
+    // 将节点移动到链表头部
+    private void moveToHead(DLinkedNode node) {
+        removeNode(node);
+        addToHead(node);
+    }
+
+    // 删除指定节点
+    private void removeNode(DLinkedNode node) {
+        node.prev.next = node.next;
+        node.next.prev = node.prev;
+    }
+
+    // 将节点添加到链表头部
+    private void addToHead(DLinkedNode node) {
+        node.prev = head;
+        node.next = head.next;
+        head.next.prev = node;
+        head.next = node;
+    }
+
+    // 删除链表尾节点并返回
+    private DLinkedNode removeTail() {
+        DLinkedNode res = tail.prev;
+        removeNode(res);
+        return res;
+    }
+}
+```
+
+3. 解法二：基于Java内置LinkedHashMap实现
+- 算法思想：LinkedHashMap是HashMap的子类，内部维护双向链表保证元素顺序；设置构造参数accessOrder为true时，节点会按访问顺序调整位置（访问/更新后移至链表尾部）；重写removeEldestEntry方法，当缓存大小超过容量时，自动删除最久未使用的头部节点。复用LinkedHashMap原生API即可实现LRU缓存，所有操作平均时间复杂度为O(1)。
+- Java代码
+```java
+import java.util.LinkedHashMap;
+import java.util.Map;
+
+public class LRUCache {
+    private Map<Integer, Integer> map;
+    private int capacity;
+
+    public LRUCache(int capacity) {
+        this.capacity = capacity;
+        // 初始化LinkedHashMap，accessOrder=true开启访问顺序排序
+        map = new LinkedHashMap<Integer, Integer>(capacity, 0.75f, true) {
+            // 重写方法，超出容量时删除最老节点
+            @Override
+            protected boolean removeEldestEntry(Map.Entry<Integer, Integer> eldest) {
+                return size() > capacity;
+            }
+        };
+    }
+
+    public int get(int key) {
+        // 键不存在返回-1，存在则自动调整节点顺序
+        return map.getOrDefault(key, -1);
+    }
+
+    public void put(int key, int value) {
+        // 自动处理插入、更新和超限删除逻辑
+        map.put(key, value);
+    }
+}
+```
+
+## 二叉树
+
+二叉树定义
+
+二叉树是一种非线性的树形数据结构，核心特征为**每个节点最多拥有两个子节点**，两个子节点严格区分左子节点和右子节点（顺序不可互换），是数据结构中最基础、应用最广泛的树形结构。
+
+二叉树常见操作
+
+1. 二叉树节点的定义与初始化
+2. 手动构建二叉树结构
+3. 深度优先遍历（前序遍历、中序遍历、后序遍历）
+4. 广度优先遍历（层序遍历）
+5. 计算二叉树的最大深度
+6. 统计二叉树的总节点数量
+7. 统计二叉树的叶子节点数量
+8. 查找指定值的树节点
+9. 清空/销毁二叉树
+
+Java实现二叉树常用操作Demo
+
+以下代码完整实现上述所有操作，包含节点定义、二叉树操作类、测试主方法，可直接运行：
+```java
+import java.util.LinkedList;
+import java.util.Queue;
+
+/**
+ * 二叉树节点类
+ * 定义二叉树的基础节点结构：值、左子节点、右子节点
+ */
+class TreeNode {
+    // 节点存储的值
+    int val;
+    // 左子节点
+    TreeNode left;
+    // 右子节点
+    TreeNode right;
+
+    // 构造方法
+    public TreeNode(int val) {
+        this.val = val;
+        this.left = null;
+        this.right = null;
+    }
+}
+
+/**
+ * 二叉树操作实现类
+ * 包含二叉树所有常用操作的具体实现
+ */
+class BinaryTree {
+    // 根节点
+    TreeNode root;
+
+    // 构造方法：初始化空二叉树
+    public BinaryTree() {
+        this.root = null;
+    }
+
+    // ==================== 1. 手动构建二叉树 ====================
+    public void createTree() {
+        // 手动构建示例二叉树
+        // 结构：
+        //        1
+        //       / \
+        //      2   3
+        //     / \
+        //    4   5
+        root = new TreeNode(1);
+        root.left = new TreeNode(2);
+        root.right = new TreeNode(3);
+        root.left.left = new TreeNode(4);
+        root.left.right = new TreeNode(5);
+    }
+
+    // ==================== 2. 深度优先遍历（递归实现） ====================
+    // 前序遍历：根节点 → 左子树 → 右子树
+    public void preOrder(TreeNode node) {
+        if (node == null) {
+            return;
+        }
+        System.out.print(node.val + " ");
+        preOrder(node.left);
+        preOrder(node.right);
+    }
+
+    // 中序遍历：左子树 → 根节点 → 右子树
+    public void inOrder(TreeNode node) {
+        if (node == null) {
+            return;
+        }
+        inOrder(node.left);
+        System.out.print(node.val + " ");
+        inOrder(node.right);
+    }
+
+    // 后序遍历：左子树 → 右子树 → 根节点
+    public void postOrder(TreeNode node) {
+        if (node == null) {
+            return;
+        }
+        postOrder(node.left);
+        postOrder(node.right);
+        System.out.print(node.val + " ");
+    }
+
+    // ==================== 3. 广度优先遍历（层序遍历） ====================
+    // 按层次从上到下、从左到右遍历节点，使用队列实现
+    public void levelOrder(TreeNode root) {
+        if (root == null) {
+            return;
+        }
+        Queue<TreeNode> queue = new LinkedList<>();
+        // 根节点入队
+        queue.offer(root);
+        while (!queue.isEmpty()) {
+            TreeNode current = queue.poll();
+            System.out.print(current.val + " ");
+            // 左子节点入队
+            if (current.left != null) {
+                queue.offer(current.left);
+            }
+            // 右子节点入队
+            if (current.right != null) {
+                queue.offer(current.right);
+            }
+        }
+    }
+
+    // ==================== 4. 计算二叉树最大深度 ====================
+    public int getMaxDepth(TreeNode node) {
+        if (node == null) {
+            return 0;
+        }
+        // 递归计算左、右子树深度，取最大值+1（当前节点）
+        int leftDepth = getMaxDepth(node.left);
+        int rightDepth = getMaxDepth(node.right);
+        return Math.max(leftDepth, rightDepth) + 1;
+    }
+
+    // ==================== 5. 统计总节点数 ====================
+    public int getNodeCount(TreeNode node) {
+        if (node == null) {
+            return 0;
+        }
+        // 左子树节点数 + 右子树节点数 + 1（当前节点）
+        return getNodeCount(node.left) + getNodeCount(node.right) + 1;
+    }
+
+    // ==================== 6. 统计叶子节点数 ====================
+    public int getLeafCount(TreeNode node) {
+        if (node == null) {
+            return 0;
+        }
+        // 叶子节点：无左右子节点
+        if (node.left == null && node.right == null) {
+            return 1;
+        }
+        return getLeafCount(node.left) + getLeafCount(node.right);
+    }
+
+    // ==================== 7. 查找指定值的节点 ====================
+    public TreeNode searchNode(TreeNode node, int target) {
+        if (node == null) {
+            return null;
+        }
+        // 找到目标节点，直接返回
+        if (node.val == target) {
+            return node;
+        }
+        // 递归查找左子树
+        TreeNode leftResult = searchNode(node.left, target);
+        if (leftResult != null) {
+            return leftResult;
+        }
+        // 递归查找右子树
+        return searchNode(node.right, target);
+    }
+
+    // ==================== 8. 清空二叉树 ====================
+    public void clearTree(TreeNode node) {
+        if (node == null) {
+            return;
+        }
+        // 递归清空左、右子树
+        clearTree(node.left);
+        clearTree(node.right);
+        // 释放当前节点
+        node.left = null;
+        node.right = null;
+        node = null;
+    }
+}
+
+/**
+ * 测试主类
+ * 调用所有二叉树操作，验证功能
+ */
+public class BinaryTreeDemo {
+    public static void main(String[] args) {
+        // 创建二叉树对象
+        BinaryTree tree = new BinaryTree();
+        // 手动构建二叉树
+        tree.createTree();
+
+        System.out.println("========== 二叉树常用操作测试结果 ==========");
+        System.out.print("1. 前序遍历结果：");
+        tree.preOrder(tree.root);
+        System.out.println();
+
+        System.out.print("2. 中序遍历结果：");
+        tree.inOrder(tree.root);
+        System.out.println();
+
+        System.out.print("3. 后序遍历结果：");
+        tree.postOrder(tree.root);
+        System.out.println();
+
+        System.out.print("4. 层序遍历结果：");
+        tree.levelOrder(tree.root);
+        System.out.println();
+
+        System.out.println("5. 二叉树最大深度：" + tree.getMaxDepth(tree.root));
+        System.out.println("6. 二叉树总节点数：" + tree.getNodeCount(tree.root));
+        System.out.println("7. 二叉树叶子节点数：" + tree.getLeafCount(tree.root));
+
+        // 查找值为4的节点
+        TreeNode target = tree.searchNode(tree.root, 4);
+        System.out.println("8. 查找节点（值=4）：" + (target != null ? "找到节点" : "未找到节点"));
+
+        // 清空二叉树
+        tree.clearTree(tree.root);
+        System.out.println("9. 清空二叉树后，总节点数：" + tree.getNodeCount(tree.root));
+    }
+}
+```
+
+```
+========== 二叉树常用操作测试结果 ==========
+1. 前序遍历结果：1 2 4 5 3 
+2. 中序遍历结果：4 2 5 1 3 
+3. 后序遍历结果：4 5 2 3 1 
+4. 层序遍历结果：1 2 3 4 5 
+5. 二叉树最大深度：3
+6. 二叉树总节点数：5
+7. 二叉树叶子节点数：3
+8. 查找节点（值=4）：找到节点
+9. 清空二叉树后，总节点数：0
+```
+
+1. 二叉树的遍历是核心操作，深度优先遍历基于**递归**实现，层序遍历基于**队列**实现
+2. 深度、节点数、叶子节点数的统计均采用递归思想，利用二叉树的子结构特性简化计算
+3. 手动构建二叉树是基础，实际开发中可根据需求改为递归/数组自动构建
+4. 清空二叉树通过递归释放所有节点，避免内存泄漏
+
+### [94. 二叉树的中序遍历](https://leetcode.cn/problems/binary-tree-inorder-traversal/)
+
+1. 题目描述
+给定一个二叉树的根节点 root ，返回它的中序遍历。
+示例 1：输入：root = [1,null,2,3]，输出：[1,3,2]
+示例 2：输入：root = []，输出：[]
+示例 3：输入：root = [1]，输出：[1]
+提示：树中节点数目在范围 [0, 100] 内，-100 <= Node.val <= 100
+进阶：递归算法很简单，你可以通过迭代算法完成吗？
+
+2. 算法思想+代码
+- 解法一：递归法
+  算法思想：中序遍历遵循左子树→根节点→右子树的访问顺序，通过递归实现遍历逻辑，递归终止条件为当前节点为null；递归时先处理左子树，再将当前节点的值加入结果集合，最后处理右子树。
+  代码：
+  ```java
+  import java.util.ArrayList;
+  import java.util.List;
+  
+  // 二叉树节点定义
+  class TreeNode {
+      int val;
+      TreeNode left;
+      TreeNode right;
+      TreeNode() {}
+      TreeNode(int val) { this.val = val; }
+      TreeNode(int val, TreeNode left, TreeNode right) {
+          this.val = val;
+          this.left = left;
+          this.right = right;
+      }
+  }
+  
+  class Solution {
+      public List<Integer> inorderTraversal(TreeNode root) {
+          List<Integer> res = new ArrayList<>();
+          inorder(root, res);
+          return res;
+      }
+  
+      // 递归遍历核心方法
+      private void inorder(TreeNode node, List<Integer> res) {
+          // 递归终止：节点为空
+          if (node == null) {
+              return;
+          }
+          // 第一步：递归遍历左子树
+          inorder(node.left, res);
+          // 第二步：访问当前根节点
+          res.add(node.val);
+          // 第三步：递归遍历右子树
+          inorder(node.right, res);
+      }
+  }
+  ```
+- 解法二：迭代法（栈实现）
+  算法思想：使用栈模拟递归的调用过程，首先循环遍历当前节点的左子节点并依次入栈，直到左子节点为null；然后弹出栈顶节点（根节点），将其值加入结果集合，再将当前节点指向该节点的右子节点，重复上述操作，直到栈为空且当前节点为null，完成遍历。
+  代码：
+  ```java
+  import java.util.ArrayList;
+  import java.util.List;
+  import java.util.Stack;
+  
+  // 二叉树节点定义（与递归法复用）
+  class TreeNode {
+      int val;
+      TreeNode left;
+      TreeNode right;
+      TreeNode() {}
+      TreeNode(int val) { this.val = val; }
+      TreeNode(int val, TreeNode left, TreeNode right) {
+          this.val = val;
+          this.left = left;
+          this.right = right;
+      }
+  }
+  
+  class Solution {
+      public List<Integer> inorderTraversal(TreeNode root) {
+          List<Integer> res = new ArrayList<>();
+          // 用栈模拟递归调用
+          Stack<TreeNode> stack = new Stack<>();
+          TreeNode cur = root;
+          // 循环条件：当前节点不为空 或 栈中还有未处理的节点
+          while (cur != null || !stack.isEmpty()) {
+              // 遍历至最左节点，所有左节点依次入栈
+              while (cur != null) {
+                  stack.push(cur);
+                  cur = cur.left;
+              }
+              // 弹出栈顶节点（根节点）
+              cur = stack.pop();
+              // 访问当前节点
+              res.add(cur.val);
+              // 处理当前节点的右子树
+              cur = cur.right;
+          }
+          return res;
+      }
+  }
+  ```
+  
+  ### [104. 二叉树的最大深度](https://leetcode.cn/problems/maximum-depth-of-binary-tree/)
+  
+  104. 二叉树的最大深度
+1. 题目描述
+   给定一个二叉树 root ，返回其最大深度。二叉树的最大深度是指从根节点到最远叶子节点的最长路径上的节点数。
+   示例 1：输入：root = [3,9,20,null,null,15,7]，输出：3
+   示例 2：输入：root = [1,null,2]，输出：2
+   提示：树中节点的数量在 [0, 104] 区间内，-100 <= Node.val <= 100
+2. 解法一：深度优先搜索（递归）
+   - 算法思想：采用递归的方式遍历二叉树，递归终止条件为当前节点为null，此时深度为0；对于非空节点，其最大深度为左子树最大深度与右子树最大深度的最大值加1（当前节点占一个深度）。
+   - 代码
+```java
+// 二叉树节点定义
+class TreeNode {
+    int val;
+    TreeNode left;
+    TreeNode right;
+    TreeNode() {}
+    TreeNode(int val) { this.val = val; }
+    TreeNode(int val, TreeNode left, TreeNode right) {
+        this.val = val;
+        this.left = left;
+        this.right = right;
+    }
+}
+
+class Solution {
+    public int maxDepth(TreeNode root) {
+        // 递归终止条件：节点为空，深度为0
+        if (root == null) {
+            return 0;
+        }
+        // 递归计算左子树深度
+        int leftDepth = maxDepth(root.left);
+        // 递归计算右子树深度
+        int rightDepth = maxDepth(root.right);
+        // 当前节点深度 = 左右子树最大深度 + 1
+        return Math.max(leftDepth, rightDepth) + 1;
+    }
+}
+```
+3. 解法二：广度优先搜索（迭代，层序遍历）
+   - 算法思想：借助队列实现二叉树的层序遍历，每遍历完整的一层，深度值加1；遍历完所有层级后，最终的深度值即为二叉树的最大深度。
+   - 代码
+```java
+// 二叉树节点定义
+class TreeNode {
+    int val;
+    TreeNode left;
+    TreeNode right;
+    TreeNode() {}
+    TreeNode(int val) { this.val = val; }
+    TreeNode(int val, TreeNode left, TreeNode right) {
+        this.val = val;
+        this.left = left;
+        this.right = right;
+    }
+}
+
+import java.util.LinkedList;
+import java.util.Queue;
+
+class Solution {
+    public int maxDepth(TreeNode root) {
+        // 根节点为空，深度为0
+        if (root == null) {
+            return 0;
+        }
+        // 初始化队列，存储每一层的节点
+        Queue<TreeNode> queue = new LinkedList<>();
+        queue.offer(root);
+        int depth = 0;
+        // 层序遍历
+        while (!queue.isEmpty()) {
+            // 获取当前层的节点数量
+            int size = queue.size();
+            // 遍历当前层所有节点
+            for (int i = 0; i < size; i++) {
+                TreeNode node = queue.poll();
+                // 左子节点入队
+                if (node.left != null) {
+                    queue.offer(node.left);
+                }
+                // 右子节点入队
+                if (node.right != null) {
+                    queue.offer(node.right);
+                }
+            }
+            // 每遍历完一层，深度加1
+            depth++;
+        }
+        return depth;
+    }
+}
+```
+
+###   [226. 翻转二叉树](https://leetcode.cn/problems/invert-binary-tree/)
+
+1. 题目描述
+给你一棵二叉树的根节点 root ，翻转这棵二叉树，并返回其根节点。
+示例 1：输入：root = [4,2,7,1,3,6,9]，输出：[4,7,2,9,6,3,1]
+示例 2：输入：root = [2,1,3]，输出：[2,3,1]
+示例 3：输入：root = []，输出：[]
+提示：树中节点数目范围在 [0, 100] 内，-100 <= Node.val <= 100
+
+2. 算法思想+代码
+- 解法一：递归法
+  算法思想：递归的核心逻辑为交换每个节点的左右子节点，递归终止条件是当前节点为null（空节点无需翻转）。先递归翻转当前节点的左子树，再递归翻转当前节点的右子树，最后交换左右子节点，自底向上完成整棵二叉树的翻转。
+  Java代码：
+```java
+// 二叉树节点定义
+class TreeNode {
+    int val;
+    TreeNode left;
+    TreeNode right;
+    TreeNode() {}
+    TreeNode(int val) { this.val = val; }
+    TreeNode(int val, TreeNode left, TreeNode right) {
+        this.val = val;
+        this.left = left;
+        this.right = right;
+    }
+}
+
+class Solution {
+    public TreeNode invertTree(TreeNode root) {
+        // 递归终止条件：空节点直接返回
+        if (root == null) {
+            return null;
+        }
+        // 递归翻转左子树
+        TreeNode left = invertTree(root.left);
+        // 递归翻转右子树
+        TreeNode right = invertTree(root.right);
+        // 交换当前节点的左右子节点
+        root.left = right;
+        root.right = left;
+        return root;
+    }
+}
+```
+
+- 解法二：迭代法（层序遍历/BFS）
+  算法思想：借助队列实现二叉树的层序遍历，遍历过程中逐个交换每个节点的左右子节点。首先将根节点加入队列，循环取出队首节点，交换其左右孩子，若孩子节点不为空则依次入队，直到队列为空，完成整棵树的翻转。
+  Java代码：
+```java
+// 二叉树节点定义
+class TreeNode {
+    int val;
+    TreeNode left;
+    TreeNode right;
+    TreeNode() {}
+    TreeNode(int val) { this.val = val; }
+    TreeNode(int val, TreeNode left, TreeNode right) {
+        this.val = val;
+        this.left = left;
+        this.right = right;
+    }
+}
+
+import java.util.LinkedList;
+import java.util.Queue;
+
+class Solution {
+    public TreeNode invertTree(TreeNode root) {
+        // 空树直接返回
+        if (root == null) {
+            return null;
+        }
+        // 初始化队列，用于层序遍历
+        Queue<TreeNode> queue = new LinkedList<>();
+        queue.offer(root);
+        while (!queue.isEmpty()) {
+            // 取出当前遍历的节点
+            TreeNode node = queue.poll();
+            // 交换当前节点的左右子节点
+            TreeNode temp = node.left;
+            node.left = node.right;
+            node.right = temp;
+            // 左子节点非空，加入队列
+            if (node.left != null) {
+                queue.offer(node.left);
+            }
+            // 右子节点非空，加入队列
+            if (node.right != null) {
+                queue.offer(node.right);
+            }
+        }
+        return root;
+    }
+}
+```
+
+###   [101. 对称二叉树](https://leetcode.cn/problems/symmetric-tree/)
+
+  1. 题目描述
+给你一个二叉树的根节点 root ，检查它是否轴对称。
+示例 1：输入：root = [1,2,2,3,4,4,3]，输出：true
+示例 2：输入：root = [1,2,2,null,3,null,3]，输出：false
+提示：树中节点数目在范围 [1, 1000] 内，-100 <= Node.val <= 100
+进阶：你可以运用递归和迭代两种方法解决这个问题吗
+
+2. 算法思想+代码
+- 递归解法
+  算法思想：判断二叉树对称的核心是验证根节点的左子树和右子树是否呈镜像对称。镜像对称满足三个条件：两个对比节点的数值相等；左节点的左子树与右节点的右子树对称；左节点的右子树与右节点的左子树对称。递归终止条件：两个节点均为空则对称；仅一个节点为空则不对称。
+  代码：
+```java
+// 二叉树节点定义
+class TreeNode {
+    int val;
+    TreeNode left;
+    TreeNode right;
+    TreeNode() {}
+    TreeNode(int val) { this.val = val; }
+    TreeNode(int val, TreeNode left, TreeNode right) {
+        this.val = val;
+        this.left = left;
+        this.right = right;
+    }
+}
+
+class Solution {
+    public boolean isSymmetric(TreeNode root) {
+        // 根节点为空则对称，否则判断左右子树
+        if (root == null) {
+            return true;
+        }
+        return isMirror(root.left, root.right);
+    }
+
+    // 递归判断两个节点是否镜像对称
+    private boolean isMirror(TreeNode left, TreeNode right) {
+        // 两个节点都为空，对称
+        if (left == null && right == null) {
+            return true;
+        }
+        // 一个为空一个不为空，不对称
+        if (left == null || right == null) {
+            return false;
+        }
+        // 数值相等，且左左和右右对称、左右和右左对称
+        return left.val == right.val && isMirror(left.left, right.right) && isMirror(left.right, right.left);
+    }
+}
+```
+
+- 迭代解法
+  算法思想：借助队列模拟递归过程，将需要对比的节点成对入队。每次从队列中取出两个节点，先判断是否为空、数值是否相等；若相等则将左节点的左子节点与右节点的右子节点、左节点的右子节点与右节点的左子节点成对入队，继续后续判断；若不满足条件则直接返回false。队列为空时所有节点验证完毕，返回true。
+  代码：
+```java
+// 二叉树节点定义
+class TreeNode {
+    int val;
+    TreeNode left;
+    TreeNode right;
+    TreeNode() {}
+    TreeNode(int val) { this.val = val; }
+    TreeNode(int val, TreeNode left, TreeNode right) {
+        this.val = val;
+        this.left = left;
+        this.right = right;
+    }
+}
+
+class Solution {
+    public boolean isSymmetric(TreeNode root) {
+        if (root == null) {
+            return true;
+        }
+        // 使用队列存储待对比的节点对
+        java.util.Queue<TreeNode> queue = new java.util.LinkedList<>();
+        queue.offer(root.left);
+        queue.offer(root.right);
+
+        while (!queue.isEmpty()) {
+            // 取出一对对比节点
+            TreeNode left = queue.poll();
+            TreeNode right = queue.poll();
+
+            // 两个节点均为空，继续验证下一对
+            if (left == null && right == null) {
+                continue;
+            }
+            // 单个节点为空，不对称
+            if (left == null || right == null) {
+                return false;
+            }
+            // 节点值不相等，不对称
+            if (left.val != right.val) {
+                return false;
+            }
+
+            // 将下一组待对比节点成对入队
+            queue.offer(left.left);
+            queue.offer(right.right);
+            queue.offer(left.right);
+            queue.offer(right.left);
+        }
+        return true;
+    }
+}
+```
 
 
 
