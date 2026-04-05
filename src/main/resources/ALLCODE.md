@@ -4947,12 +4947,424 @@ class Solution {
 }
 ```
 
+### [543. 二叉树的直径](https://leetcode.cn/problems/diameter-of-binary-tree/)
 
+1. 题目描述
+给你一棵二叉树的根节点，返回该树的 直径 。二叉树的 直径 是指树中任意两个节点之间最长路径的 长度 。这条路径可能经过也可能不经过根节点 root 。两节点之间路径的 长度 由它们之间边数表示。
+示例 1：输入：root = [1,2,3,4,5]，输出：3，解释：3 ，取路径 [4,2,1,3] 或 [5,2,1,3] 的长度。
+示例 2：输入：root = [1,2]，输出：1
+提示：树中节点数目在范围 [1, 104] 内，-100 <= Node.val <= 100
 
+2. 算法思想+代码
+- 算法思想：采用深度优先搜索（DFS）递归遍历二叉树的所有节点，二叉树的直径为任意节点的左子树高度与右子树高度之和的最大值；定义全局变量存储最大直径，递归函数计算当前节点的子树高度，返回当前节点的最大子树高度（左、右子树高度的较大值加1），遍历过程中不断更新最大直径。
+- Java代码
+```java
+// 二叉树节点定义
+class TreeNode {
+    int val;
+    TreeNode left;
+    TreeNode right;
+    TreeNode() {}
+    TreeNode(int val) { this.val = val; }
+    TreeNode(int val, TreeNode left, TreeNode right) {
+        this.val = val;
+        this.left = left;
+        this.right = right;
+    }
+}
 
+class Solution {
+    // 全局变量记录遍历过程中的最大直径
+    int max = 0;
 
+    public int diameterOfBinaryTree(TreeNode root) {
+        depth(root);
+        return max;
+    }
 
+    // 递归计算节点的深度，同时更新最大直径
+    private int depth(TreeNode node) {
+        if (node == null) {
+            return 0;
+        }
+        // 计算左子树深度
+        int left = depth(node.left);
+        // 计算右子树深度
+        int right = depth(node.right);
+        // 更新最大直径：左深度+右深度
+        max = Math.max(max, left + right);
+        // 返回当前节点的最大子树深度
+        return Math.max(left, right) + 1;
+    }
+}
+```
 
+### [102. 二叉树的层序遍历](https://leetcode.cn/problems/binary-tree-level-order-traversal/)
+
+1. 题目描述
+给你二叉树的根节点 root ，返回其节点值的层序遍历。（即逐层地，从左到右访问所有节点）
+示例 1：输入：root = [3,9,20,null,null,15,7]，输出：[[3],[9,20],[15,7]]
+示例 2：输入：root = [1]，输出：[[1]]
+示例 3：输入：root = []，输出：[]
+提示：树中节点数目在范围 [0, 2000] 内，-1000 <= Node.val <= 1000
+2. 解法一：BFS（队列实现）
+- 算法思想：借助队列先进先出的特性实现逐层遍历，初始将根节点入队，循环处理队列时，先获取当前队列的长度（即当前层的节点数），依次取出当前层所有节点，记录节点值后将其左右非空子节点入队，直至队列为空，最终得到各层节点值集合
+- 代码：
+```java
+import java.util.*;
+// 二叉树节点定义
+class TreeNode {
+    int val;
+    TreeNode left;
+    TreeNode right;
+    TreeNode() {}
+    TreeNode(int val) { this.val = val; }
+    TreeNode(int val, TreeNode left, TreeNode right) {
+        this.val = val;
+        this.left = left;
+        this.right = right;
+    }
+}
+class Solution {
+    public List<List<Integer>> levelOrder(TreeNode root) {
+        List<List<Integer>> res = new ArrayList<>();
+        // 空树直接返回空集合
+        if (root == null) {
+            return res;
+        }
+        // 初始化队列存储节点
+        Queue<TreeNode> queue = new LinkedList<>();
+        queue.offer(root);
+        while (!queue.isEmpty()) {
+            // 获取当前层的节点数量
+            int levelSize = queue.size();
+            List<Integer> levelNodes = new ArrayList<>();
+            // 遍历当前层所有节点
+            for (int i = 0; i < levelSize; i++) {
+                TreeNode currNode = queue.poll();
+                levelNodes.add(currNode.val);
+                // 左子节点非空则入队
+                if (currNode.left != null) {
+                    queue.offer(currNode.left);
+                }
+                // 右子节点非空则入队
+                if (currNode.right != null) {
+                    queue.offer(currNode.right);
+                }
+            }
+            // 将当前层节点值加入结果集
+            res.add(levelNodes);
+        }
+        return res;
+    }
+}
+```
+3. 解法二：DFS（递归实现）
+- 算法思想：通过递归深度遍历二叉树，传递当前节点的层数参数，将节点值添加到结果集合中对应层数的列表里，递归优先访问左子节点再访问右子节点，保证层序从左到右的顺序，最终完成层序遍历
+- 代码：
+```java
+import java.util.*;
+// 二叉树节点定义
+class TreeNode {
+    int val;
+    TreeNode left;
+    TreeNode right;
+    TreeNode() {}
+    TreeNode(int val) { this.val = val; }
+    TreeNode(int val, TreeNode left, TreeNode right) {
+        this.val = val;
+        this.left = left;
+        this.right = right;
+    }
+}
+class Solution {
+    public List<List<Integer>> levelOrder(TreeNode root) {
+        List<List<Integer>> res = new ArrayList<>();
+        // 调用递归方法，初始层数为0
+        dfs(root, 0, res);
+        return res;
+    }
+    // 递归遍历：node当前节点，level当前层数，res结果集
+    private void dfs(TreeNode node, int level, List<List<Integer>> res) {
+        // 递归终止条件：节点为空
+        if (node == null) {
+            return;
+        }
+        // 若当前层数无对应列表，创建新列表
+        if (res.size() == level) {
+            res.add(new ArrayList<>());
+        }
+        // 将节点值加入对应层的列表
+        res.get(level).add(node.val);
+        // 递归遍历左子树，层数+1
+        dfs(node.left, level + 1, res);
+        // 递归遍历右子树，层数+1
+        dfs(node.right, level + 1, res);
+    }
+}
+```
+
+### [108. 将有序数组转换为二叉搜索树](https://leetcode.cn/problems/convert-sorted-array-to-binary-search-tree/)
+
+1. 题目描述
+给你一个整数数组 nums ，其中元素已经按 升序 排列，请你将其转换为一棵 平衡 二叉搜索树。
+示例 1：
+输入：nums = [-10,-3,0,5,9]
+输出：[0,-3,9,-10,null,5]
+解释：[0,-10,5,null,-3,null,9] 也将被视为正确答案
+示例 2：
+输入：nums = [1,3]
+输出：[3,1]
+解释：[1,null,3] 和 [3,1] 都是高度平衡二叉搜索树
+提示：
+1 <= nums.length <= 104
+-104 <= nums[i] <= 104
+nums 按 严格递增 顺序排列
+2. 算法思想+代码
+- 解法一：递归法
+  算法思想：有序数组是二叉搜索树的中序遍历结果，平衡二叉搜索树要求每个节点的左右子树高度差不超过1。每次选取数组区间的中间元素作为当前根节点，左半区间递归构建左子树，右半区间递归构建右子树，递归终止条件为左边界大于右边界。
+  Java代码：
+```java
+// 二叉树节点定义
+class TreeNode {
+    int val;
+    TreeNode left;
+    TreeNode right;
+    TreeNode() {}
+    TreeNode(int val) { this.val = val; }
+    TreeNode(int val, TreeNode left, TreeNode right) {
+        this.val = val;
+        this.left = left;
+        this.right = right;
+    }
+}
+
+class Solution {
+    public TreeNode sortedArrayToBST(int[] nums) {
+        // 调用递归函数，初始区间为数组首尾
+        return dfs(nums, 0, nums.length - 1);
+    }
+
+    // 递归构建平衡二叉搜索树
+    private TreeNode dfs(int[] nums, int left, int right) {
+        // 递归终止：区间无效，返回空节点
+        if (left > right) {
+            return null;
+        }
+        // 计算中间索引，避免整数溢出
+        int mid = left + (right - left) / 2;
+        // 以中间元素创建根节点
+        TreeNode root = new TreeNode(nums[mid]);
+        // 递归构建左子树
+        root.left = dfs(nums, left, mid - 1);
+        // 递归构建右子树
+        root.right = dfs(nums, mid + 1, right);
+        return root;
+    }
+}
+```
+- 解法二：迭代法
+  算法思想：模拟递归的分治逻辑，借助栈存储待处理的数组区间、父节点和子节点类型，通过迭代遍历区间，选取中间元素创建节点并关联父节点，利用栈先进后出的特性依次处理左右子区间，最终构建平衡二叉搜索树。
+  Java代码：
+```java
+import java.util.Deque;
+import java.util.LinkedList;
+
+// 二叉树节点定义
+class TreeNode {
+    int val;
+    TreeNode left;
+    TreeNode right;
+    TreeNode() {}
+    TreeNode(int val) { this.val = val; }
+    TreeNode(int val, TreeNode left, TreeNode right) {
+        this.val = val;
+        this.left = left;
+        this.right = right;
+    }
+}
+
+class Solution {
+    public TreeNode sortedArrayToBST(int[] nums) {
+        // 边界判断
+        if (nums == null || nums.length == 0) {
+            return null;
+        }
+        // 栈存储：[左边界, 右边界, 父节点, 是否为左子节点]
+        Deque<Object[]> stack = new LinkedList<>();
+        stack.push(new Object[]{0, nums.length - 1, null, false});
+        TreeNode root = null;
+
+        while (!stack.isEmpty()) {
+            Object[] cur = stack.pop();
+            int left = (int) cur[0];
+            int right = (int) cur[1];
+            TreeNode parent = (TreeNode) cur[2];
+            boolean isLeft = (boolean) cur[3];
+
+            // 计算中间索引
+            int mid = left + (right - left) / 2;
+            TreeNode curNode = new TreeNode(nums[mid]);
+
+            // 关联当前节点与父节点
+            if (parent == null) {
+                root = curNode;
+            } else {
+                if (isLeft) {
+                    parent.left = curNode;
+                } else {
+                    parent.right = curNode;
+                }
+            }
+
+            // 先压右区间，再压左区间（栈先进后出）
+            if (mid + 1 <= right) {
+                stack.push(new Object[]{mid + 1, right, curNode, false});
+            }
+            if (left <= mid - 1) {
+                stack.push(new Object[]{left, mid - 1, curNode, true});
+            }
+        }
+        return root;
+    }
+}
+```
+
+### [98. 验证二叉搜索树](https://leetcode.cn/problems/validate-binary-search-tree/)
+
+1. 题目描述
+给你一个二叉树的根节点 root ，判断其是否是一个有效的二叉搜索树。有效二叉搜索树定义如下：节点的左子树只包含严格小于当前节点的数。节点的右子树只包含严格大于当前节点的数。所有左子树和右子树自身必须也是二叉搜索树。
+示例 1：输入：root = [2,1,3] 输出：true
+示例 2：输入：root = [5,1,4,null,null,3,6] 输出：false 解释：根节点的值是 5 ，但是右子节点的值是 4 。
+提示：树中节点数目范围在[1, 104]内，-2^31 <= Node.val <= 2^31 - 1
+2. 解法一：递归上下界校验法
+- 算法思想：基于二叉搜索树的数值区间规则，为每个节点设定上下边界，根节点的上下界为负无穷和正无穷；当前节点的左子节点取值范围为（父节点下界，父节点值），右子节点取值范围为（父节点值，父节点上界）；递归校验所有节点是否在对应区间内，因节点值包含int类型极值，使用long类型避免数值溢出，空节点默认为有效节点。
+- Java代码
+```java
+// 二叉树节点定义
+class TreeNode {
+    int val;
+    TreeNode left;
+    TreeNode right;
+    TreeNode() {}
+    TreeNode(int val) { this.val = val; }
+    TreeNode(int val, TreeNode left, TreeNode right) {
+        this.val = val;
+        this.left = left;
+        this.right = right;
+    }
+}
+
+class Solution {
+    public boolean isValidBST(TreeNode root) {
+        // 初始调用，下界为Long最小值，上界为Long最大值
+        return helper(root, Long.MIN_VALUE, Long.MAX_VALUE);
+    }
+
+    // 递归校验函数
+    private boolean helper(TreeNode node, long lower, long upper) {
+        // 空节点符合条件
+        if (node == null) {
+            return true;
+        }
+        // 当前节点值超出区间，直接返回false
+        if (node.val <= lower || node.val >= upper) {
+            return false;
+        }
+        // 递归校验左子树（上界更新为当前节点值）和右子树（下界更新为当前节点值）
+        return helper(node.left, lower, node.val) && helper(node.right, node.val, upper);
+    }
+}
+```
+3. 解法二：中序遍历迭代法
+- 算法思想：二叉搜索树的中序遍历结果为严格递增序列，利用该特性校验有效性；使用栈实现迭代式中序遍历，遍历过程中记录上一个访问节点的数值，若当前节点数值小于等于上一个节点数值，则判定为无效二叉搜索树，该方式可避免递归栈溢出。
+- Java代码
+```java
+import java.util.Deque;
+import java.util.LinkedList;
+
+// 二叉树节点定义（同解法一，可复用）
+class TreeNode {
+    int val;
+    TreeNode left;
+    TreeNode right;
+    TreeNode() {}
+    TreeNode(int val) { this.val = val; }
+    TreeNode(int val, TreeNode left, TreeNode right) {
+        this.val = val;
+        this.left = left;
+        this.right = right;
+    }
+}
+
+class Solution {
+    public boolean isValidBST(TreeNode root) {
+        Deque<TreeNode> stack = new LinkedList<>();
+        // 记录上一个节点的值，初始化为Long最小值
+        long prev = Long.MIN_VALUE;
+
+        while (root != null || !stack.isEmpty()) {
+            // 遍历到最左子节点
+            while (root != null) {
+                stack.push(root);
+                root = root.left;
+            }
+            // 出栈访问节点
+            root = stack.pop();
+            // 不满足严格递增，返回false
+            if (root.val <= prev) {
+                return false;
+            }
+            // 更新上一个节点值
+            prev = root.val;
+            // 遍历右子树
+            root = root.right;
+        }
+        return true;
+    }
+}
+```
+4. 解法三：中序遍历递归法
+- 算法思想：核心逻辑与中序遍历迭代法一致，通过递归实现二叉树中序遍历，定义全局变量记录上一个节点的数值，递归过程中实时校验序列的严格递增性。
+- Java代码
+```java
+// 二叉树节点定义（同解法一，可复用）
+class TreeNode {
+    int val;
+    TreeNode left;
+    TreeNode right;
+    TreeNode() {}
+    TreeNode(int val) { this.val = val; }
+    TreeNode(int val, TreeNode left, TreeNode right) {
+        this.val = val;
+        this.left = left;
+        this.right = right;
+    }
+}
+
+class Solution {
+    // 记录上一个节点的值
+    private long prev = Long.MIN_VALUE;
+
+    public boolean isValidBST(TreeNode root) {
+        if (root == null) {
+            return true;
+        }
+        // 递归遍历左子树
+        if (!isValidBST(root.left)) {
+            return false;
+        }
+        // 校验当前节点是否大于上一个节点
+        if (root.val <= prev) {
+            return false;
+        }
+        // 更新上一个节点值
+        prev = root.val;
+        // 递归遍历右子树
+        return isValidBST(root.right);
+    }
+}
+```
 
 
 
