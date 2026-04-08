@@ -5366,6 +5366,660 @@ class Solution {
 }
 ```
 
+### [230. 二叉搜索树中第 K 小的元素](https://leetcode.cn/problems/kth-smallest-element-in-a-bst/)
+
+1. 题目描述
+给定一个二叉搜索树的根节点 root ，和一个整数 k ，请你设计一个算法查找其中第 k 小的元素（k 从 1 开始计数）。
+示例 1：输入：root = [3,1,4,null,2], k = 1，输出：1
+示例 2：输入：root = [5,3,6,2,4,null,null,1], k = 3，输出：3
+提示：树中的节点数为 n ，1 <= k <= n <= 10^4，0 <= Node.val <= 10^4
+进阶：如果二叉搜索树经常被修改（插入/删除操作）并且你需要频繁地查找第 k 小的值，你将如何优化算法？
+
+2. 解法一：递归中序遍历
+- 算法思想：二叉搜索树的中序遍历序列为升序序列，通过递归完成中序遍历，遍历过程中记录遍历次数，当次数等于k时，当前节点值即为所求结果。
+```java
+// 二叉树节点定义
+class TreeNode {
+    int val;
+    TreeNode left;
+    TreeNode right;
+    TreeNode() {}
+    TreeNode(int val) { this.val = val; }
+    TreeNode(int val, TreeNode left, TreeNode right) {
+        this.val = val;
+        this.left = left;
+        this.right = right;
+    }
+}
+
+class Solution {
+    // 存储最终结果
+    int res = 0;
+    // 遍历计数
+    int count = 0;
+    public int kthSmallest(TreeNode root, int k) {
+        inorderTraversal(root, k);
+        return res;
+    }
+    // 递归实现中序遍历
+    private void inorderTraversal(TreeNode node, int k) {
+        if (node == null) {
+            return;
+        }
+        // 遍历左子树
+        inorderTraversal(node.left, k);
+        // 访问当前节点，计数累加
+        count++;
+        // 计数匹配k，记录结果
+        if (count == k) {
+            res = node.val;
+            return;
+        }
+        // 遍历右子树
+        inorderTraversal(node.right, k);
+    }
+}
+```
+
+3. 解法二：迭代中序遍历
+- 算法思想：使用栈模拟递归的中序遍历流程，将左子树节点依次入栈，弹出节点时进行计数，计数达到k时直接返回当前节点值，无需遍历完整树，空间效率更优。
+```java
+import java.util.Deque;
+import java.util.LinkedList;
+
+class Solution {
+    public int kthSmallest(TreeNode root, int k) {
+        Deque<TreeNode> stack = new LinkedList<>();
+        TreeNode current = root;
+        // 遍历计数
+        int count = 0;
+        while (current != null || !stack.isEmpty()) {
+            // 左子树节点全部入栈
+            while (current != null) {
+                stack.push(current);
+                current = current.left;
+            }
+            // 弹出栈顶节点
+            current = stack.pop();
+            count++;
+            // 找到第k小元素，直接返回
+            if (count == k) {
+                return current.val;
+            }
+            // 遍历右子树
+            current = current.right;
+        }
+        // 题目保证k合法，无需处理异常情况
+        return -1;
+    }
+}
+```
+
+4. 进阶解法：带子树节点统计的二叉搜索树
+- 算法思想：自定义二叉树节点，为每个节点维护左子树的节点总数，查询时通过左子树节点数快速定位目标节点；查询、插入、删除操作的时间复杂度均为O(logn)，适合频繁修改和查询的场景。
+```java
+// 自定义带左子树节点统计的二叉树节点
+class TreeNodeWithCount {
+    int val;
+    // 左子树的节点总数量
+    int leftNodeCount;
+    TreeNodeWithCount left;
+    TreeNodeWithCount right;
+    TreeNodeWithCount(int val) {
+        this.val = val;
+        this.leftNodeCount = 0;
+    }
+}
+
+class Solution {
+    // 插入节点并维护左子树节点数
+    private TreeNodeWithCount insertNode(TreeNodeWithCount root, int val) {
+        if (root == null) {
+            return new TreeNodeWithCount(val);
+        }
+        if (val < root.val) {
+            root.left = insertNode(root.left, val);
+            root.leftNodeCount++;
+        } else {
+            root.right = insertNode(root.right, val);
+        }
+        return root;
+    }
+
+    // 查询第k小的元素
+    private int findKthSmallest(TreeNodeWithCount root, int k) {
+        if (root.leftNodeCount + 1 == k) {
+            return root.val;
+        } else if (root.leftNodeCount + 1 < k) {
+            // 去右子树查找对应位次元素
+            return findKthSmallest(root.right, k - root.leftNodeCount - 1);
+        } else {
+            // 去左子树查找
+            return findKthSmallest(root.left, k);
+        }
+    }
+
+    // 适配题目输入的封装方法
+    public int kthSmallest(TreeNode root, int k) {
+        TreeNodeWithCount newRoot = null;
+        buildTree(root, newRoot);
+        return findKthSmallest(newRoot, k);
+    }
+
+    // 将普通二叉树转为带统计的二叉树
+    private void buildTree(TreeNode oldNode, TreeNodeWithCount newNode) {
+        if (oldNode == null) return;
+        newNode = insertNode(newNode, oldNode.val);
+        buildTree(oldNode.left, newNode);
+        buildTree(oldNode.right, newNode);
+    }
+}
+```
+
+### [199. 二叉树的右视图](https://leetcode.cn/problems/binary-tree-right-side-view/)
+
+1. 题目描述
+给定一个二叉树的根节点 root，想象自己站在它的右侧，按照从顶部到底部的顺序，返回从右侧所能看到的节点值。
+示例 1：输入：root = [1,2,3,null,5,null,4]，输出：[1,3,4]
+示例 2：输入：root = [1,2,3,4,null,null,null,5]，输出：[1,3,4,5]
+示例 3：输入：root = [1,null,3]，输出：[1,3]
+示例 4：输入：root = []，输出：[]
+提示：二叉树的节点个数的范围是 [0,100]，-100 <= Node.val <= 100
+2. 解法一：广度优先搜索（BFS）
+- 算法思想：通过层序遍历二叉树，遍历每一层的所有节点，每一层仅保留最后一个节点的值（即最右侧节点），最终收集所有层的最右侧节点值即为结果。使用队列存储每一层的节点，依次处理每一层节点并记录最后一个节点值。
+- 代码
+```java
+import java.util.ArrayList;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Queue;
+
+// 二叉树节点定义
+class TreeNode {
+    int val;
+    TreeNode left;
+    TreeNode right;
+    TreeNode() {}
+    TreeNode(int val) { this.val = val; }
+    TreeNode(int val, TreeNode left, TreeNode right) {
+        this.val = val;
+        this.left = left;
+        this.right = right;
+    }
+}
+
+class Solution {
+    public List<Integer> rightSideView(TreeNode root) {
+        List<Integer> res = new ArrayList<>();
+        if (root == null) {
+            return res;
+        }
+        // 队列辅助实现层序遍历
+        Queue<TreeNode> queue = new LinkedList<>();
+        queue.offer(root);
+        while (!queue.isEmpty()) {
+            // 获取当前层的节点总数
+            int levelSize = queue.size();
+            // 遍历当前层所有节点
+            for (int i = 0; i < levelSize; i++) {
+                TreeNode node = queue.poll();
+                // 每一层最后一个节点，加入结果列表
+                if (i == levelSize - 1) {
+                    res.add(node.val);
+                }
+                // 依次将左、右子节点入队
+                if (node.left != null) {
+                    queue.offer(node.left);
+                }
+                if (node.right != null) {
+                    queue.offer(node.right);
+                }
+            }
+        }
+        return res;
+    }
+}
+```
+3. 解法二：深度优先搜索（DFS）
+- 算法思想：采用根节点→右子树→左子树的遍历顺序，优先访问右子树节点，保证每一层第一个被访问的节点是该层最右侧节点。通过记录当前遍历深度，当深度与结果列表长度相等时，将当前节点值加入结果列表。
+- 代码
+```java
+import java.util.ArrayList;
+import java.util.List;
+
+// 二叉树节点定义
+class TreeNode {
+    int val;
+    TreeNode left;
+    TreeNode right;
+    TreeNode() {}
+    TreeNode(int val) { this.val = val; }
+    TreeNode(int val, TreeNode left, TreeNode right) {
+        this.val = val;
+        this.left = left;
+        this.right = right;
+    }
+}
+
+class Solution {
+    List<Integer> res = new ArrayList<>();
+    public List<Integer> rightSideView(TreeNode root) {
+        dfs(root, 0);
+        return res;
+    }
+    // 深度优先遍历，depth为当前节点的深度
+    private void dfs(TreeNode node, int depth) {
+        if (node == null) {
+            return;
+        }
+        // 当前深度未记录节点时，将当前节点加入结果
+        if (depth == res.size()) {
+            res.add(node.val);
+        }
+        // 优先遍历右子树，再遍历左子树
+        dfs(node.right, depth + 1);
+        dfs(node.left, depth + 1);
+    }
+}
+```
+
+### [114. 二叉树展开为链表](https://leetcode.cn/problems/flatten-binary-tree-to-linked-list/)
+
+1. 题目描述
+给你二叉树的根结点 root ，请你将它展开为一个单链表：展开后的单链表应该同样使用 TreeNode ，其中 right 子指针指向链表中下一个结点，而左子指针始终为 null 。展开后的单链表应该与二叉树 先序遍历 顺序相同。
+示例 1：输入：root = [1,2,5,3,4,null,6]，输出：[1,null,2,null,3,null,4,null,5,null,6]
+示例 2：输入：root = []，输出：[]
+示例 3：输入：root = [0]，输出：[0]
+提示：树中结点数在范围 [0, 2000] 内，-100 <= Node.val <= 100
+进阶：你可以使用原地算法（O(1) 额外空间）展开这棵树吗？
+
+2. 算法思想+代码
+- 解法一：递归收集节点法
+  算法思想：通过二叉树先序遍历的递归方式，将所有节点按顺序收集到列表中；遍历列表，依次将每个节点的左指针置为null，右指针指向列表中的下一个节点，完成链表转换；时间复杂度O(n)，空间复杂度O(n)
+  代码：
+```java
+import java.util.ArrayList;
+import java.util.List;
+
+// 二叉树节点定义
+class TreeNode {
+    int val;
+    TreeNode left;
+    TreeNode right;
+    TreeNode() {}
+    TreeNode(int val) { this.val = val; }
+    TreeNode(int val, TreeNode left, TreeNode right) {
+        this.val = val;
+        this.left = left;
+        this.right = right;
+    }
+}
+
+public class Solution {
+    public void flatten(TreeNode root) {
+        List<TreeNode> list = new ArrayList<>();
+        // 先序遍历收集节点
+        preOrder(root, list);
+        // 拼接链表
+        for (int i = 1; i < list.size(); i++) {
+            TreeNode pre = list.get(i - 1);
+            TreeNode cur = list.get(i);
+            pre.left = null;
+            pre.right = cur;
+        }
+    }
+
+    // 先序遍历递归
+    private void preOrder(TreeNode root, List<TreeNode> list) {
+        if (root == null) {
+            return;
+        }
+        list.add(root);
+        preOrder(root.left, list);
+        preOrder(root.right, list);
+    }
+}
+```
+
+- 解法二：迭代先序遍历法
+  算法思想：使用栈模拟先序遍历的迭代过程，记录上一个遍历的节点；遍历过程中直接修改节点指针，将当前节点作为前驱节点的右孩子，同时置空前驱节点的左指针；时间复杂度O(n)，空间复杂度O(n)
+  代码：
+```java
+import java.util.Stack;
+
+// 二叉树节点定义
+class TreeNode {
+    int val;
+    TreeNode left;
+    TreeNode right;
+    TreeNode() {}
+    TreeNode(int val) { this.val = val; }
+    TreeNode(int val, TreeNode left, TreeNode right) {
+        this.val = val;
+        this.left = left;
+        this.right = right;
+    }
+}
+
+public class Solution {
+    public void flatten(TreeNode root) {
+        if (root == null) {
+            return;
+        }
+        Stack<TreeNode> stack = new Stack<>();
+        stack.push(root);
+        TreeNode pre = null;
+        // 迭代先序遍历
+        while (!stack.isEmpty()) {
+            TreeNode cur = stack.pop();
+            // 调整指针
+            if (pre != null) {
+                pre.left = null;
+                pre.right = cur;
+            }
+            // 先压右孩子，再压左孩子
+            if (cur.right != null) {
+                stack.push(cur.right);
+            }
+            if (cur.left != null) {
+                stack.push(cur.left);
+            }
+            pre = cur;
+        }
+    }
+}
+```
+
+- 解法三：原地前驱节点法（进阶O(1)空间）
+  算法思想：遍历每个节点，若节点存在左子树，找到左子树的最右节点（先序遍历中左子树的最后一个节点）；将该前驱节点的右指针指向当前节点的右子树，再将当前节点的左子树移到右侧，置空左指针；循环处理所有节点，无需额外空间；时间复杂度O(n)，空间复杂度O(1)
+  代码：
+```java
+// 二叉树节点定义
+class TreeNode {
+    int val;
+    TreeNode left;
+    TreeNode right;
+    TreeNode() {}
+    TreeNode(int val) { this.val = val; }
+    TreeNode(int val, TreeNode left, TreeNode right) {
+        this.val = val;
+        this.left = left;
+        this.right = right;
+    }
+}
+
+public class Solution {
+    public void flatten(TreeNode root) {
+        TreeNode cur = root;
+        while (cur != null) {
+            // 左子树不为空，寻找前驱节点
+            if (cur.left != null) {
+                TreeNode predecessor = cur.left;
+                // 找到左子树的最右节点
+                while (predecessor.right != null) {
+                    predecessor = predecessor.right;
+                }
+                // 前驱节点指向当前节点的右子树
+                predecessor.right = cur.right;
+                // 左子树移到右侧，置空左指针
+                cur.right = cur.left;
+                cur.left = null;
+            }
+            // 处理下一个节点
+            cur = cur.right;
+        }
+    }
+}
+```
+
+### [105. 从前序与中序遍历序列构造二叉树](https://leetcode.cn/problems/construct-binary-tree-from-preorder-and-inorder-traversal/)
+
+1. 题目描述
+给定两个整数数组 preorder 和 inorder ，其中 preorder 是二叉树的先序遍历， inorder 是同一棵树的中序遍历，请构造二叉树并返回其根节点。
+示例 1:
+输入: preorder = [3,9,20,15,7], inorder = [9,3,15,20,7]
+输出: [3,9,20,null,null,15,7]
+示例 2:
+输入: preorder = [-1], inorder = [-1]
+输出: [-1]
+提示:
+1 <= preorder.length <= 3000
+inorder.length == preorder.length
+-3000 <= preorder[i], inorder[i] <= 3000
+preorder 和 inorder 均 无重复 元素
+inorder 均出现在 preorder
+preorder 保证 为二叉树的前序遍历序列
+inorder 保证 为二叉树的中序遍历序列
+
+2. 解法一：递归法（哈希表优化）
+- 算法思想：前序遍历的首个元素是二叉树的根节点，在中序遍历中定位根节点后，根节点左侧为左子树的中序遍历序列，右侧为右子树的中序遍历序列；根据左子树的节点数量，可划分出前序遍历中左子树和右子树的区间；递归执行根节点、左子树、右子树的构建逻辑；使用哈希表存储中序遍历元素与索引的映射，将根节点定位的时间复杂度优化至O(1)，整体时间复杂度为O(n)，空间复杂度为O(n)。
+- Java代码：
+```java
+// 二叉树节点定义
+class TreeNode {
+    int val;
+    TreeNode left;
+    TreeNode right;
+    TreeNode() {}
+    TreeNode(int val) { this.val = val; }
+    TreeNode(int val, TreeNode left, TreeNode right) {
+        this.val = val;
+        this.left = left;
+        this.right = right;
+    }
+}
+
+import java.util.HashMap;
+import java.util.Map;
+
+class Solution {
+    // 哈希表存储中序遍历元素和索引的映射
+    private Map<Integer, Integer> inorderMap;
+    public TreeNode buildTree(int[] preorder, int[] inorder) {
+        int n = preorder.length;
+        inorderMap = new HashMap<>();
+        // 初始化哈希表
+        for (int i = 0; i < n; i++) {
+            inorderMap.put(inorder[i], i);
+        }
+        // 递归构建二叉树
+        return build(preorder, inorder, 0, n - 1, 0, n - 1);
+    }
+
+    // 递归函数：preLeft前序左边界，preRight前序右边界，inLeft中序左边界，inRight中序右边界
+    private TreeNode build(int[] preorder, int[] inorder, int preLeft, int preRight, int inLeft, int inRight) {
+        // 递归终止条件：区间为空
+        if (preLeft > preRight) {
+            return null;
+        }
+        // 前序遍历第一个节点为根节点
+        int rootVal = preorder[preLeft];
+        TreeNode root = new TreeNode(rootVal);
+        // 找到根节点在中序遍历中的索引
+        int inRoot = inorderMap.get(rootVal);
+        // 左子树的节点个数
+        int leftSize = inRoot - inLeft;
+        // 构建左子树
+        root.left = build(preorder, inorder, preLeft + 1, preLeft + leftSize, inLeft, inRoot - 1);
+        // 构建右子树
+        root.right = build(preorder, inorder, preLeft + leftSize + 1, preRight, inRoot + 1, inRight);
+        return root;
+    }
+}
+```
+
+3. 解法二：迭代法
+- 算法思想：通过栈模拟递归的构建过程，使用两个指针分别遍历前序和中序数组；首先将前序遍历的首个元素作为根节点并入栈，依次遍历前序数组，将元素作为栈顶节点的左子节点并入栈；当栈顶元素与中序指针指向的元素相等时，说明左子树构建完成，开始回溯弹出栈顶元素并移动中序指针，直至不满足条件后，将当前前序元素作为最后弹出节点的右子节点；重复该过程直至遍历完成，最终构建出完整二叉树，时间复杂度O(n)，空间复杂度O(n)。
+- Java代码：
+```java
+// 二叉树节点定义
+class TreeNode {
+    int val;
+    TreeNode left;
+    TreeNode right;
+    TreeNode() {}
+    TreeNode(int val) { this.val = val; }
+    TreeNode(int val, TreeNode left, TreeNode right) {
+        this.val = val;
+        this.left = left;
+        this.right = right;
+    }
+}
+
+import java.util.Deque;
+import java.util.LinkedList;
+
+class Solution {
+    public TreeNode buildTree(int[] preorder, int[] inorder) {
+        if (preorder == null || preorder.length == 0) {
+            return null;
+        }
+        TreeNode root = new TreeNode(preorder[0]);
+        Deque<TreeNode> stack = new LinkedList<>();
+        stack.push(root);
+        // 中序遍历指针
+        int inorderIndex = 0;
+        for (int i = 1; i < preorder.length; i++) {
+            int preVal = preorder[i];
+            TreeNode node = stack.peek();
+            // 栈顶节点值与中序当前值不等，说明是左子节点
+            if (node.val != inorder[inorderIndex]) {
+                node.left = new TreeNode(preVal);
+                stack.push(node.left);
+            } else {
+                // 回溯构建右子节点
+                while (!stack.isEmpty() && stack.peek().val == inorder[inorderIndex]) {
+                    node = stack.pop();
+                    inorderIndex++;
+                }
+                node.right = new TreeNode(preVal);
+                stack.push(node.right);
+            }
+        }
+        return root;
+    }
+}
+```
+
+### [437. 路径总和 III](https://leetcode.cn/problems/path-sum-iii/)
+
+1. 题目描述
+给定一个二叉树的根节点 root ，和一个整数 targetSum ，求该二叉树里节点值之和等于 targetSum 的 路径 的数目。路径 不需要从根节点开始，也不需要在叶子节点结束，但是路径方向必须是向下的（只能从父节点到子节点）。
+示例 1：输入：root = [10,5,-3,3,2,null,11,3,-2,null,1], targetSum = 8 输出：3 解释：和等于 8 的路径有 3 条
+示例 2：输入：root = [5,4,8,11,null,13,4,7,2,null,null,5,1], targetSum = 22 输出：3
+提示：二叉树的节点个数的范围是 [0,1000]，-10^9 <= Node.val <= 10^9，-1000 <= targetSum <= 1000
+
+2. 解法一：暴力深度优先搜索
+- 算法思想：采用双重递归实现，第一层递归遍历二叉树的所有节点，将每个节点作为路径的起点；第二层递归从当前起点节点出发，向下递归遍历左、右子节点，累加路径和，每遍历一个节点就判断当前路径和是否等于目标和，相等则将结果计数加一，最终统计所有符合条件的路径数量。
+- 代码：
+```java
+// 二叉树节点定义
+class TreeNode {
+    int val;
+    TreeNode left;
+    TreeNode right;
+    TreeNode() {}
+    TreeNode(int val) { this.val = val; }
+    TreeNode(int val, TreeNode left, TreeNode right) {
+        this.val = val;
+        this.left = left;
+        this.right = right;
+    }
+}
+
+public class Solution {
+    // 统计符合条件的路径总数
+    private int count = 0;
+    public int pathSum(TreeNode root, int targetSum) {
+        if (root == null) {
+            return 0;
+        }
+        // 以当前节点为起点计算路径数
+        dfs(root, targetSum);
+        // 递归遍历左子树所有节点作为起点
+        pathSum(root.left, targetSum);
+        // 递归遍历右子树所有节点作为起点
+        pathSum(root.right, targetSum);
+        return count;
+    }
+
+    // 从当前节点出发，向下遍历计算路径和
+    private void dfs(TreeNode node, long sum) {
+        if (node == null) {
+            return;
+        }
+        // 当前节点值匹配剩余和，路径数+1
+        if (node.val == sum) {
+            count++;
+        }
+        // 递归左子树，更新剩余目标和
+        dfs(node.left, sum - node.val);
+        // 递归右子树，更新剩余目标和
+        dfs(node.right, sum - node.val);
+    }
+}
+```
+
+3. 解法二：前缀和+哈希表优化
+- 算法思想：利用前缀和原理，前缀和指从根节点到当前节点的路径节点值总和。若根到节点A的前缀和为pre1，根到节点B的前缀和为pre2，且pre2 - pre1 = targetSum，则A到B的路径和为目标和。使用哈希表存储前缀和出现的次数，遍历二叉树时，计算当前前缀和与目标和的差值，差值对应的哈希表值即为当前节点结尾的合法路径数；遍历完子树后回溯哈希表，保证分支计算互不干扰。该方法时间复杂度为O(n)，空间复杂度为O(n)。
+- 代码：
+```java
+// 二叉树节点定义
+class TreeNode {
+    int val;
+    TreeNode left;
+    TreeNode right;
+    TreeNode() {}
+    TreeNode(int val) { this.val = val; }
+    TreeNode(int val, TreeNode left, TreeNode right) {
+        this.val = val;
+        this.left = left;
+        this.right = right;
+    }
+}
+
+import java.util.HashMap;
+import java.util.Map;
+
+public class Solution {
+    public int pathSum(TreeNode root, int targetSum) {
+        // 哈希表：key=前缀和，value=该前缀和出现的次数
+        Map<Long, Integer> prefixMap = new HashMap<>();
+        // 初始化前缀和0出现1次，处理从根节点开始的路径
+        prefixMap.put(0L, 1);
+        return dfs(root, 0, targetSum, prefixMap);
+    }
+
+    private int dfs(TreeNode node, long currentSum, int targetSum, Map<Long, Integer> prefixMap) {
+        // 递归终止条件：节点为空
+        if (node == null) {
+            return 0;
+        }
+        // 更新当前节点的前缀和
+        currentSum += node.val;
+        // 获取以当前节点为结尾的合法路径数量
+        int res = prefixMap.getOrDefault(currentSum - targetSum, 0);
+        // 将当前前缀和存入哈希表，计数+1
+        prefixMap.put(currentSum, prefixMap.getOrDefault(currentSum, 0) + 1);
+        // 递归遍历左子树并累加路径数
+        res += dfs(node.left, currentSum, targetSum, prefixMap);
+        // 递归遍历右子树并累加路径数
+        res += dfs(node.right, currentSum, targetSum, prefixMap);
+        // 回溯操作：移除当前前缀和，不影响其他分支计算
+        prefixMap.put(currentSum, prefixMap.get(currentSum) - 1);
+        return res;
+    }
+}
+```
+
+
+
+
+
+
+
+
+
 
 
 
