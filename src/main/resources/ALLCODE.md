@@ -6012,15 +6012,1620 @@ public class Solution {
 }
 ```
 
+### [236. 二叉树的最近公共祖先](https://leetcode.cn/problems/lowest-common-ancestor-of-a-binary-tree/)
+
+1. 题目描述：给定一个二叉树，找到该树中两个指定节点的最近公共祖先。最近公共祖先的定义为：对于有根树 T 的两个节点 p、q，最近公共祖先表示为一个节点 x，满足 x 是 p、q 的祖先且 x 的深度尽可能大（一个节点也可以是它自己的祖先）。
+示例 1：输入：root = [3,5,1,6,2,0,8,null,null,7,4], p = 5, q = 1 输出：3 解释：节点 5 和节点 1 的最近公共祖先是节点 3 。
+示例 2：输入：root = [3,5,1,6,2,0,8,null,null,7,4], p = 5, q = 4 输出：5 解释：节点 5 和节点 4 的最近公共祖先是节点 5 。因为根据定义最近公共祖先节点可以为节点本身。
+示例 3：输入：root = [1,2], p = 1, q = 2 输出：1
+提示：树中节点数目在范围 [2, 105] 内。-109 <= Node.val <= 109 所有 Node.val 互不相同 。p != q p 和 q 均存在于给定的二叉树中。
+2. 算法思想+代码
+- 解法一：递归法
+  算法思想：采用后序递归遍历二叉树，设置递归终止条件：当当前节点为null，或当前节点等于p，或当前节点等于q时，直接返回当前节点；递归遍历左子树得到左结果，递归遍历右子树得到右结果；若左结果和右结果都不为空，说明当前节点是p和q的最近公共祖先，返回当前节点；若仅左结果不为空，返回左结果；若仅右结果不为空，返回右结果。
+  Java代码：
+```java
+// 二叉树节点定义
+class TreeNode {
+    int val;
+    TreeNode left;
+    TreeNode right;
+    TreeNode(int x) { val = x; }
+}
+
+class Solution {
+    public TreeNode lowestCommonAncestor(TreeNode root, TreeNode p, TreeNode q) {
+        // 递归终止条件：节点为空 或 找到目标节点p/q
+        if (root == null || root == p || root == q) {
+            return root;
+        }
+        // 递归遍历左子树
+        TreeNode left = lowestCommonAncestor(root.left, p, q);
+        // 递归遍历右子树
+        TreeNode right = lowestCommonAncestor(root.right, p, q);
+        
+        // 左右子树均找到节点，当前节点为最近公共祖先
+        if (left != null && right != null) {
+            return root;
+        }
+        // 仅左子树找到，返回左子树结果；仅右子树找到，返回右子树结果
+        return left != null ? left : right;
+    }
+}
+```
+- 解法二：迭代法（父指针哈希表）
+  算法思想：借助哈希表存储每个节点对应的父节点，通过广度优先遍历（BFS）遍历二叉树完成父节点的记录；再通过集合存储节点p的所有祖先节点（包含自身），接着遍历节点q的所有祖先节点，第一个存在于集合中的节点即为最近公共祖先。
+  Java代码：
+```java
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.Map;
+import java.util.Queue;
+import java.util.Set;
+
+// 二叉树节点定义
+class TreeNode {
+    int val;
+    TreeNode left;
+    TreeNode right;
+    TreeNode(int x) { val = x; }
+}
+
+class Solution {
+    public TreeNode lowestCommonAncestor(TreeNode root, TreeNode p, TreeNode q) {
+        // 存储节点与父节点的映射关系
+        Map<TreeNode, TreeNode> parentMap = new HashMap<>();
+        // 存储p的所有祖先节点
+        Set<TreeNode> ancestorSet = new HashSet<>();
+        Queue<TreeNode> queue = new LinkedList<>();
+        
+        parentMap.put(root, null);
+        queue.offer(root);
+        
+        // BFS遍历，记录所有节点的父节点
+        while (!queue.isEmpty() && !(parentMap.containsKey(p) && parentMap.containsKey(q))) {
+            TreeNode curr = queue.poll();
+            if (curr.left != null) {
+                parentMap.put(curr.left, curr);
+                queue.offer(curr.left);
+            }
+            if (curr.right != null) {
+                parentMap.put(curr.right, curr);
+                queue.offer(curr.right);
+            }
+        }
+        
+        // 收集p的全部祖先节点
+        while (p != null) {
+            ancestorSet.add(p);
+            p = parentMap.get(p);
+        }
+        
+        // 查找q的祖先中第一个在集合中的节点
+        while (!ancestorSet.contains(q)) {
+            q = parentMap.get(q);
+        }
+        return q;
+    }
+}
+```
+
+### [124. 二叉树中的最大路径和](https://leetcode.cn/problems/binary-tree-maximum-path-sum/)
+
+1. 题目描述
+二叉树中的路径被定义为一条节点序列，序列中每对相邻节点之间都存在一条边。同一个节点在一条路径序列中至多出现一次。该路径至少包含一个节点，且不一定经过根节点。路径和是路径中各节点值的总和。给你一个二叉树的根节点 root，返回其最大路径和。
+示例 1：输入：root = [1,2,3]，输出：6，解释：最优路径是 2 -> 1 -> 3 ，路径和为 2 + 1 + 3 = 6
+示例 2：输入：root = [-10,9,20,null,null,15,7]，输出：42，解释：最优路径是 15 -> 20 -> 7 ，路径和为 15 + 20 + 7 = 42
+提示：树中节点数目范围是 [1, 3 * 104]，-1000 <= Node.val <= 1000
+
+2. 算法思想+代码
+- 算法思想：采用深度优先搜索（DFS）递归遍历二叉树，核心是计算每个节点作为路径最高点的最大路径和，维护全局最大值作为最终结果。递归函数返回当前节点能向上传递的最大贡献值（仅取左/右子树的单边最大路径和，负贡献值取0）；当前节点的完整路径和为自身值+左子树贡献+右子树贡献，用该值更新全局最大路径和。
+- Java代码
+```java
+// 二叉树节点定义
+class TreeNode {
+    int val;
+    TreeNode left;
+    TreeNode right;
+    TreeNode() {}
+    TreeNode(int val) { this.val = val; }
+    TreeNode(int val, TreeNode left, TreeNode right) {
+        this.val = val;
+        this.left = left;
+        this.right = right;
+    }
+}
+
+class Solution {
+    // 全局变量存储最大路径和
+    int maxSum = Integer.MIN_VALUE;
+
+    public int maxPathSum(TreeNode root) {
+        calculateMaxGain(root);
+        return maxSum;
+    }
+
+    // 递归计算节点的最大贡献值（向上传递的单边路径和）
+    private int calculateMaxGain(TreeNode node) {
+        // 空节点贡献值为0
+        if (node == null) {
+            return 0;
+        }
+        // 左子树最大贡献值，负数则取0（不选择该子树）
+        int leftGain = Math.max(calculateMaxGain(node.left), 0);
+        // 右子树最大贡献值，负数则取0
+        int rightGain = Math.max(calculateMaxGain(node.right), 0);
+
+        // 计算当前节点作为路径顶点的总路径和，更新全局最大值
+        int currentPathSum = node.val + leftGain + rightGain;
+        maxSum = Math.max(maxSum, currentPathSum);
+
+        // 返回当前节点向上传递的最大贡献值（只能选左或右单边）
+        return node.val + Math.max(leftGain, rightGain);
+    }
+}
+```
+
+## 图论
+
+1. 图论定义：图是描述事物及其关联关系的离散数学结构，由顶点集合V（代表具体事物）和边集合E（代表事物间的关联关系）构成，标准表示为G=(V,E)。细分类型包括无向图（边无方向，顶点双向连通）、有向图（边有固定指向）、无权图（边仅表示连通状态）、带权图（边附带权重值，可表示距离、成本等）；实际开发中主流存储方式为邻接矩阵（适合稠密图）和邻接表（适合稀疏图，Java语言首选）。
+2. 图的常用操作，包含基础功能与经典算法实现
+   - 基础构建操作：添加顶点、添加无向边/有向边/带权边
+   - 遍历操作：深度优先搜索(DFS)、广度优先搜索(BFS)
+   - 路径算法：单源最短路径（Dijkstra算法，适配非负权图）
+   - 生成树算法：最小生成树（Prim算法，适配无向带权图）
+   - 辅助操作：校验顶点合法性、打印图结构
+
+采用**邻接表**实现（最常用的图存储方式），整合无向图、带权图、遍历、最短路径、最小生成树全功能，代码可直接运行：
+```java
+import java.util.*;
+
+// 带权边的实体类（用于带权图、最短路径、最小生成树）
+class Edge implements Comparable<Edge> {
+    int to;     // 目标顶点
+    int weight; // 边的权重
+
+    public Edge(int to, int weight) {
+        this.to = to;
+        this.weight = weight;
+    }
+
+    // 用于优先队列排序
+    @Override
+    public int compareTo(Edge other) {
+        return Integer.compare(this.weight, other.weight);
+    }
+}
+
+// 图的核心实现类（邻接表）
+class Graph {
+    private final int vertexCount; // 顶点总数
+    private final List<List<Edge>> adj; // 邻接表
+
+    // 构造方法：初始化图
+    public Graph(int vertexCount) {
+        this.vertexCount = vertexCount;
+        adj = new ArrayList<>(vertexCount);
+        // 为每个顶点初始化邻接链表
+        for (int i = 0; i < vertexCount; i++) {
+            adj.add(new ArrayList<>());
+        }
+    }
+
+    // ------------------- 1. 基础构建操作 -------------------
+    /**
+     * 添加无向带权边
+     */
+    public void addUndirectedEdge(int from, int to, int weight) {
+        validateVertex(from);
+        validateVertex(to);
+        adj.get(from).add(new Edge(to, weight));
+        adj.get(to).add(new Edge(from, weight));
+    }
+
+    /**
+     * 添加有向带权边
+     */
+    public void addDirectedEdge(int from, int to, int weight) {
+        validateVertex(from);
+        validateVertex(to);
+        adj.get(from).add(new Edge(to, weight));
+    }
+
+    // 校验顶点合法性
+    private void validateVertex(int v) {
+        if (v < 0 || v >= vertexCount) {
+            throw new IllegalArgumentException("顶点编号非法！");
+        }
+    }
+
+    // ------------------- 2. 图的遍历操作 -------------------
+    /**
+     * 深度优先搜索(DFS)：递归实现
+     */
+    public void dfs(int start) {
+        validateVertex(start);
+        boolean[] visited = new boolean[vertexCount];
+        System.out.print("DFS遍历结果：");
+        dfsRecursive(start, visited);
+        System.out.println();
+    }
+
+    private void dfsRecursive(int v, boolean[] visited) {
+        visited[v] = true;
+        System.out.print(v + " ");
+        // 遍历所有邻接顶点
+        for (Edge edge : adj.get(v)) {
+            if (!visited[edge.to]) {
+                dfsRecursive(edge.to, visited);
+            }
+        }
+    }
+
+    /**
+     * 广度优先搜索(BFS)：队列实现
+     */
+    public void bfs(int start) {
+        validateVertex(start);
+        boolean[] visited = new boolean[vertexCount];
+        Queue<Integer> queue = new LinkedList<>();
+        System.out.print("BFS遍历结果：");
+        visited[start] = true;
+        queue.offer(start);
+
+        while (!queue.isEmpty()) {
+            int v = queue.poll();
+            System.out.print(v + " ");
+            for (Edge edge : adj.get(v)) {
+                if (!visited[edge.to]) {
+                    visited[edge.to] = true;
+                    queue.offer(edge.to);
+                }
+            }
+        }
+        System.out.println();
+    }
+
+    // ------------------- 3. 单源最短路径：Dijkstra算法 -------------------
+    public void dijkstra(int start) {
+        validateVertex(start);
+        int[] dist = new int[vertexCount]; // 存储起点到各顶点的最短距离
+        boolean[] visited = new boolean[vertexCount];
+        Arrays.fill(dist, Integer.MAX_VALUE);
+        dist[start] = 0;
+
+        // 优先队列：按权重升序排列
+        PriorityQueue<Edge> pq = new PriorityQueue<>();
+        pq.offer(new Edge(start, 0));
+
+        while (!pq.isEmpty()) {
+            Edge curr = pq.poll();
+            int v = curr.to;
+            if (visited[v]) continue;
+            visited[v] = true;
+
+            // 松弛操作
+            for (Edge edge : adj.get(v)) {
+                int w = edge.to;
+                if (!visited[w] && dist[v] != Integer.MAX_VALUE && dist[v] + edge.weight < dist[w]) {
+                    dist[w] = dist[v] + edge.weight;
+                    pq.offer(new Edge(w, dist[w]));
+                }
+            }
+        }
+
+        // 打印结果
+        System.out.println("Dijkstra算法-起点" + start + "到各顶点最短距离：");
+        for (int i = 0; i < vertexCount; i++) {
+            System.out.println(start + " -> " + i + "：" + (dist[i] == Integer.MAX_VALUE ? "不可达" : dist[i]));
+        }
+    }
+
+    // ------------------- 4. 最小生成树：Prim算法 -------------------
+    public void prim(int start) {
+        validateVertex(start);
+        boolean[] visited = new boolean[vertexCount];
+        int totalWeight = 0; // 最小生成树总权重
+        PriorityQueue<Edge> pq = new PriorityQueue<>();
+        pq.offer(new Edge(start, 0));
+        List<String> mstEdges = new ArrayList<>(); // 存储生成树的边
+
+        while (!pq.isEmpty() && mstEdges.size() < vertexCount - 1) {
+            Edge curr = pq.poll();
+            int v = curr.to;
+            if (visited[v]) continue;
+            visited[v] = true;
+            totalWeight += curr.weight;
+
+            // 记录边（排除起点的初始边）
+            if (curr.weight != 0) {
+                mstEdges.add(curr.to + " <-> " + v + " (权重:" + curr.weight + ")");
+            }
+
+            for (Edge edge : adj.get(v)) {
+                if (!visited[edge.to]) {
+                    pq.offer(edge);
+                }
+            }
+        }
+
+        System.out.println("Prim算法最小生成树：");
+        mstEdges.forEach(System.out::println);
+        System.out.println("最小生成树总权重：" + totalWeight);
+    }
+
+    // ------------------- 辅助操作：打印图结构 -------------------
+    public void printGraph() {
+        System.out.println("图的邻接表结构：");
+        for (int i = 0; i < vertexCount; i++) {
+            System.out.print("顶点 " + i + "：");
+            for (Edge edge : adj.get(i)) {
+                System.out.print(edge.to + "(权重:" + edge.weight + ") ");
+            }
+            System.out.println();
+        }
+    }
+}
+
+// 测试主类
+public class GraphDemo {
+    public static void main(String[] args) {
+        // 初始化一个5个顶点的无向带权图（顶点编号：0,1,2,3,4）
+        Graph graph = new Graph(5);
+
+        // 添加无向边
+        graph.addUndirectedEdge(0, 1, 2);
+        graph.addUndirectedEdge(0, 3, 6);
+        graph.addUndirectedEdge(1, 2, 3);
+        graph.addUndirectedEdge(1, 4, 4);
+        graph.addUndirectedEdge(2, 4, 1);
+        graph.addUndirectedEdge(3, 4, 5);
+
+        // 执行所有操作
+        graph.printGraph();
+        System.out.println("------------------------");
+        graph.dfs(0);
+        graph.bfs(0);
+        System.out.println("------------------------");
+        graph.dijkstra(0);
+        System.out.println("------------------------");
+        graph.prim(0);
+    }
+}
+```
+
+1. 核心结构：使用`List<List<Edge>>`实现邻接表，`Edge`类封装边的目标顶点和权重；
+2. 功能覆盖：无向图构建、DFS/BFS遍历、Dijkstra最短路径、Prim最小生成树；
+3. 运行结果：控制台会依次打印图结构、遍历结果、最短路径、最小生成树，直观展示所有图论常用操作。
+1. 图的核心是**顶点+边**，邻接表是Java实现图的最优选择；
+2. 常用操作分为**构建、遍历、路径、生成树**四大类，覆盖图论基础应用场景；
+3. 代码适配无向带权图，可快速修改为有向图（仅需替换边添加方法）。
+
+### [200. 岛屿数量](https://leetcode.cn/problems/number-of-islands/)
+
+1. 题目描述
+给你一个由 '1'（陆地）和 '0'（水）组成的的二维网格，请你计算网格中岛屿的数量。岛屿总是被水包围，并且每座岛屿只能由水平方向和/或竖直方向上相邻的陆地连接形成。此外，你可以假设该网格的四条边均被水包围。
+示例 1：
+输入：grid = [
+    ['1','1','1','1','0'],
+    ['1','1','0','1','0'],
+    ['1','1','0','0','0'],
+    ['0','0','0','0','0']
+]
+输出：1
+示例 2：
+输入：grid = [
+    ['1','1','0','0','0'],
+    ['1','1','0','0','0'],
+    ['0','0','1','0','0'],
+    ['0','0','0','1','1']
+]
+输出：3
+提示：
+m == grid.length
+n == grid[i].length
+1 <= m, n <= 300
+grid[i][j] 的值为 '0' 或 '1'
+
+2. 算法思想+代码
+- 解法一：深度优先搜索（DFS）
+算法思想：遍历二维网格中的每一个单元格，当遍历到值为'1'的陆地时，说明发现一座新岛屿，岛屿数量加1；通过深度优先搜索递归遍历该陆地上下左右四个方向的相邻单元格，将所有相连的陆地标记为'0'（水），避免重复统计同一座岛屿；递归终止条件为单元格超出网格边界或值为'0'。
+Java代码：
+```java
+public class NumberOfIslands {
+    public int numIslands(char[][] grid) {
+        // 边界判断
+        if (grid == null || grid.length == 0) {
+            return 0;
+        }
+        int row = grid.length;
+        int col = grid[0].length;
+        int count = 0;
+        // 遍历整个网格
+        for (int i = 0; i < row; i++) {
+            for (int j = 0; j < col; j++) {
+                if (grid[i][j] == '1') {
+                    count++;
+                    // 深度优先搜索标记相连陆地
+                    dfs(grid, i, j);
+                }
+            }
+        }
+        return count;
+    }
+
+    // 深度优先搜索方法
+    private void dfs(char[][] grid, int i, int j) {
+        int row = grid.length;
+        int col = grid[0].length;
+        // 越界或当前为水，直接返回
+        if (i < 0 || i >= row || j < 0 || j >= col || grid[i][j] == '0') {
+            return;
+        }
+        // 将当前陆地标记为水
+        grid[i][j] = '0';
+        // 上下左右四个方向递归
+        dfs(grid, i - 1, j); // 上
+        dfs(grid, i + 1, j); // 下
+        dfs(grid, i, j - 1); // 左
+        dfs(grid, i, j + 1); // 右
+    }
+
+    // 测试示例
+    public static void main(String[] args) {
+        NumberOfIslands solution = new NumberOfIslands();
+        char[][] grid1 = {
+            {'1','1','1','1','0'},
+            {'1','1','0','1','0'},
+            {'1','1','0','0','0'},
+            {'0','0','0','0','0'}
+        };
+        System.out.println(solution.numIslands(grid1));
+
+        char[][] grid2 = {
+            {'1','1','0','0','0'},
+            {'1','1','0','0','0'},
+            {'0','0','1','0','0'},
+            {'0','0','0','1','1'}
+        };
+        System.out.println(solution.numIslands(grid2));
+    }
+}
+```
+
+- 解法二：广度优先搜索（BFS）
+算法思想：遍历二维网格中的每一个单元格，当遍历到值为'1'的陆地时，岛屿数量加1；使用队列存储当前陆地的坐标，将当前陆地标记为'0'；循环取出队列中的坐标，遍历其上下左右四个方向的相邻单元格，若为陆地则加入队列并标记为'0'，直到队列为空，完成当前岛屿的遍历。
+Java代码：
+```java
+import java.util.LinkedList;
+import java.util.Queue;
+
+public class NumberOfIslandsBFS {
+    public int numIslands(char[][] grid) {
+        // 边界判断
+        if (grid == null || grid.length == 0) {
+            return 0;
+        }
+        int row = grid.length;
+        int col = grid[0].length;
+        int count = 0;
+        // 遍历整个网格
+        for (int i = 0; i < row; i++) {
+            for (int j = 0; j < col; j++) {
+                if (grid[i][j] == '1') {
+                    count++;
+                    // 广度优先搜索标记相连陆地
+                    bfs(grid, i, j);
+                }
+            }
+        }
+        return count;
+    }
+
+    // 广度优先搜索方法
+    private void bfs(char[][] grid, int i, int j) {
+        int row = grid.length;
+        int col = grid[0].length;
+        Queue<int[]> queue = new LinkedList<>();
+        queue.offer(new int[]{i, j});
+        // 标记当前陆地为水
+        grid[i][j] = '0';
+        // 上下左右四个方向
+        int[][] directions = {{-1, 0}, {1, 0}, {0, -1}, {0, 1}};
+        while (!queue.isEmpty()) {
+            int[] curr = queue.poll();
+            int x = curr[0];
+            int y = curr[1];
+            // 遍历四个方向
+            for (int[] dir : directions) {
+                int newX = x + dir[0];
+                int newY = y + dir[1];
+                // 未越界且为陆地
+                if (newX >= 0 && newX < row && newY >= 0 && newY < col && grid[newX][newY] == '1') {
+                    queue.offer(new int[]{newX, newY});
+                    grid[newX][newY] = '0';
+                }
+            }
+        }
+    }
+
+    // 测试示例
+    public static void main(String[] args) {
+        NumberOfIslandsBFS solution = new NumberOfIslandsBFS();
+        char[][] grid1 = {
+            {'1','1','1','1','0'},
+            {'1','1','0','1','0'},
+            {'1','1','0','0','0'},
+            {'0','0','0','0','0'}
+        };
+        System.out.println(solution.numIslands(grid1));
+
+        char[][] grid2 = {
+            {'1','1','0','0','0'},
+            {'1','1','0','0','0'},
+            {'0','0','1','0','0'},
+            {'0','0','0','1','1'}
+        };
+        System.out.println(solution.numIslands(grid2));
+    }
+}
+```
+
+### [994. 腐烂的橘子](https://leetcode.cn/problems/rotting-oranges/)
+
+1. 题目描述
+在给定的 m x n 网格 grid 中，每个单元格可以有以下三个值之一：值 0 代表空单元格；值 1 代表新鲜橘子；值 2 代表腐烂的橘子。每分钟，腐烂的橘子周围 4 个方向上相邻的新鲜橘子都会腐烂。返回直到单元格中没有新鲜橘子为止所必须经过的最小分钟数。如果不可能，返回 -1。
+示例 1：输入：grid = [[2,1,1],[1,1,0],[0,1,1]]，输出：4
+示例 2：输入：grid = [[2,1,1],[0,1,1],[1,0,1]]，输出：-1，解释：左下角的橘子永远不会腐烂，因为腐烂只会发生在 4 个方向上。
+示例 3：输入：grid = [[0,2]]，输出：0，解释：因为 0 分钟时已经没有新鲜橘子了，所以答案就是 0。
+提示：m == grid.length，n == grid[i].length，1 <= m, n <= 10，grid[i][j] 仅为 0、1 或 2
+
+2. 算法思想+代码
+- 解法一：广度优先搜索（BFS）
+  算法思想：本题属于多源广度优先搜索场景，初始状态下所有腐烂的橘子均为搜索起点。首先遍历整个网格，完成两个操作：统计新鲜橘子的总数量，将所有腐烂橘子的行列坐标存入队列。随后以层序的方式遍历队列，每一层遍历对应一分钟的时间流逝；遍历当前层所有腐烂橘子时，向上下左右四个方向检查相邻单元格，若存在新鲜橘子则将其腐烂，新鲜橘子数量减一，并将该橘子坐标加入队列作为下一层的搜索节点。当队列遍历完成后，若新鲜橘子数量为0，返回层序遍历的总层数（即分钟数）；若仍有新鲜橘子剩余，返回-1。特殊情况：初始无新鲜橘子时，直接返回0。
+  Java代码：
+```java
+import java.util.LinkedList;
+import java.util.Queue;
+
+class Solution {
+    public int orangesRotting(int[][] grid) {
+        // 获取网格的行数和列数
+        int m = grid.length;
+        int n = grid[0].length;
+        // 队列存储腐烂橘子的坐标，数组元素0为行坐标，1为列坐标
+        Queue<int[]> queue = new LinkedList<>();
+        // 统计新鲜橘子的数量
+        int freshCount = 0;
+
+        // 第一次遍历网格：初始化队列，统计新鲜橘子数量
+        for (int i = 0; i < m; i++) {
+            for (int j = 0; j < n; j++) {
+                if (grid[i][j] == 2) {
+                    // 将初始腐烂橘子加入队列
+                    queue.offer(new int[]{i, j});
+                } else if (grid[i][j] == 1) {
+                    // 新鲜橘子计数
+                    freshCount++;
+                }
+            }
+        }
+
+        // 定义上下左右四个移动方向
+        int[][] directions = {{-1, 0}, {1, 0}, {0, -1}, {0, 1}};
+        // 记录橘子完全腐烂的分钟数
+        int minute = 0;
+
+        // BFS循环：有新鲜橘子且队列不为空时执行
+        while (freshCount > 0 && !queue.isEmpty()) {
+            // 当前层的腐烂橘子数量，控制层序遍历
+            int levelSize = queue.size();
+            for (int i = 0; i < levelSize; i++) {
+                int[] current = queue.poll();
+                int x = current[0];
+                int y = current[1];
+                // 遍历四个方向
+                for (int[] dir : directions) {
+                    int newX = x + dir[0];
+                    int newY = y + dir[1];
+                    // 判断坐标越界，且当前位置是新鲜橘子
+                    if (newX >= 0 && newX < m && newY >= 0 && newY < n && grid[newX][newY] == 1) {
+                        // 新鲜橘子变为腐烂
+                        grid[newX][newY] = 2;
+                        // 新鲜橘子数量减1
+                        freshCount--;
+                        // 新腐烂的橘子加入队列
+                        queue.offer(new int[]{newX, newY});
+                    }
+                }
+            }
+            // 每完成一层遍历，时间加1分钟
+            minute++;
+        }
+
+        // 无剩余新鲜橘子返回分钟数，否则返回-1
+        return freshCount == 0 ? minute : -1;
+    }
+}
+```
+
+### [207. 课程表](https://leetcode.cn/problems/course-schedule/)
+
+1. 题目描述
+你这个学期必须选修 numCourses 门课程，记为 0 到 numCourses - 1 。在选修某些课程之前需要一些先修课程。 先修课程按数组 prerequisites 给出，其中 prerequisites[i] = [ai, bi] ，表示如果要学习课程 ai 则必须先学习课程 bi 。例如，先修课程对 [0, 1] 表示：想要学习课程 0 ，你需要先完成课程 1 。请你判断是否可能完成所有课程的学习？如果可以，返回 true ；否则，返回 false 。
+示例 1：输入：numCourses = 2, prerequisites = [[1,0]] 输出：true 解释：总共有 2 门课程。学习课程 1 之前，你需要完成课程 0 。这是可能的。
+示例 2：输入：numCourses = 2, prerequisites = [[1,0],[0,1]] 输出：false 解释：总共有 2 门课程。学习课程 1 之前，你需要先完成课程 0 ；并且学习课程 0 之前，你还应先完成课程 1 。这是不可能的。
+提示：1 <= numCourses <= 2000，0 <= prerequisites.length <= 5000，prerequisites[i].length == 2，0 <= ai, bi < numCourses，prerequisites[i] 中的所有课程对互不相同
+
+2. 算法思想+代码
+- 解法一：广度优先搜索（BFS）拓扑排序
+  算法思想：问题等价于判断有向图中是否存在环，无环则可完成所有课程。基于拓扑排序的BFS实现，步骤为构建有向图邻接表并统计每个节点的入度；将入度为0的节点加入队列；依次取出队列节点，遍历其邻接节点并将邻接节点入度减1，入度为0则入队；统计遍历的节点总数，若等于总课程数则无环返回true，否则有环返回false。
+  Java代码：
+  ```java
+  import java.util.*;
+  class Solution {
+      public boolean canFinish(int numCourses, int[][] prerequisites) {
+          // 构建图的邻接表
+          List<List<Integer>> adjacency = new ArrayList<>();
+          // 入度数组，记录每个课程的先修课程数量
+          int[] inDegree = new int[numCourses];
+          // 初始化邻接表
+          for (int i = 0; i < numCourses; i++) {
+              adjacency.add(new ArrayList<>());
+          }
+          // 填充邻接表和入度数组
+          for (int[] req : prerequisites) {
+              int cur = req[0];
+              int pre = req[1];
+              adjacency.get(pre).add(cur);
+              inDegree[cur]++;
+          }
+          // 队列存储入度为0的节点（无先修课程的课程）
+          Queue<Integer> queue = new LinkedList<>();
+          for (int i = 0; i < numCourses; i++) {
+              if (inDegree[i] == 0) {
+                  queue.offer(i);
+              }
+          }
+          // 统计已学习的课程数量
+          int count = 0;
+          while (!queue.isEmpty()) {
+              int course = queue.poll();
+              count++;
+              // 遍历当前课程的后续课程，入度减1
+              for (int next : adjacency.get(course)) {
+                  inDegree[next]--;
+                  if (inDegree[next] == 0) {
+                      queue.offer(next);
+                  }
+              }
+          }
+          // 已学习课程数等于总课程数，说明无环
+          return count == numCourses;
+      }
+  }
+  ```
+- 解法二：深度优先搜索（DFS）判断有向环
+  算法思想：通过DFS遍历有向图，标记节点三种状态：0表示未访问，1表示正在访问（处于当前递归栈中），2表示已访问完成。遍历每个未访问节点，递归访问其邻接节点；若遇到状态为1的节点，说明存在环；若邻接节点全部访问完毕，将当前节点标记为2。全程无环则返回true，存在环则返回false。
+  Java代码：
+  ```java
+  import java.util.*;
+  class Solution {
+      public boolean canFinish(int numCourses, int[][] prerequisites) {
+          // 构建图的邻接表
+          List<List<Integer>> adjacency = new ArrayList<>();
+          for (int i = 0; i < numCourses; i++) {
+              adjacency.add(new ArrayList<>());
+          }
+          for (int[] req : prerequisites) {
+              adjacency.get(req[1]).add(req[0]);
+          }
+          // 标记节点状态：0=未访问，1=访问中，2=已访问
+          int[] visited = new int[numCourses];
+          // 遍历所有课程节点
+          for (int i = 0; i < numCourses; i++) {
+              // 检测到环直接返回false
+              if (!dfs(adjacency, visited, i)) {
+                  return false;
+              }
+          }
+          return true;
+      }
+  
+      // DFS递归：判断以node为起点的子图是否无环
+      private boolean dfs(List<List<Integer>> adjacency, int[] visited, int node) {
+          // 节点在当前递归链中，形成环
+          if (visited[node] == 1) {
+              return false;
+          }
+          // 节点已遍历完成，无环
+          if (visited[node] == 2) {
+              return true;
+          }
+          // 标记为正在访问
+          visited[node] = 1;
+          // 递归遍历所有邻接节点
+          for (int next : adjacency.get(node)) {
+              if (!dfs(adjacency, visited, next)) {
+                  return false;
+              }
+          }
+          // 标记为已访问完成
+          visited[node] = 2;
+          return true;
+      }
+  }
+  ```
+
+### [208. 实现 Trie (前缀树)](https://leetcode.cn/problems/implement-trie-prefix-tree/)
+
+1. 题目描述
+Trie（发音类似 "try"）或者说前缀树是一种树形数据结构，用于高效地存储和检索字符串数据集中的键。这一数据结构有相当多的应用情景，例如自动补全和拼写检查。请你实现 Trie 类：
+Trie() 初始化前缀树对象。
+void insert(String word) 向前缀树中插入字符串 word 。
+boolean search(String word) 如果字符串 word 在前缀树中，返回 true（即，在检索之前已经插入）；否则，返回 false 。
+boolean startsWith(String prefix) 如果之前已经插入的字符串 word 的前缀之一为 prefix ，返回 true ；否则，返回 false 。
+示例：
+输入
+["Trie", "insert", "search", "search", "startsWith", "insert", "search"]
+[[], ["apple"], ["apple"], ["app"], ["app"], ["app"], ["app"]]
+输出
+[null, null, true, false, true, null, true]
+解释
+Trie trie = new Trie();
+trie.insert("apple");
+trie.search("apple");   // 返回 True
+trie.search("app");     // 返回 False
+trie.startsWith("app"); // 返回 True
+trie.insert("app");
+trie.search("app");     // 返回 True
+提示：
+1 <= word.length, prefix.length <= 2000
+word 和 prefix 仅由小写英文字母组成
+insert、search 和 startsWith 调用次数总计不超过 3 * 10^4 次
+
+2. 算法思想+代码
+算法思想：该实现为前缀树的最优高效版本，采用极简节点结构，每个节点仅包含对应26个小写英文字母的子节点数组和字符串结束标记，根节点直接初始化无冗余操作。插入字符串时，从根节点开始逐字符遍历，不存在对应子节点则创建，遍历完成后标记结尾节点；查找完整字符串时，逐字符匹配，中途无对应节点直接返回false，遍历完成后校验结尾标记；前缀匹配仅需逐字符完成遍历，无需校验结尾标记，全程无多余逻辑和内存开销，执行速度极快。
+```java
+class Trie {
+
+    class Node {
+        Node[] child = new Node[26];
+        boolean isEnd;
+    }
+
+    Node root = new Node();
+
+    public Trie() {
+
+    }
+
+    public void insert(String word) {
+        Node cur = root;
+        for (char w : word.toCharArray()) {
+            if (cur.child[w - 'a'] == null) {
+                cur.child[w - 'a'] = new Node();
+            }
+            cur = cur.child[w - 'a'];
+        }
+        cur.isEnd = true;
+    }
+
+    public boolean search(String word) {
+        Node cur = root;
+        for (char w : word.toCharArray()) {
+            if (cur.child[w - 'a'] == null) {
+                return false;
+            }
+            cur = cur.child[w - 'a'];
+        }
+        return cur.isEnd;
+    }
+
+    public boolean startsWith(String prefix) {
+        Node cur = root;
+        for (char w : prefix.toCharArray()) {
+            if (cur.child[w - 'a'] == null) {
+                return false;
+            }
+            cur = cur.child[w - 'a'];
+        }
+        return true;
+    }
+}
+
+/**
+ * Your Trie object will be instantiated and called as such:
+ * Trie obj = new Trie();
+ * obj.insert(word);
+ * boolean param_2 = obj.search(word);
+ * boolean param_3 = obj.startsWith(prefix);
+ */
+```
+
+## 回溯
+
+**组合可重复**：for 从`i`开始，能反复选自己
+
+**组合不重复**：for 从`i+1`开始，只往后选不回头
+
+**排列要有序**：for 从`0`开始，从头遍历全元素
 
 
 
+1. 回溯算法定义：回溯是一种基于深度优先搜索的暴力枚举算法思想，核心逻辑是沿着一个方向不断尝试选择元素，当发现当前路径无法生成有效解时，立即撤销上一步的选择（回溯），回到上一状态尝试其他可选分支，最终遍历所有可能的解空间，找到符合要求的全部解或最优解。该算法无需提前预知所有路径，通过递归实现状态的递进与回退，是解决组合、排列、子集、分割类问题的核心方法。
+2. 回溯算法的常见操作
+   - 路径记录：维护当前递归过程中已选择的元素集合，代表当前的搜索路径
+   - 选择列表：确定当前步骤中可以选择的所有候选元素，是分支遍历的依据
+   - 终止条件：定义递归的边界，当满足条件时将当前路径加入结果集
+   - 回溯回退：递归深入后，撤销最后一步的选择，恢复路径和选择列表的状态
+   - 剪枝优化：提前过滤不符合条件的分支，避免无效的递归搜索，提升效率
 
+以下代码实现了回溯最常用的三个场景：全排列、子集、组合，完整覆盖上述所有常见操作，代码可直接运行：
+```java
+import java.util.ArrayList;
+import java.util.List;
 
+/**
+ * 回溯算法通用Demo
+ * 包含：全排列、子集、组合 三大经典回溯场景
+ */
+public class BacktrackDemo {
+    // 全局存储最终结果
+    private static final List<List<Integer>> result = new ArrayList<>();
+    // 全局存储当前递归的搜索路径
+    private static final List<Integer> path = new ArrayList<>();
 
+    // ==================== 1. 全排列（无重复元素）====================
+    public static void permute(int[] nums) {
+        // 标记元素是否被选中，用于剪枝
+        boolean[] used = new boolean[nums.length];
+        backtrackPermute(nums, used);
+    }
 
+    // 全排列回溯核心
+    private static void backtrackPermute(int[] nums, boolean[] used) {
+        // 终止条件：路径长度=数组长度，生成有效排列
+        if (path.size() == nums.length) {
+            result.add(new ArrayList<>(path));
+            return;
+        }
+        // 遍历所有可选元素
+        for (int i = 0; i < nums.length; i++) {
+            if (used[i]) continue; // 剪枝：跳过已选元素
+            used[i] = true;       // 做出选择
+            path.add(nums[i]);    // 记录路径
+            backtrackPermute(nums, used); // 递归深入
+            path.remove(path.size() - 1); // 撤销选择（核心回溯操作）
+            used[i] = false;      // 恢复状态
+        }
+    }
 
+    // ==================== 2. 子集 ====================
+    public static void subsets(int[] nums) {
+        backtrackSubset(nums, 0);
+    }
 
+    // 子集回溯核心
+    private static void backtrackSubset(int[] nums, int start) {
+        // 终止条件：无显式终止，所有路径都是有效子集
+        result.add(new ArrayList<>(path));
+        // 从start遍历，避免重复子集
+        for (int i = start; i < nums.length; i++) {
+            path.add(nums[i]);
+            backtrackSubset(nums, i + 1);
+            path.remove(path.size() - 1); // 回溯
+        }
+    }
+
+    // ==================== 3. 组合（n个数选k个）====================
+    public static void combine(int n, int k) {
+        backtrackCombine(n, k, 1);
+    }
+
+    // 组合回溯核心（带剪枝优化）
+    private static void backtrackCombine(int n, int k, int start) {
+        // 终止条件：路径长度=k，生成有效组合
+        if (path.size() == k) {
+            result.add(new ArrayList<>(path));
+            return;
+        }
+        // 剪枝：提前结束循环，减少无效搜索
+        for (int i = start; i <= n - (k - path.size()) + 1; i++) {
+            path.add(i);
+            backtrackCombine(n, k, i + 1);
+            path.remove(path.size() - 1); // 回溯
+        }
+    }
+
+    // 重置数据（多次调用时清空）
+    private static void reset() {
+        result.clear();
+        path.clear();
+    }
+
+    // 测试主方法
+    public static void main(String[] args) {
+        int[] nums = {1, 2, 3};
+
+        System.out.println("=== 数组 [1,2,3] 的全排列 ===");
+        permute(nums);
+        System.out.println(result);
+        reset();
+
+        System.out.println("\n=== 数组 [1,2,3] 的所有子集 ===");
+        subsets(nums);
+        System.out.println(result);
+        reset();
+
+        System.out.println("\n=== 从数字1-3中选2个的组合 ===");
+        combine(3, 2);
+        System.out.println(result);
+    }
+}
+```
+
+1. 全局变量`path`负责**记录当前路径**，`result`负责存储所有有效解
+2. 每个回溯方法都遵循固定模板：`做出选择 → 递归 → 撤销选择（回溯）`
+3. 包含**终止条件**判断、**剪枝优化**等核心操作
+4. 重置方法`reset()`用于多次调用回溯场景时清空数据
+5. 主方法直接测试三个最常用的回溯案例，运行后可直观看到结果
+1. 回溯的核心是**递归+回退**，本质是暴力枚举所有可能解
+2. 固定模板：选择→递归→撤销选择，是编写回溯代码的通用思路
+3. 全排列、子集、组合是回溯算法的基础应用，掌握后可快速解决分割、棋盘等复杂回溯问题
+
+### [46. 全排列](https://leetcode.cn/problems/permutations/)
+
+1. 题目描述
+给定一个不含重复数字的数组 nums ，返回其所有可能的全排列 。你可以按任意顺序返回答案。
+示例 1：
+输入：nums = [1,2,3]
+输出：[[1,2,3],[1,3,2],[2,1,3],[2,3,1],[3,1,2],[3,2,1]]
+示例 2：
+输入：nums = [0,1]
+输出：[[0,1],[1,0]]
+示例 3：
+输入：nums = [1]
+输出：[[1]]
+提示：
+1 <= nums.length <= 6
+-10 <= nums[i] <= 10
+nums 中的所有整数 互不相同
+
+2. 解法一：回溯法
+- 算法思想：基于深度优先搜索的回溯思想，使用标记数组记录数组元素是否被使用，依次选取未使用的数字加入当前排列组合，当当前排列长度与原数组长度一致时，将其加入结果集；之后进行回溯操作，撤销上一步的选择，继续遍历剩余未使用的数字，最终枚举所有合法的全排列。
+- Java代码：
+```java
+import java.util.ArrayList;
+import java.util.List;
+
+public class Permutations {
+    // 存储最终的全排列结果
+    List<List<Integer>> res = new ArrayList<>();
+    // 存储当前遍历的排列
+    List<Integer> path = new ArrayList<>();
+
+    public List<List<Integer>> permute(int[] nums) {
+        // 标记数组：记录对应位置的数字是否已被使用
+        boolean[] used = new boolean[nums.length];
+        backtrack(nums, used);
+        return res;
+    }
+
+    // 回溯核心方法
+    private void backtrack(int[] nums, boolean[] used) {
+        // 递归终止条件：当前排列长度等于数组长度，说明找到一个全排列
+        if (path.size() == nums.length) {
+            res.add(new ArrayList<>(path));
+            return;
+        }
+        // 遍历数组中的每个数字
+        for (int i = 0; i < nums.length; i++) {
+            // 如果当前数字已被使用，跳过
+            if (used[i]) {
+                continue;
+            }
+            // 选择当前数字
+            used[i] = true;
+            path.add(nums[i]);
+            // 递归深入
+            backtrack(nums, used);
+            // 回溯：撤销选择
+            path.remove(path.size() - 1);
+            used[i] = false;
+        }
+    }
+
+    // 测试
+    public static void main(String[] args) {
+        Permutations solution = new Permutations();
+        int[] nums = {1,2,3};
+        System.out.println(solution.permute(nums));
+    }
+}
+```
+
+3. 解法二：递归交换法
+- 算法思想：通过递归交换数组元素的位置实现全排列，固定数组的第k位元素，递归处理k+1到末尾的元素；当递归到数组末尾时，记录当前数组的排列；回溯时将元素交换回原位置，遍历所有元素交换组合，无需额外使用标记数组，空间效率更高。
+- Java代码：
+```java
+import java.util.ArrayList;
+import java.util.List;
+
+public class PermutationsSwap {
+    // 存储最终结果
+    List<List<Integer>> res = new ArrayList<>();
+
+    public List<List<Integer>> permute(int[] nums) {
+        // 从第0位开始递归交换
+        backtrack(nums, 0);
+        return res;
+    }
+
+    // 递归交换核心方法
+    private void backtrack(int[] nums, int start) {
+        // 递归终止条件：起始索引到达数组末尾，记录当前排列
+        if (start == nums.length) {
+            List<Integer> path = new ArrayList<>();
+            for (int num : nums) {
+                path.add(num);
+            }
+            res.add(path);
+            return;
+        }
+        // 遍历从start开始的所有元素，与start位置交换
+        for (int i = start; i < nums.length; i++) {
+            // 交换元素
+            swap(nums, start, i);
+            // 递归处理下一个位置
+            backtrack(nums, start + 1);
+            // 回溯：交换回原位置
+            swap(nums, start, i);
+        }
+    }
+
+    // 交换数组中两个位置的元素
+    private void swap(int[] nums, int i, int j) {
+        int temp = nums[i];
+        nums[i] = nums[j];
+        nums[j] = temp;
+    }
+
+    // 测试
+    public static void main(String[] args) {
+        PermutationsSwap solution = new PermutationsSwap();
+        int[] nums = {1,2,3};
+        System.out.println(solution.permute(nums));
+    }
+}
+```
+
+### [78. 子集](https://leetcode.cn/problems/subsets/)
+
+1. 题目描述
+给你一个整数数组 nums ，数组中的元素互不相同。返回该数组所有可能的子集（幂集）。解集不能包含重复的子集，你可以按任意顺序返回解集。
+示例 1：输入：nums = [1,2,3]，输出：[[],[1],[2],[1,2],[3],[1,3],[2,3],[1,2,3]]
+示例 2：输入：nums = [0]，输出：[[],[0]]
+提示：1 <= nums.length <= 10，-10 <= nums[i] <= 10，nums 中的所有元素互不相同
+2. 解法一：回溯法
+- 算法思想：子集问题是经典的回溯算法应用场景，核心逻辑为对数组中的每个元素做两种选择（选取该元素、不选取该元素），通过递归遍历数组所有元素，当遍历到数组末尾时，将当前构建的子集加入结果集；数组元素无重复，因此无需额外去重操作，直接回溯即可。
+- Java代码：
+```java
+import java.util.ArrayList;
+import java.util.List;
+
+public class Subsets {
+    // 存储最终结果
+    List<List<Integer>> res = new ArrayList<>();
+    // 存储当前子集
+    List<Integer> path = new ArrayList<>();
+
+    public List<List<Integer>> subsets(int[] nums) {
+        backtrack(nums, 0);
+        return res;
+    }
+
+    // 回溯函数，start表示当前遍历的起始索引
+    private void backtrack(int[] nums, int start) {
+        // 将当前子集加入结果集（每一步的路径都是一个有效子集）
+        res.add(new ArrayList<>(path));
+        // 遍历数组，从start开始避免重复子集
+        for (int i = start; i < nums.length; i++) {
+            // 选择当前元素
+            path.add(nums[i]);
+            // 递归遍历下一个元素
+            backtrack(nums, i + 1);
+            // 回溯，撤销选择
+            path.remove(path.size() - 1);
+        }
+    }
+}
+```
+3. 解法二：迭代法
+- 算法思想：从空集开始初始化结果集，依次遍历数组中的每个元素，将当前元素添加到已有的所有子集中，生成新的子集并合并到结果集中，逐步扩充得到所有子集。
+- Java代码：
+```java
+import java.util.ArrayList;
+import java.util.List;
+
+public class Subsets {
+    public List<List<Integer>> subsets(int[] nums) {
+        // 初始化结果集，默认包含空集
+        List<List<Integer>> res = new ArrayList<>();
+        res.add(new ArrayList<>());
+
+        // 遍历数组中的每个元素
+        for (int num : nums) {
+            // 获取当前结果集的大小
+            int size = res.size();
+            // 遍历已有子集，添加当前元素生成新子集
+            for (int i = 0; i < size; i++) {
+                List<Integer> newSubset = new ArrayList<>(res.get(i));
+                newSubset.add(num);
+                res.add(newSubset);
+            }
+        }
+        return res;
+    }
+}
+```
+4. 解法三：位运算
+- 算法思想：数组长度为n时，子集总数量为2ⁿ，每个子集可以对应一个n位的二进制数，二进制位为1表示选取对应位置的元素，为0表示不选取；遍历0到2ⁿ-1的所有数字，根据二进制位的状态构建对应子集。
+- Java代码：
+```java
+import java.util.ArrayList;
+import java.util.List;
+
+public class Subsets {
+    public List<List<Integer>> subsets(int[] nums) {
+        List<List<Integer>> res = new ArrayList<>();
+        int n = nums.length;
+        // 总子集数：2^n
+        int total = 1 << n;
+
+        // 遍历所有二进制数
+        for (int mask = 0; mask < total; mask++) {
+            List<Integer> subset = new ArrayList<>();
+            // 遍历每一位，判断是否选取元素
+            for (int i = 0; i < n; i++) {
+                // 判断第i位是否为1
+                if ((mask & (1 << i)) != 0) {
+                    subset.add(nums[i]);
+                }
+            }
+            res.add(subset);
+        }
+        return res;
+    }
+}
+```
+
+### [17. 电话号码的字母组合](https://leetcode.cn/problems/letter-combinations-of-a-phone-number/)
+
+1. 题目描述
+给定一个仅包含数字 2-9 的字符串，返回所有它能表示的字母组合，答案可以按任意顺序返回。数字到字母的映射与电话按键相同，数字1不对应任何字母。
+示例 1：输入：digits = "23"，输出：["ad","ae","af","bd","be","bf","cd","ce","cf"]
+示例 2：输入：digits = "2"，输出：["a","b","c"]
+提示：1 <= digits.length <= 4，digits[i] 是范围 ['2', '9'] 的一个数字。
+
+2. 解法一：回溯法
+- 算法思想：基于回溯的深度优先搜索思路，先构建数字与字母的映射关系，通过递归遍历输入数字的每一位，将当前数字对应的每一个字母拼接到临时字符串中；当临时字符串的长度与输入数字的长度相等时，说明完成了一个有效组合，将其加入结果集；随后回溯，移除最后拼接的字母，继续尝试当前数字的其他字母，直至遍历完所有可能的组合。
+- 代码：
+```java
+import java.util.ArrayList;
+import java.util.List;
+
+public class LetterCombinations {
+    // 数字到字母的映射，数组索引对应电话数字，0和1无对应字母
+    private final String[] letterMap = {"", "", "abc", "def", "ghi", "jkl", "mno", "pqrs", "tuv", "wxyz"};
+    // 存储最终的字母组合结果
+    private List<String> result = new ArrayList<>();
+
+    public List<String> letterCombinations(String digits) {
+        // 边界处理：输入为空直接返回空集合
+        if (digits == null || digits.length() == 0) {
+            return result;
+        }
+        // 启动回溯递归，初始索引为0，初始拼接字符串为空
+        backtrack(digits, 0, new StringBuilder());
+        return result;
+    }
+
+    /**
+     * 回溯核心方法
+     * @param digits 输入的数字字符串
+     * @param index 当前遍历到的数字索引
+     * @param sb 用于拼接字母的可变字符串
+     */
+    private void backtrack(String digits, int index, StringBuilder sb) {
+        // 递归终止条件：拼接完成，加入结果集
+        if (index == digits.length()) {
+            result.add(sb.toString());
+            return;
+        }
+        // 获取当前数字对应的所有字母
+        char currentNum = digits.charAt(index);
+        String letters = letterMap[currentNum - '0'];
+        // 遍历当前数字的每一个字母，进行拼接与回溯
+        for (int i = 0; i < letters.length(); i++) {
+            // 拼接当前字母
+            sb.append(letters.charAt(i));
+            // 递归处理下一个数字
+            backtrack(digits, index + 1, sb);
+            // 回溯：撤销最后一个拼接的字母
+            sb.deleteCharAt(sb.length() - 1);
+        }
+    }
+
+    // 测试方法
+    public static void main(String[] args) {
+        LetterCombinations solution = new LetterCombinations();
+        System.out.println(solution.letterCombinations("23"));
+    }
+}
+```
+
+3. 解法二：广度优先搜索（BFS）
+- 算法思想：借助队列实现广度优先遍历，初始队列为空字符串；依次遍历输入的每一个数字，取出队列中当前所有的字符串，将每个字符串与当前数字对应的所有字母拼接，生成新字符串并入队；遍历完所有数字后，队列中的所有元素即为最终的字母组合。
+- 代码：
+```java
+import java.util.ArrayList;
+import java.util.LinkedList;
+import java.util.List;
+import java.utilQueue;
+
+public class LetterCombinationsBFS {
+    // 数字到字母的映射关系
+    private final String[] letterMap = {"", "", "abc", "def", "ghi", "jkl", "mno", "pqrs", "tuv", "wxyz"};
+
+    public List<String> letterCombinations(String digits) {
+        List<String> result = new ArrayList<>();
+        // 边界处理
+        if (digits == null || digits.length() == 0) {
+            return result;
+        }
+        // 初始化队列，存入空字符串作为起始
+        Queue<String> queue = new LinkedList<>();
+        queue.offer("");
+
+        // 遍历每一个输入的数字
+        for (int i = 0; i < digits.length(); i++) {
+            String letters = letterMap[digits.charAt(i) - '0'];
+            // 获取当前队列的长度，固定遍历次数
+            int queueSize = queue.size();
+            // 遍历当前队列的所有元素
+            for (int j = 0; j < queueSize; j++) {
+                String tempStr = queue.poll();
+                // 拼接当前数字的所有字母，并入队
+                for (char c : letters.toCharArray()) {
+                    queue.offer(tempStr + c);
+                }
+            }
+        }
+        // 将队列中的结果转为集合返回
+        result.addAll(queue);
+        return result;
+    }
+
+    // 测试方法
+    public static void main(String[] args) {
+        LetterCombinationsBFS solution = new LetterCombinationsBFS();
+        System.out.println(solution.letterCombinations("23"));
+    }
+}
+```
+
+### [39. 组合总和](https://leetcode.cn/problems/combination-sum/)
+
+1. 题目描述
+给你一个 无重复元素 的整数数组 candidates 和一个目标整数 target ，找出 candidates 中可以使数字和为目标数 target 的 所有 不同组合 ，并以列表形式返回。你可以按 任意顺序 返回这些组合。
+candidates 中的 同一个 数字可以 无限制重复被选取 。如果至少一个数字的被选数量不同，则两种组合是不同的。
+对于给定的输入，保证和为 target 的不同组合数少于 150 个。
+
+示例 1：
+输入：candidates = [2,3,6,7], target = 7
+输出：[[2,2,3],[7]]
+解释：2 和 3 可以形成一组候选，2 + 2 + 3 = 7 。注意 2 可以使用多次。7 也是一个候选， 7 = 7 。仅有这两种组合。
+
+示例 2：
+输入: candidates = [2,3,5], target = 8
+输出: [[2,2,2,2],[2,3,3],[3,5]]
+
+示例 3：
+输入：candidates = [2], target = 1
+输出：[]
+
+提示：
+1 <= candidates.length <= 30
+2 <= candidates[i] <= 40
+candidates 的所有元素 互不相同
+1 <= target <= 40
+
+2. 算法思想+代码
+- 解法一：回溯法（深度优先搜索）
+  算法思想：本题是可重复选取元素的组合枚举问题，采用回溯算法（深度优先搜索）求解。核心逻辑为递归遍历候选数组，将元素加入当前组合并扣减剩余目标值；当剩余值为0时，记录当前有效组合；若当前元素大于剩余值则剪枝，终止当前分支递归。通过固定递归的起始索引，不回头遍历之前的元素，避免生成重复组合，同时允许当前元素重复选取。
+  Java代码：
+```java
+import java.util.ArrayList;
+import java.util.List;
+
+public class Solution {
+    // 存储最终的所有组合结果
+    private List<List<Integer>> result = new ArrayList<>();
+    // 存储当前递归路径中的组合元素
+    private List<Integer> path = new ArrayList<>();
+
+    public List<List<Integer>> combinationSum(int[] candidates, int target) {
+        // 处理空数组边界情况
+        if (candidates == null || candidates.length == 0) {
+            return result;
+        }
+        // 启动回溯递归，起始索引为0
+        backTracking(candidates, target, 0);
+        return result;
+    }
+
+    /**
+     * 回溯递归方法
+     * @param candidates 候选数组
+     * @param remain 剩余需要凑齐的数值
+     * @param start 遍历起始索引（去重核心）
+     */
+    private void backTracking(int[] candidates, int remain, int start) {
+        // 递归终止条件：剩余值为0，找到有效组合
+        if (remain == 0) {
+            result.add(new ArrayList<>(path));
+            return;
+        }
+
+        // 从start索引开始遍历，避免重复组合
+        for (int i = start; i < candidates.length; i++) {
+            // 剪枝操作：当前元素大于剩余值，无需继续递归
+            if (candidates[i] > remain) {
+                continue;
+            }
+            // 选择当前元素，加入路径
+            path.add(candidates[i]);
+            // 递归：可重复选取，因此起始索引仍为i
+            backTracking(candidates, remain - candidates[i], i);
+            // 回溯：撤销最后一次选择，恢复路径
+            path.remove(path.size() - 1);
+        }
+    }
+
+    // 测试示例
+    public static void main(String[] args) {
+        Solution solution = new Solution();
+        // 测试示例1
+        int[] arr1 = {2,3,6,7};
+        System.out.println(solution.combinationSum(arr1, 7));
+        // 测试示例2
+        int[] arr2 = {2,3,5};
+        System.out.println(solution.combinationSum(arr2, 8));
+        // 测试示例3
+        int[] arr3 = {2};
+        System.out.println(solution.combinationSum(arr3, 1));
+    }
+}
+```
+
+### [22. 括号生成](https://leetcode.cn/problems/generate-parentheses/)
+
+1. 题目描述：数字 n 代表生成括号的对数，请你设计一个函数，用于能够生成所有可能的并且有效的括号组合。示例 1：输入：n = 3，输出：["((()))","(()())","(())()","()(())","()()()"]；示例 2：输入：n = 1，输出：["()"]。提示：1 <= n <= 8。
+2. 解法一：回溯法（深度优先搜索）
+- 算法思想：通过递归回溯的方式逐位构建括号字符串，为保证括号有效性，遵循两个核心规则：左括号的使用数量小于n时，可添加左括号；右括号的使用数量小于左括号数量时，可添加右括号。当构建的字符串长度等于2n时，即为有效括号组合，将其加入结果集合。
+- Java代码
+```java
+import java.util.ArrayList;
+import java.util.List;
+
+public class GenerateParentheses {
+    // 存储最终的有效括号组合
+    private List<String> result = new ArrayList<>();
+
+    public List<String> generateParenthesis(int n) {
+        // 开启回溯，初始左括号数、右括号数均为0，拼接字符串为空
+        backtrack(n, 0, 0, "");
+        return result;
+    }
+
+    /**
+     * 回溯核心方法
+     * @param n 目标括号对数
+     * @param leftCount 已使用的左括号数量
+     * @param rightCount 已使用的右括号数量
+     * @param path 当前拼接的括号字符串
+     */
+    private void backtrack(int n, int leftCount, int rightCount, String path) {
+        // 终止条件：字符串长度达到2n，说明生成有效组合
+        if (path.length() == 2 * n) {
+            result.add(path);
+            return;
+        }
+        // 规则1：左括号未用完，可添加左括号
+        if (leftCount < n) {
+            backtrack(n, leftCount + 1, rightCount, path + "(");
+        }
+        // 规则2：右括号数量小于左括号，可添加右括号
+        if (rightCount < leftCount) {
+            backtrack(n, leftCount, rightCount + 1, path + ")");
+        }
+    }
+
+    // 测试方法
+    public static void main(String[] args) {
+        GenerateParentheses solution = new GenerateParentheses();
+        System.out.println(solution.generateParenthesis(3));
+        System.out.println(solution.generateParenthesis(1));
+    }
+}
+```
+3. 解法二：动态规划法
+- 算法思想：定义dp[i]为i对有效括号的所有组合，初始状态dp[0]为空列表。状态转移逻辑：对于i对括号，可拆分为「( + dp[j]的组合 + ) + dp[i-j-1]的组合」，其中j的取值范围为0到i-1，遍历所有拆分方式，将拼接后的字符串加入dp[i]，最终dp[n]即为n对括号的所有有效组合。
+- Java代码
+```java
+import java.util.ArrayList;
+import java.util.List;
+
+public class GenerateParenthesesDP {
+    public List<String> generateParenthesis(int n) {
+        // 动态规划数组，dp.get(i)存储i对括号的有效组合
+        List<List<String>> dp = new ArrayList<>();
+        // 初始化：0对括号的组合为空字符串
+        dp.add(new ArrayList<>());
+        dp.get(0).add("");
+
+        // 依次计算1~n对括号的有效组合
+        for (int i = 1; i <= n; i++) {
+            dp.add(new ArrayList<>());
+            // 遍历所有拆分方式 j ∈ [0, i-1]
+            for (int j = 0; j < i; j++) {
+                // 遍历dp[j]的所有组合
+                for (String left : dp.get(j)) {
+                    // 遍历dp[i-j-1]的所有组合
+                    for (String right : dp.get(i - j - 1)) {
+                        // 拼接生成新的有效组合
+                        dp.get(i).add("(" + left + ")" + right);
+                    }
+                }
+            }
+        }
+        // 返回n对括号的结果集
+        return dp.get(n);
+    }
+
+    // 测试方法
+    public static void main(String[] args) {
+        GenerateParenthesesDP solution = new GenerateParenthesesDP();
+        System.out.println(solution.generateParenthesis(3));
+        System.out.println(solution.generateParenthesis(1));
+    }
+}
+```
+
+### [79. 单词搜索](https://leetcode.cn/problems/word-search/)
+
+1. 题目描述
+给定一个 m x n 二维字符网格 board 和一个字符串单词 word 。如果 word 存在于网格中，返回 true ；否则，返回 false 。单词必须按照字母顺序，通过相邻的单元格内的字母构成，其中“相邻”单元格是那些水平相邻或垂直相邻的单元格。同一个单元格内的字母不允许被重复使用。
+示例 1：输入：board = [['A','B','C','E'],['S','F','C','S'],['A','D','E','E']], word = "ABCCED" 输出：true
+示例 2：输入：board = [['A','B','C','E'],['S','F','C','S'],['A','D','E','E']], word = "SEE" 输出：true
+示例 3：输入：board = [['A','B','C','E'],['S','F','C','S'],['A','D','E','E']], word = "ABCB" 输出：false
+提示：m == board.length，n = board[i].length，1 <= m, n <= 6，1 <= word.length <= 15，board 和 word 仅由大小写英文字母组成
+进阶：可以使用搜索剪枝的技术优化解决方案，在网格更大时更快解决问题
+
+2. 解法一：深度优先搜索（DFS）+ 回溯算法
+- 算法思想：该问题属于二维网格的路径查找问题，核心采用深度优先搜索遍历所有可能的路径，结合回溯法处理单元格的重复使用问题。遍历网格中的每一个单元格作为起始点，若当前单元格字符与单词首字符匹配，则向上下左右四个相邻方向递归搜索；递归过程中标记当前单元格为已访问，避免重复使用；当递归匹配到单词的最后一个字符时，说明找到有效路径，返回true；若某一方向搜索失败，则回溯恢复单元格的原始状态，继续探索其他方向；若所有起始点和路径都遍历完毕仍未匹配成功，返回false。
+- Java代码
+```java
+public class Solution {
+    // 定义上下左右四个方向的偏移量
+    private int[][] dirs = {{-1, 0}, {1, 0}, {0, -1}, {0, 1}};
+    private int rows, cols;
+
+    public boolean exist(char[][] board, String word) {
+        rows = board.length;
+        cols = board[0].length;
+        // 遍历每一个单元格作为起始搜索点
+        for (int i = 0; i < rows; i++) {
+            for (int j = 0; j < cols; j++) {
+                if (dfs(board, word, i, j, 0)) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    /**
+     * DFS递归搜索
+     * @param board 字符网格
+     * @param word 目标单词
+     * @param i 当前行坐标
+     * @param j 当前列坐标
+     * @param index 当前匹配到单词的第几个字符
+     * @return 是否匹配成功
+     */
+    private boolean dfs(char[][] board, String word, int i, int j, int index) {
+        // 递归终止条件：匹配完所有字符
+        if (index == word.length()) {
+            return true;
+        }
+        // 越界判断 或 当前字符不匹配 直接返回false
+        if (i < 0 || i >= rows || j < 0 || j >= cols || board[i][j] != word.charAt(index)) {
+            return false;
+        }
+        // 临时保存当前字符，标记为已访问（用特殊字符替代）
+        char temp = board[i][j];
+        board[i][j] = '#';
+        // 向四个方向递归搜索
+        for (int[] dir : dirs) {
+            int newRow = i + dir[0];
+            int newCol = j + dir[1];
+            if (dfs(board, word, newRow, newCol, index + 1)) {
+                return true;
+            }
+        }
+        // 回溯：恢复当前单元格的原始字符
+        board[i][j] = temp;
+        return false;
+    }
+}
+```
+
+3. 解法二：深度优先搜索（DFS）+ 回溯 + 剪枝优化
+- 算法思想：在基础DFS+回溯的基础上增加剪枝策略，提前终止无效的搜索流程，优化执行效率。核心剪枝点：1. 若单词长度大于网格总字符数，直接返回false，不可能匹配；2. 递归过程中字符不匹配、坐标越界时立即返回，不进行后续操作；3. 找到有效路径后直接逐层返回true，终止所有剩余搜索。其余逻辑与基础解法一致，通过标记已访问单元格避免重复使用，递归探索四个方向，搜索失败后回溯恢复状态。
+- Java代码
+```java
+public class Solution {
+    // 四个搜索方向
+    private int[][] dirs = {{-1, 0}, {1, 0}, {0, -1}, {0, 1}};
+    private int rows, cols;
+    private char[] words;
+
+    public boolean exist(char[][] board, String word) {
+        rows = board.length;
+        cols = board[0].length;
+        words = word.toCharArray();
+        // 剪枝1：单词长度超过网格总字符数，直接返回false
+        if (words.length > rows * cols) {
+            return false;
+        }
+        // 遍历所有起始点
+        for (int i = 0; i < rows; i++) {
+            for (int j = 0; j < cols; j++) {
+                if (dfs(board, i, j, 0)) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    // 深度优先搜索+回溯
+    private boolean dfs(char[][] board, int i, int j, int index) {
+        // 匹配完成
+        if (index == words.length) {
+            return true;
+        }
+        // 剪枝2：越界或字符不匹配，直接终止搜索
+        if (i < 0 || i >= rows || j < 0 || j >= cols || board[i][j] != words[index]) {
+            return false;
+        }
+        // 标记已访问
+        char temp = board[i][j];
+        board[i][j] = '#';
+        // 遍历四个方向
+        for (int[] dir : dirs) {
+            if (dfs(board, i + dir[0], j + dir[1], index + 1)) {
+                return true;
+            }
+        }
+        // 回溯恢复
+        board[i][j] = temp;
+        return false;
+    }
+}
+```
 
 
 
@@ -6031,3 +7636,19 @@ public class Solution {
 
 
 # 结尾
+
+哈希：整理算法内容，使用java编写一个demo演示常用操作，需要包含以下内容，注意不使用分级标题（可以使用有序列表和无序列表）
+
+1.定义
+
+2.常见操作
+
+
+
+整理算法内容，使用java，需要包含以下内容，注意不使用分级标题（可以使用有序列表和无序列表），不要写总结
+
+1.题目描述
+
+2.算法思想+代码
+
+（如果有多种解法分开写）
