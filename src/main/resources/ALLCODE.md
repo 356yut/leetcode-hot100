@@ -8360,9 +8360,150 @@ class Solution {
 
 ### [153. 寻找旋转排序数组中的最小值](https://leetcode.cn/problems/find-minimum-in-rotated-sorted-array/)
 
+1. 题目描述
+已知一个长度为n的升序排列数组，经由1到n次旋转后得到输入数组，旋转一次的结果为数组最后一个元素移动到首位，其余元素依次后移一位。给定一个元素值互不相同的旋转后升序数组，需要设计时间复杂度为O(log n)的算法，找出并返回数组中的最小元素。
+示例 1：输入：nums = [3,4,5,1,2]，输出：1
+示例 2：输入：nums = [4,5,6,7,0,1,2]，输出：0
+示例 3：输入：nums = [11,13,15,17]，输出：11
+提示：n == nums.length，1 <= n <= 5000，-5000 <= nums[i] <= 5000，nums中的所有整数互不相同，nums原来是一个升序排序的数组，并进行了1至n次旋转
+2. 算法思想+代码
+解法一：二分查找法
+算法思想：旋转后的排序数组会被分割为两个升序子数组，最小元素就是两个子数组的分界点。基于二分查找思想缩小查找范围，比较中间元素与右边界元素的大小关系：
+- 当中点元素小于右边界元素时，说明最小值在左半区间（包含中点）
+- 当中点元素大于右边界元素时，说明最小值在右半区间（不包含中点）
+循环执行直至左右指针重合，此时指针指向的元素即为最小值，该算法时间复杂度为O(log n)，空间复杂度为O(1)
+```java
+class Solution {
+    public int findMin(int[] nums) {
+        // 定义左右指针
+        int left = 0;
+        int right = nums.length - 1;
+        // 二分查找循环条件
+        while (left < right) {
+            // 计算中间索引，避免溢出
+            int mid = left + (right - left) / 2;
+            // 中间值小于右边界值，最小值在左区间
+            if (nums[mid] < nums[right]) {
+                right = mid;
+            } else {
+                // 中间值大于右边界值，最小值在右区间
+                left = mid + 1;
+            }
+        }
+        // 左右指针重合，返回最小值
+        return nums[left];
+    }
+}
+```
+解法二：暴力遍历法
+算法思想：直接遍历整个数组，逐个比较元素大小，记录遍历过程中的最小元素，该算法逻辑简单，但时间复杂度为O(n)，不满足题目O(log n)的时间要求，仅作为基础解法参考
+```java
+class Solution {
+    public int findMin(int[] nums) {
+        // 初始化最小值为数组第一个元素
+        int min = nums[0];
+        // 遍历数组所有元素
+        for (int num : nums) {
+            // 更新最小值
+            if (num < min) {
+                min = num;
+            }
+        }
+        return min;
+    }
+}
+```
 
+### [4. 寻找两个正序数组的中位数](https://leetcode.cn/problems/median-of-two-sorted-arrays/)
 
-
+1. 题目描述：给定两个大小分别为 m 和 n 的正序（从小到大）数组 nums1 和 nums2，请你找出并返回这两个正序数组的中位数。算法的时间复杂度应该为 O(log (m+n))。示例 1：输入：nums1 = [1,3], nums2 = [2]，输出：2.00000，解释：合并数组 = [1,2,3] ，中位数 2。示例 2：输入：nums1 = [1,2], nums2 = [3,4]，输出：2.50000，解释：合并数组 = [1,2,3,4] ，中位数 (2 + 3) / 2 = 2.5。提示：nums1.length == m，nums2.length == n，0 <= m <= 1000，0 <= n <= 1000，1 <= m + n <= 2000，-106 <= nums1[i], nums2[i] <= 106。
+2. 算法思想+代码
+- 解法一：暴力合并法
+  算法思想：将两个有序数组通过双指针遍历合并为一个新的有序数组，根据合并后数组长度的奇偶性计算中位数；数组长度为奇数时取中间元素，偶数时取中间两个元素的平均值。该方法时间复杂度为O(m+n)，空间复杂度为O(m+n)，不满足题目时间复杂度要求，仅作为基础解法参考。
+  Java代码：
+  ```java
+  class Solution {
+      public double findMedianSortedArrays(int[] nums1, int[] nums2) {
+          int m = nums1.length;
+          int n = nums2.length;
+          // 定义合并后的数组
+          int[] merge = new int[m + n];
+          int index = 0;
+          int i = 0, j = 0;
+          // 双指针合并两个有序数组
+          while (i < m && j < n) {
+              if (nums1[i] < nums2[j]) {
+                  merge[index++] = nums1[i++];
+              } else {
+                  merge[index++] = nums2[j++];
+              }
+          }
+          // 遍历nums1剩余元素
+          while (i < m) {
+              merge[index++] = nums1[i++];
+          }
+          // 遍历nums2剩余元素
+          while (j < n) {
+              merge[index++] = nums2[j++];
+          }
+          // 计算中位数
+          int total = m + n;
+          if (total % 2 == 1) {
+              return merge[total / 2];
+          } else {
+              return (merge[total / 2 - 1] + merge[total / 2]) / 2.0;
+          }
+      }
+  }
+  ```
+- 解法二：二分查找法（最优解，满足题目时间复杂度要求）
+  算法思想：不合并数组，通过二分查找确定两个数组的分割位置，将数组分为左右两部分，保证左半部分所有元素小于等于右半部分所有元素；总长度为奇数时，左半部分的最大值即为中位数，偶数时取左半部分最大值和右半部分最小值的平均值。该方法时间复杂度为O(log(min(m,n)))，空间复杂度为O(1)，符合题目O(log(m+n))的要求。
+  Java代码：
+  ```java
+  class Solution {
+      public double findMedianSortedArrays(int[] nums1, int[] nums2) {
+          // 确保nums1为较短数组，减少二分查找次数
+          if (nums1.length > nums2.length) {
+              return findMedianSortedArrays(nums2, nums1);
+          }
+          int m = nums1.length;
+          int n = nums2.length;
+          int left = 0;
+          int right = m;
+          // 左半部分总元素数量
+          int totalLeft = (m + n + 1) / 2;
+  
+          while (left <= right) {
+              // nums1的分割点
+              int i = left + (right - left) / 2;
+              // nums2的分割点
+              int j = totalLeft - i;
+  
+              // 处理边界：分割点在数组开头/结尾时，赋值极值避免越界
+              int left1Max = i == 0 ? Integer.MIN_VALUE : nums1[i - 1];
+              int right1Min = i == m ? Integer.MAX_VALUE : nums1[i];
+              int left2Max = j == 0 ? Integer.MIN_VALUE : nums2[j - 1];
+              int right2Min = j == n ? Integer.MAX_VALUE : nums2[j];
+  
+              // 满足分割条件，计算中位数
+              if (left1Max <= right2Min && left2Max <= right1Min) {
+                  if ((m + n) % 2 == 1) {
+                      return Math.max(left1Max, left2Max);
+                  } else {
+                      return (Math.max(left1Max, left2Max) + Math.min(right1Min, right2Min)) / 2.0;
+                  }
+              } else if (left1Max > right2Min) {
+                  // nums1分割点左移
+                  right = i - 1;
+              } else {
+                  // nums1分割点右移
+                  left = i + 1;
+              }
+          }
+          return 0.0;
+      }
+  }
+  ```
 
 
 
