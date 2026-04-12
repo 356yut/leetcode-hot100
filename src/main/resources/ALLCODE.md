@@ -7627,6 +7627,749 @@ public class Solution {
 }
 ```
 
+### [131. 分割回文串](https://leetcode.cn/problems/palindrome-partitioning/)
+
+1. 题目描述
+给你一个字符串 s，请你将 s 分割成一些子串，使每个子串都是回文串。返回 s 所有可能的分割方案。
+示例 1：输入：s = "aab" 输出：[["a","a","b"],["aa","b"]]
+示例 2：输入：s = "a" 输出：[["a"]]
+提示：1 <= s.length <= 16，s 仅由小写英文字母组成
+
+- 解法一：回溯法（基础版）
+  - 算法思想：该问题属于组合分割类问题，采用回溯（深度优先搜索）解决。从字符串的起始索引开始，遍历所有可能的结束索引，截取子串并通过双指针法判断是否为回文；若为回文，将其加入当前分割路径，递归处理剩余子串；当索引到达字符串末尾时，将路径加入结果集；递归回溯时移除最后加入的子串，继续探索其他分割可能。
+  - 代码
+```java
+import java.util.ArrayList;
+import java.util.List;
+
+public class Solution {
+    // 存储最终所有分割方案
+    List<List<String>> res = new ArrayList<>();
+    // 存储当前分割的临时路径
+    List<String> path = new ArrayList<>();
+
+    public List<List<String>> partition(String s) {
+        backtrack(s, 0);
+        return res;
+    }
+
+    // 回溯核心方法，start为当前分割的起始索引
+    private void backtrack(String s, int start) {
+        // 终止条件：起始索引等于字符串长度，完成一次有效分割
+        if (start == s.length()) {
+            res.add(new ArrayList<>(path));
+            return;
+        }
+        // 遍历所有可能的结束位置
+        for (int i = start; i < s.length(); i++) {
+            // 判断子串是否为回文
+            if (isPalindrome(s, start, i)) {
+                path.add(s.substring(start, i + 1));
+                // 递归处理下一段子串
+                backtrack(s, i + 1);
+                // 回溯，撤销当前选择
+                path.remove(path.size() - 1);
+            }
+        }
+    }
+
+    // 双指针法判断子串s[left, right]是否为回文
+    private boolean isPalindrome(String s, int left, int right) {
+        while (left < right) {
+            if (s.charAt(left) != s.charAt(right)) {
+                return false;
+            }
+            left++;
+            right--;
+        }
+        return true;
+    }
+}
+```
+
+- 解法二：回溯+动态规划预处理（优化版）
+  - 算法思想：为避免重复判断回文子串，先通过动态规划预处理字符串，生成二维布尔数组dp，dp[i][j]表示字符串索引i到j的子串是否为回文。预处理规则：单个字符一定是回文；两个相邻字符相等则为回文；长度大于2的子串，首尾字符相等且中间子串为回文，则当前子串为回文。预处理完成后，通过回溯法分割，直接查询dp数组判断回文，提升执行效率。
+  - 代码
+```java
+import java.util.ArrayList;
+import java.util.List;
+
+public class Solution {
+    List<List<String>> res = new ArrayList<>();
+    List<String> path = new ArrayList<>();
+    boolean[][] dp; // 动态规划数组，标记回文子串
+
+    public List<List<String>> partition(String s) {
+        int n = s.length();
+        dp = new boolean[n][n];
+        // 动态规划预处理所有子串的回文状态
+        for (int i = n - 1; i >= 0; i--) {
+            for (int j = i; j < n; j++) {
+                dp[i][j] = s.charAt(i) == s.charAt(j) && (j - i <= 1 || dp[i + 1][j - 1]);
+            }
+        }
+        backtrack(s, 0);
+        return res;
+    }
+
+    // 回溯分割方法
+    private void backtrack(String s, int start) {
+        if (start == s.length()) {
+            res.add(new ArrayList<>(path));
+            return;
+        }
+        for (int i = start; i < s.length(); i++) {
+            // 直接查询预处理结果，无需重复判断
+            if (dp[start][i]) {
+                path.add(s.substring(start, i + 1));
+                backtrack(s, i + 1);
+                path.remove(path.size() - 1);
+            }
+        }
+    }
+}
+```
+
+### [51. N 皇后](https://leetcode.cn/problems/n-queens/)
+
+1. 题目描述
+按照国际象棋的规则，皇后可以攻击与之处在同一行或同一列或同一斜线上的棋子。n 皇后问题研究的是如何将 n 个皇后放置在 n×n 的棋盘上，并且使皇后彼此之间不能相互攻击。给你一个整数 n ，返回所有不同的 n 皇后问题的解决方案。每一种解法包含一个不同的 n 皇后问题的棋子放置方案，该方案中 'Q' 和 '.' 分别代表了皇后和空位。
+示例 1：输入：n = 4，输出：[[".Q..","...Q","Q...","..Q."],["..Q.","Q...","...Q",".Q.."]]，解释：4 皇后问题存在两个不同的解法。
+示例 2：输入：n = 1，输出：[["Q"]]
+提示：1 <= n <= 9
+
+2. 算法思想+代码
+- 解法一：基础回溯法（逐行放置+暴力校验）
+  算法思想：由于每行只能放置一个皇后，因此采用按行递归的回溯策略。从第一行开始，依次尝试在每一列放置皇后，放置前校验当前位置是否与已放置的皇后冲突（不在同一列、同一主对角线、同一副对角线）。若合法则标记皇后，递归处理下一行；当递归到最后一行时，说明找到一组有效解，将其存入结果集。递归返回后回溯，撤销当前皇后的放置，继续尝试下一列。
+  Java代码：
+```java
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+
+public class Solution {
+    // 存储所有合法的解法
+    List<List<String>> result = new ArrayList<>();
+
+    public List<List<String>> solveNQueens(int n) {
+        // 初始化n*n的棋盘，默认用.填充
+        char[][] board = new char[n][n];
+        for (int i = 0; i < n; i++) {
+            Arrays.fill(board[i], '.');
+        }
+        // 从第0行开始回溯
+        backtrack(board, 0);
+        return result;
+    }
+
+    // 回溯核心方法：row为当前要放置皇后的行
+    private void backtrack(char[][] board, int row) {
+        // 递归终止条件：所有行都放置完成，记录解法
+        if (row == board.length) {
+            result.add(convertBoardToList(board));
+            return;
+        }
+        int n = board[row].length;
+        // 遍历当前行的每一列
+        for (int col = 0; col < n; col++) {
+            // 判断当前位置是否可以放置皇后
+            if (isValid(board, row, col)) {
+                // 放置皇后
+                board[row][col] = 'Q';
+                // 递归处理下一行
+                backtrack(board, row + 1);
+                // 回溯：撤销当前位置的皇后
+                board[row][col] = '.';
+            }
+        }
+    }
+
+    // 校验位置(row, col)是否合法
+    private boolean isValid(char[][] board, int row, int col) {
+        int n = board.length;
+        // 检查同一列是否已有皇后
+        for (int i = 0; i < row; i++) {
+            if (board[i][col] == 'Q') {
+                return false;
+            }
+        }
+        // 检查左上对角线是否已有皇后
+        for (int i = row - 1, j = col - 1; i >= 0 && j >= 0; i--, j--) {
+            if (board[i][j] == 'Q') {
+                return false;
+            }
+        }
+        // 检查右上对角线是否已有皇后
+        for (int i = row - 1, j = col + 1; i >= 0 && j < n; i--, j++) {
+            if (board[i][j] == 'Q') {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    // 将棋盘字符数组转换为字符串列表
+    private List<String> convertBoardToList(char[][] board) {
+        List<String> solution = new ArrayList<>();
+        for (char[] row : board) {
+            solution.add(new String(row));
+        }
+        return solution;
+    }
+}
+```
+- 解法二：优化回溯法（布尔数组标记冲突+回溯）
+  算法思想：优化基础回溯的冲突校验逻辑，使用三个布尔数组分别标记已占用的列、主对角线（行-列固定，偏移n避免负数）、副对角线（行+列固定）。放置皇后时直接通过数组判断冲突，无需遍历校验，提升执行效率。整体回溯逻辑不变，按行递归放置、回溯记录有效解。
+  Java代码：
+```java
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+
+public class Solution {
+    List<List<String>> result = new ArrayList<>();
+    // 标记列是否被皇后占用
+    boolean[] usedCol;
+    // 标记主对角线（左上→右下）是否被占用
+    boolean[] usedMainDiag;
+    // 标记副对角线（右上→左下）是否被占用
+    boolean[] usedSubDiag;
+    int n;
+
+    public List<List<String>> solveNQueens(int n) {
+        this.n = n;
+        usedCol = new boolean[n];
+        // 对角线最大长度为2n
+        usedMainDiag = new boolean[2 * n];
+        usedSubDiag = new boolean[2 * n];
+        char[][] board = new char[n][n];
+        for (int i = 0; i < n; i++) {
+            Arrays.fill(board[i], '.');
+        }
+        backtrack(board, 0);
+        return result;
+    }
+
+    private void backtrack(char[][] board, int row) {
+        // 所有行放置完毕，保存解法
+        if (row == n) {
+            result.add(convertBoardToList(board));
+            return;
+        }
+        // 遍历当前行所有列
+        for (int col = 0; col < n; col++) {
+            // 主对角线索引：row-col + n 避免负数
+            int mainIdx = row - col + n;
+            // 副对角线索引：row+col
+            int subIdx = row + col;
+            // 无冲突则放置皇后
+            if (!usedCol[col] && !usedMainDiag[mainIdx] && !usedSubDiag[subIdx]) {
+                // 标记占用
+                usedCol[col] = true;
+                usedMainDiag[mainIdx] = true;
+                usedSubDiag[subIdx] = true;
+                board[row][col] = 'Q';
+                // 递归下一行
+                backtrack(board, row + 1);
+                // 回溯撤销标记
+                board[row][col] = '.';
+                usedSubDiag[subIdx] = false;
+                usedMainDiag[mainIdx] = false;
+                usedCol[col] = false;
+            }
+        }
+    }
+
+    private List<String> convertBoardToList(char[][] board) {
+        List<String> solution = new ArrayList<>();
+        for (char[] row : board) {
+            solution.add(new String(row));
+        }
+        return solution;
+    }
+}
+```
+
+## 二分查找
+
+1. 定义
+二分查找（Binary Search）又称折半查找，是专门针对**有序数据集**的高效查找算法，核心逻辑是每次将查找区间折半，通过对比中间元素与目标值的大小，快速缩小查找范围，最终定位目标元素或确认元素不存在；该算法有严格限制，仅适用于有序且支持随机访问的数据集（如有序数组），无序数据集无法使用。
+
+2. 常见操作
+- 前置要求：待查找数组必须为有序序列（默认升序），且支持通过索引直接访问元素
+- 边界初始化：定义左边界left=0（数组起始索引），右边界right=数组长度-1（数组末尾索引）
+- 中间值计算：计算当前区间的中间索引mid，推荐写法 `mid = left + (right - left) / 2`，避免`(left + right)`整数溢出问题
+- 区间收缩：对比数组[mid]与目标值target，相等则返回mid；target < 数组[mid]则收缩右边界`right=mid-1`；target > 数组[mid]则收缩左边界`left=mid+1`
+- 终止条件：left > right 时，说明目标元素不存在，返回-1
+- 实现方式：分为迭代实现（常用，无栈溢出风险）和递归实现（代码简洁，深度过大可能栈溢出）
+- 效率指标：时间复杂度最坏为O(log n)，空间复杂度迭代版O(1)、递归版O(log n)
+- 适用场景：有序静态数据集的高频查找，不适合频繁增删的动态数据集
+
+```java
+public class BinarySearchDemo {
+    // 迭代实现二分查找（最常用，推荐使用）
+    public static int binarySearchByIteration(int[] arr, int target) {
+        // 初始化左右边界
+        int left = 0;
+        int right = arr.length - 1;
+        // 循环查找，直到左边界超过右边界
+        while (left <= right) {
+            // 计算中间索引，规避整数溢出
+            int mid = left + (right - left) / 2;
+            // 找到目标值，直接返回索引
+            if (arr[mid] == target) {
+                return mid;
+            }
+            // 目标值更小，收缩右边界，查找左半区间
+            else if (target < arr[mid]) {
+                right = mid - 1;
+            }
+            // 目标值更大，收缩左边界，查找右半区间
+            else {
+                left = mid + 1;
+            }
+        }
+        // 循环结束未找到，返回-1
+        return -1;
+    }
+
+    // 递归实现二分查找
+    public static int binarySearchByRecursion(int[] arr, int target, int left, int right) {
+        // 递归终止条件：边界交叉，未找到元素
+        if (left > right) {
+            return -1;
+        }
+        int mid = left + (right - left) / 2;
+        if (arr[mid] == target) {
+            return mid;
+        } else if (target < arr[mid]) {
+            // 递归查找左半区间
+            return binarySearchByRecursion(arr, target, left, mid - 1);
+        } else {
+            // 递归查找右半区间
+            return binarySearchByRecursion(arr, target, mid + 1, right);
+        }
+    }
+
+    public static void main(String[] args) {
+        // 二分查找必须使用【有序数组】
+        int[] sortedArray = {1, 3, 5, 7, 9, 11, 13, 15, 17, 19};
+        int targetExist = 7;   // 存在的目标值
+        int targetNotExist = 10; // 不存在的目标值
+
+        // 测试迭代版二分查找
+        System.out.println("===== 迭代版二分查找测试 =====");
+        int index1 = binarySearchByIteration(sortedArray, targetExist);
+        System.out.println("目标值 " + targetExist + " 的索引：" + index1);
+        int index2 = binarySearchByIteration(sortedArray, targetNotExist);
+        System.out.println("目标值 " + targetNotExist + " 的索引：" + index2);
+
+        // 测试递归版二分查找
+        System.out.println("\n===== 递归版二分查找测试 =====");
+        int index3 = binarySearchByRecursion(sortedArray, targetExist, 0, sortedArray.length - 1);
+        System.out.println("目标值 " + targetExist + " 的索引：" + index3);
+        int index4 = binarySearchByRecursion(sortedArray, targetNotExist, 0, sortedArray.length - 1);
+        System.out.println("目标值 " + targetNotExist + " 的索引：" + index4);
+    }
+}
+```
+
+- 迭代版是实际开发中首选方案，无递归栈溢出风险，空间复杂度为O(1)
+- 递归版代码更简洁，适合理解算法逻辑，大数据量场景不推荐
+- 中间索引的计算方式是算法优化点，必须避免整数溢出
+- 测试用例覆盖了「目标值存在」和「目标值不存在」两种核心场景
+- 运行结果：找到目标值返回对应数组索引，未找到返回-1
+
+```
+===== 迭代版二分查找测试 =====
+目标值 7 的索引：3
+目标值 10 的索引：-1
+
+===== 递归版二分查找测试 =====
+目标值 7 的索引：3
+目标值 10 的索引：-1
+```
+
+### [35. 搜索插入位置](https://leetcode.cn/problems/search-insert-position/)
+
+1. 题目描述：给定一个排序数组和一个目标值，在数组中找到目标值，并返回其索引。如果目标值不存在于数组中，返回它将会被按顺序插入的位置。请必须使用时间复杂度为 O(log n) 的算法。示例 1:输入: nums = [1,3,5,6], target = 5，输出: 2；示例 2:输入: nums = [1,3,5,6], target = 2，输出: 1；示例 3:输入: nums = [1,3,5,6], target = 7，输出: 4。提示:1 <= nums.length <= 104，-104 <= nums[i] <= 104，nums 为无重复元素的升序排列数组，-104 <= target <= 104
+2. 算法思想+代码
+- 算法思想：题目要求时间复杂度为O(log n)，因此采用二分查找算法，该算法适用于有序数组的高效查找。初始化左指针指向数组起始索引0，右指针指向数组末尾索引；循环计算中间索引，对比中间元素与目标值：若相等则直接返回中间索引；若中间元素小于目标值，说明目标值在右半区间，左指针右移；若中间元素大于目标值，说明目标值在左半区间，右指针左移；循环结束后，左指针的位置即为目标值不存在时的插入位置。
+- Java代码
+```java
+public class Solution {
+    public int searchInsert(int[] nums, int target) {
+        // 定义左指针
+        int left = 0;
+        // 定义右指针
+        int right = nums.length - 1;
+        // 二分查找循环条件
+        while (left <= right) {
+            // 计算中间索引，避免整数溢出
+            int mid = left + (right - left) / 2;
+            if (nums[mid] == target) {
+                // 找到目标值，返回对应索引
+                return mid;
+            } else if (nums[mid] < target) {
+                // 目标值在右侧区间，更新左指针
+                left = mid + 1;
+            } else {
+                // 目标值在左侧区间，更新右指针
+                right = mid - 1;
+            }
+        }
+        // 未找到目标值，返回插入位置
+        return left;
+    }
+
+    // 测试方法
+    public static void main(String[] args) {
+        Solution s = new Solution();
+        int[] nums = {1,3,5,6};
+        System.out.println(s.searchInsert(nums,5));
+        System.out.println(s.searchInsert(nums,2));
+        System.out.println(s.searchInsert(nums,7));
+    }
+}
+```
+
+### [74. 搜索二维矩阵](https://leetcode.cn/problems/search-a-2d-matrix/)
+
+1. 题目描述
+给你一个满足下述两条属性的 m x n 整数矩阵：每行中的整数从左到右按非严格递增顺序排列，每行的第一个整数大于前一行的最后一个整数。给你一个整数 target ，如果 target 在矩阵中，返回 true ；否则，返回 false 。
+示例 1：输入：matrix = [[1,3,5,7],[10,11,16,20],[23,30,34,60]], target = 3，输出：true
+示例 2：输入：matrix = [[1,3,5,7],[10,11,16,20],[23,30,34,60]], target = 13，输出：false
+提示：m == matrix.length，n == matrix[i].length，1 <= m, n <= 100，-10^4 <= matrix[i][j], target <= 10^4
+
+2. 解法1：暴力遍历法
+- 算法思想：直接遍历矩阵中的每一个元素，依次与目标值target进行比较，若找到相等的元素则立即返回true，遍历完所有元素仍未找到则返回false，该方法逻辑简单直观，适合小规模矩阵场景
+- Java代码
+```java
+class Solution {
+    public boolean searchMatrix(int[][] matrix, int target) {
+        // 遍历矩阵的每一行
+        for (int i = 0; i < matrix.length; i++) {
+            // 遍历当前行的每一列元素
+            for (int j = 0; j < matrix[i].length; j++) {
+                // 找到目标值，返回true
+                if (matrix[i][j] == target) {
+                    return true;
+                }
+            }
+        }
+        // 遍历结束未找到目标值，返回false
+        return false;
+    }
+}
+```
+
+3. 解法2：二分查找法（先定位目标行，再二分查找列）
+- 算法思想：利用矩阵的有序特性，先通过二分查找确定target可能存在的行，再对该行进行二分查找定位元素，相比暴力法时间复杂度更低
+- Java代码
+```java
+class Solution {
+    public boolean searchMatrix(int[][] matrix, int target) {
+        int row = matrix.length;
+        int col = matrix[0].length;
+        // 第一步：二分查找确定目标所在的行
+        int top = 0, bottom = row - 1;
+        while (top <= bottom) {
+            int midRow = top + (bottom - top) / 2;
+            // 当前行首元素大于target，向上查找
+            if (matrix[midRow][0] > target) {
+                bottom = midRow - 1;
+            } 
+            // 当前行尾元素小于target，向下查找
+            else if (matrix[midRow][col - 1] < target) {
+                top = midRow + 1;
+            } 
+            // 找到目标行，开始二分查找列
+            else {
+                int left = 0, right = col - 1;
+                while (left <= right) {
+                    int midCol = left + (right - left) / 2;
+                    if (matrix[midRow][midCol] == target) {
+                        return true;
+                    } else if (matrix[midRow][midCol] < target) {
+                        left = midCol + 1;
+                    } else {
+                        right = midCol - 1;
+                    }
+                }
+                // 目标行中无目标值
+                return false;
+            }
+        }
+        // 无匹配的行
+        return false;
+    }
+}
+```
+
+4. 解法3：二分查找法（矩阵展平为一维数组）
+- 算法思想：将整个二维矩阵视为一个有序的一维数组，通过坐标转换公式，直接对整个矩阵执行一次二分查找，是最优解法
+- Java代码
+```java
+class Solution {
+    public boolean searchMatrix(int[][] matrix, int target) {
+        int row = matrix.length;
+        int col = matrix[0].length;
+        // 定义一维数组的左右边界
+        int left = 0, right = row * col - 1;
+        while (left <= right) {
+            int mid = left + (right - left) / 2;
+            // 一维索引转换为二维矩阵的行和列
+            int i = mid / col;
+            int j = mid % col;
+            if (matrix[i][j] == target) {
+                return true;
+            } else if (matrix[i][j] < target) {
+                left = mid + 1;
+            } else {
+                right = mid - 1;
+            }
+        }
+        return false;
+    }
+}
+```
+
+### [34. 在排序数组中查找元素的第一个和最后一个位置](https://leetcode.cn/problems/find-first-and-last-position-of-element-in-sorted-array/)
+
+1. 题目描述
+给你一个按照非递减顺序排列的整数数组 nums，和一个目标值 target。请你找出给定目标值在数组中的开始位置和结束位置。如果数组中不存在目标值 target，返回 [-1, -1]。你必须设计并实现时间复杂度为 O(log n) 的算法解决此问题。
+示例 1：输入：nums = [5,7,7,8,8,10], target = 8 输出：[3,4]
+示例 2：输入：nums = [5,7,7,8,8,10], target = 6 输出：[-1,-1]
+示例 3：输入：nums = [], target = 0 输出：[-1,-1]
+提示：0 <= nums.length <= 10^5，-10^9 <= nums[i] <= 10^9，nums 是一个非递减数组，-10^9 <= target <= 10^9
+2. 算法思想+代码
+- 解法一：两次二分查找法（符合O(log n)时间复杂度要求）
+算法思想：基于有序数组的特性，通过两次独立的二分查找分别定位目标值的左边界和右边界。左边界查找：当中间元素大于等于目标值时收缩右边界，最终锁定第一个等于目标值的索引；右边界查找：当中间元素小于等于目标值时收缩左边界，最终锁定最后一个等于目标值的索引。若查找后左边界越界或对应元素不是目标值，直接返回[-1,-1]。
+Java代码：
+```java
+public class Solution {
+    public int[] searchRange(int[] nums, int target) {
+        // 获取左边界
+        int left = findLeft(nums, target);
+        // 获取右边界
+        int right = findRight(nums, target);
+        // 边界判断：不存在目标值的情况
+        if (left > nums.length - 1 || nums[left] != target) {
+            return new int[]{-1, -1};
+        }
+        return new int[]{left, right};
+    }
+
+    // 查找左边界
+    private int findLeft(int[] nums, int target) {
+        int l = 0, r = nums.length - 1;
+        while (l <= r) {
+            int mid = l + (r - l) / 2;
+            if (nums[mid] >= target) {
+                r = mid - 1;
+            } else {
+                l = mid + 1;
+            }
+        }
+        return l;
+    }
+
+    // 查找右边界
+    private int findRight(int[] nums, int target) {
+        int l = 0, r = nums.length - 1;
+        while (l <= r) {
+            int mid = l + (r - l) / 2;
+            if (nums[mid] <= target) {
+                l = mid + 1;
+            } else {
+                r = mid - 1;
+            }
+        }
+        return r;
+    }
+
+    // 测试示例
+    public static void main(String[] args) {
+        Solution solution = new Solution();
+        int[] nums1 = {5,7,7,8,8,10};
+        int[] res1 = solution.searchRange(nums1, 8);
+        System.out.println("[" + res1[0] + "," + res1[1] + "]"); // 输出[3,4]
+
+        int[] nums2 = {5,7,7,8,8,10};
+        int[] res2 = solution.searchRange(nums2, 6);
+        System.out.println("[" + res2[0] + "," + res2[1] + "]"); // 输出[-1,-1]
+
+        int[] nums3 = {};
+        int[] res3 = solution.searchRange(nums3, 0);
+        System.out.println("[" + res3[0] + "," + res3[1] + "]"); // 输出[-1,-1]
+    }
+}
+```
+- 解法二：二分查找+线性遍历（不满足O(log n)时间复杂度，仅作参考）
+算法思想：先通过二分查找找到任意一个目标值的索引，若未找到则返回[-1,-1]；若找到目标值，从该索引向左遍历找到第一个目标值，向右遍历找到最后一个目标值。该方法最坏时间复杂度为O(n)，不符合题目强制要求。
+Java代码：
+```java
+public class Solution2 {
+    public int[] searchRange(int[] nums, int target) {
+        int left = 0, right = nums.length - 1;
+        int index = -1;
+        // 二分查找任意一个目标值位置
+        while (left <= right) {
+            int mid = left + (right - left) / 2;
+            if (nums[mid] == target) {
+                index = mid;
+                break;
+            } else if (nums[mid] < target) {
+                left = mid + 1;
+            } else {
+                right = mid - 1;
+            }
+        }
+        // 未找到目标值
+        if (index == -1) {
+            return new int[]{-1, -1};
+        }
+        // 向左找第一个目标值
+        int start = index;
+        while (start > 0 && nums[start - 1] == target) {
+            start--;
+        }
+        // 向右找最后一个目标值
+        int end = index;
+        while (end < nums.length - 1 && nums[end + 1] == target) {
+            end++;
+        }
+        return new int[]{start, end};
+    }
+
+    // 测试示例
+    public static void main(String[] args) {
+        Solution2 solution = new Solution2();
+        int[] nums1 = {5,7,7,8,8,10};
+        int[] res1 = solution.searchRange(nums1, 8);
+        System.out.println("[" + res1[0] + "," + res1[1] + "]"); // 输出[3,4]
+    }
+}
+```
+
+### [33. 搜索旋转排序数组](https://leetcode.cn/problems/search-in-rotated-sorted-array/)
+
+1. 题目描述
+整数数组 nums 按升序排列，数组中的值互不相同。在传递给函数之前，nums 在预先未知的某个下标 k（0 <= k < nums.length）上进行了向左旋转，使数组变为 [nums[k], nums[k+1], ..., nums[n-1], nums[0], nums[1], ..., nums[k-1]]（下标从 0 开始计数）。例如 [0,1,2,4,5,6,7] 在下标 3 处向左旋转后变为 [4,5,6,7,0,1,2]。给定旋转后的数组 nums 和一个整数 target，如果 nums 中存在目标值 target 则返回它的下标，否则返回 -1。必须设计时间复杂度为 O(log n) 的算法解决该问题。
+示例 1：输入：nums = [4,5,6,7,0,1,2], target = 0，输出：4
+示例 2：输入：nums = [4,5,6,7,0,1,2], target = 3，输出：-1
+示例 3：输入：nums = [1], target = 0，输出：-1
+提示：1 <= nums.length <= 5000，-10^4 <= nums[i] <= 10^4，nums 中的每个值独一无二，题目数据保证 nums 在预先未知的某个下标上进行了旋转，-10^4 <= target <= 10^4
+
+2. 算法思想+代码
+- 解法一：单次二分查找
+  算法思想：旋转排序数组虽整体无序，但任意取中点分割后，左半区间或右半区间必定有一个是有序的。基于该特性执行二分查找，每次先判断中点左右哪一侧有序，再根据target与有序区间边界值的大小关系，确定target所在的区间，不断缩小查找范围，直到找到目标值或查找结束，时间复杂度为 O(log n)，空间复杂度为 O(1)。
+  Java代码：
+```java
+class Solution {
+    public int search(int[] nums, int target) {
+        int left = 0;
+        int right = nums.length - 1;
+        // 二分查找核心循环
+        while (left <= right) {
+            int mid = left + (right - left) / 2;
+            // 找到目标值，直接返回下标
+            if (nums[mid] == target) {
+                return mid;
+            }
+            // 判断左半区间是否有序
+            if (nums[left] <= nums[mid]) {
+                // 目标值在左半有序区间内，收缩右边界
+                if (target >= nums[left] && target < nums[mid]) {
+                    right = mid - 1;
+                } else {
+                    // 目标值在右半区间，收缩左边界
+                    left = mid + 1;
+                }
+            } 
+            // 右半区间有序
+            else {
+                // 目标值在右半有序区间内，收缩左边界
+                if (target > nums[mid] && target <= nums[right]) {
+                    left = mid + 1;
+                } else {
+                    // 目标值在左半区间，收缩右边界
+                    right = mid - 1;
+                }
+            }
+        }
+        // 遍历结束未找到目标值
+        return -1;
+    }
+}
+```
+- 解法二：先找旋转点再二分查找
+  算法思想：首先通过二分查找找到数组的旋转点（即数组中最小元素的下标），旋转点将原数组分割为两个连续的升序子数组；之后分别在两个有序子数组中执行标准二分查找，判断target是否存在，找到则返回对应下标，未找到则返回-1，时间复杂度为 O(log n)，空间复杂度为 O(1)。
+  Java代码：
+```java
+class Solution {
+    public int search(int[] nums, int target) {
+        int n = nums.length;
+        if (n == 0) {
+            return -1;
+        }
+        int left = 0;
+        int right = n - 1;
+        // 第一步：二分查找旋转点（最小元素的下标）
+        while (left < right) {
+            int mid = left + (right - left) / 2;
+            // 中点值大于右边界，旋转点在右侧
+            if (nums[mid] > nums[right]) {
+                left = mid + 1;
+            } else {
+                right = mid;
+            }
+        }
+        int rotateIndex = left;
+        // 第二步：在左半有序数组中二分查找
+        left = 0;
+        right = rotateIndex - 1;
+        while (left <= right) {
+            int mid = left + (right - left) / 2;
+            if (nums[mid] == target) {
+                return mid;
+            } else if (nums[mid] < target) {
+                left = mid + 1;
+            } else {
+                right = mid - 1;
+            }
+        }
+        // 第三步：在右半有序数组中二分查找
+        left = rotateIndex;
+        right = n - 1;
+        while (left <= right) {
+            int mid = left + (right - left) / 2;
+            if (nums[mid] == target) {
+                return mid;
+            } else if (nums[mid] < target) {
+                left = mid + 1;
+            } else {
+                right = mid - 1;
+            }
+        }
+        // 两个区间都未找到目标值
+        return -1;
+    }
+}
+```
+
+### [153. 寻找旋转排序数组中的最小值](https://leetcode.cn/problems/find-minimum-in-rotated-sorted-array/)
+
+
+
+
+
+
+
+
+
+
+
 
 
 
