@@ -8459,6 +8459,7 @@ class Solution {
 - 解法二：二分查找法（最优解，满足题目时间复杂度要求）
   算法思想：不合并数组，通过二分查找确定两个数组的分割位置，将数组分为左右两部分，保证左半部分所有元素小于等于右半部分所有元素；总长度为奇数时，左半部分的最大值即为中位数，偶数时取左半部分最大值和右半部分最小值的平均值。该方法时间复杂度为O(log(min(m,n)))，空间复杂度为O(1)，符合题目O(log(m+n))的要求。
   Java代码：
+  
   ```java
   class Solution {
       public double findMedianSortedArrays(int[] nums1, int[] nums2) {
@@ -8504,6 +8505,425 @@ class Solution {
       }
   }
   ```
+
+## 栈
+
+1. 栈的定义：栈是一种遵循**后进先出（LIFO, Last In First Out）**原则的线性数据结构，数据的插入和删除操作仅能在栈的一端（称为栈顶）完成，另一端为栈底，不支持随机访问元素，是最基础的线性数据结构之一。
+2. 栈的常见操作
+- 入栈（push）：向栈顶添加新元素
+- 出栈（pop）：删除并返回栈顶的元素
+- 查看栈顶（peek）：仅返回栈顶元素，不执行删除操作
+- 判空（isEmpty）：判断栈中是否没有任何元素
+- 获取大小（size）：统计并返回栈中元素的总数量
+- 清空栈（clear）：删除栈内的所有元素
+
+Java 官方推荐使用 `Deque` 接口实现栈（替代老旧的 `Stack` 类），以下是完整可运行的 Demo，覆盖所有核心操作：
+```java
+import java.util.Deque;
+import java.util.LinkedList;
+
+public class StackDemo {
+    public static void main(String[] args) {
+        // 1. 创建栈：使用 LinkedList 实现 Deque 接口
+        Deque<String> stack = new LinkedList<>();
+
+        // 2. 入栈操作 push()：向栈顶添加元素
+        stack.push("Java");
+        stack.push("栈");
+        stack.push("数据结构");
+        stack.push("Demo");
+        System.out.println("入栈后栈内元素：" + stack);
+
+        // 3. 获取栈大小 size()
+        System.out.println("栈的元素个数：" + stack.size());
+
+        // 4. 判断栈是否为空 isEmpty()
+        System.out.println("栈是否为空：" + stack.isEmpty());
+
+        // 5. 查看栈顶元素 peek()：不删除元素
+        String topElement = stack.peek();
+        System.out.println("栈顶元素：" + topElement);
+
+        // 6. 出栈操作 pop()：删除并返回栈顶元素
+        String popElement = stack.pop();
+        System.out.println("出栈元素：" + popElement);
+        System.out.println("出栈后栈内元素：" + stack);
+
+        // 再次查看栈顶
+        System.out.println("出栈后新的栈顶元素：" + stack.peek());
+
+        // 7. 清空栈 clear()
+        stack.clear();
+        System.out.println("清空后栈内元素：" + stack);
+        System.out.println("清空后栈是否为空：" + stack.isEmpty());
+    }
+}
+```
+
+运行结果
+
+```
+入栈后栈内元素：[Demo, 数据结构, 栈, Java]
+栈的元素个数：4
+栈是否为空：false
+栈顶元素：Demo
+出栈元素：Demo
+出栈后栈内元素：[数据结构, 栈, Java]
+出栈后新的栈顶元素：数据结构
+清空后栈内元素：[]
+清空后栈是否为空：true
+```
+
+### [20. 有效的括号](https://leetcode.cn/problems/valid-parentheses/)
+
+1. 题目描述：给定一个只包括 '('，')'，'{'，'}'，'['，']' 的字符串 s ，判断字符串是否有效。有效字符串需满足：左括号必须用相同类型的右括号闭合；左括号必须以正确的顺序闭合；每个右括号都有一个对应的相同类型的左括号。
+2. 算法思想+代码
+- 算法思想：采用栈的后进先出特性解决括号匹配问题，核心逻辑如下
+  - 首先判断字符串长度是否为奇数，若为奇数直接返回false（奇数长度无法实现括号完全匹配）
+  - 遍历字符串中的每一个字符，遇到左括号'('、'{'、'['时，将其对应的右括号压入栈中
+  - 遇到右括号时，若栈为空（无对应的左括号）或栈顶元素与当前右括号不相等，说明括号匹配失败，直接返回false
+  - 若右括号与栈顶元素匹配，则将栈顶元素弹出，继续遍历下一个字符
+  - 遍历完成后，若栈为空则代表所有括号都正确闭合，返回true；若栈不为空则存在未闭合的左括号，返回false
+- Java代码
+```java
+import java.util.Deque;
+import java.util.LinkedList;
+
+public class Solution {
+    public boolean isValid(String s) {
+        // 奇数长度的字符串一定不满足条件
+        if (s.length() % 2 != 0) {
+            return false;
+        }
+        // 使用Deque实现栈结构，Java中推荐使用Deque替代Stack
+        Deque<Character> stack = new LinkedList<>();
+        // 遍历字符串的每个字符
+        for (char ch : s.toCharArray()) {
+            // 左括号入栈对应的右括号
+            if (ch == '(') {
+                stack.push(')');
+            } else if (ch == '{') {
+                stack.push('}');
+            } else if (ch == '[') {
+                stack.push(']');
+            } else {
+                // 右括号：栈空或栈顶不匹配，直接返回false
+                if (stack.isEmpty() || stack.pop() != ch) {
+                    return false;
+                }
+            }
+        }
+        // 最终栈必须为空，才是完全匹配
+        return stack.isEmpty();
+    }
+}
+```
+
+### [155. 最小栈](https://leetcode.cn/problems/min-stack/)
+
+1. 题目描述
+155. 最小栈
+设计一个支持 push ，pop ，top 操作，并能在常数时间内检索到最小元素的栈。
+实现 MinStack 类:
+MinStack() 初始化堆栈对象。
+void push(int val) 将元素val推入堆栈。
+void pop() 删除堆栈顶部的元素。
+int top() 获取堆栈顶部的元素。
+int getMin() 获取堆栈中的最小元素。
+示例 1:
+输入：["MinStack","push","push","push","getMin","pop","top","getMin"]
+[[],[-2],[0],[-3],[],[],[],[]]
+输出：[null,null,null,null,-3,null,0,-2]
+解释：MinStack minStack = new MinStack(); minStack.push(-2); minStack.push(0); minStack.push(-3); minStack.getMin();   --> 返回 -3; minStack.pop(); minStack.top();      --> 返回 0; minStack.getMin();   --> 返回 -2
+提示：-2^31 <= val <= 2^31 - 1，pop、top 和 getMin 操作总是在非空栈上调用，push, pop, top, and getMin最多被调用 3 * 10^4 次
+
+2. 解法一：辅助栈法
+- 算法思想：采用两个栈实现，一个数据栈用于存储所有入栈元素，保证push、pop、top的基础操作；一个最小栈用于同步存储当前栈内的最小元素，确保getMin操作能在常数时间完成。入栈时，数据栈直接压入元素，最小栈仅当新元素小于等于其栈顶元素时才压入；出栈时，数据栈弹出栈顶元素，若该元素与最小栈栈顶元素相等，最小栈同步弹出；获取栈顶元素直接取数据栈栈顶，获取最小元素直接取最小栈栈顶，所有操作的时间复杂度均为O(1)。
+- Java代码
+```java
+import java.util.Deque;
+import java.util.LinkedList;
+
+class MinStack {
+    // 数据栈：存储所有入栈元素
+    Deque<Integer> dataStack;
+    // 最小栈：存储当前栈内的最小元素
+    Deque<Integer> minStack;
+
+    // 初始化堆栈
+    public MinStack() {
+        dataStack = new LinkedList<>();
+        minStack = new LinkedList<>();
+        // 初始化最小栈，避免空栈判断
+        minStack.push(Integer.MAX_VALUE);
+    }
+
+    // 元素入栈
+    public void push(int val) {
+        dataStack.push(val);
+        // 最小栈压入当前最小值
+        minStack.push(Math.min(minStack.peek(), val));
+    }
+
+    // 栈顶元素出栈
+    public void pop() {
+        dataStack.pop();
+        minStack.pop();
+    }
+
+    // 获取栈顶元素
+    public int top() {
+        return dataStack.peek();
+    }
+
+    // 获取栈中最小元素
+    public int getMin() {
+        return minStack.peek();
+    }
+}
+```
+
+3. 解法二：单栈法（存储差值）
+- 算法思想：仅使用一个栈和一个全局最小值变量实现，栈中存储当前入栈元素与当前最小值的差值，不存储实际元素。入栈时，计算新元素与当前最小值的差值并入栈，若新元素更小则更新最小值；出栈时，根据栈顶差值判断是否需要恢复上一个最小值；获取栈顶元素时，通过差值和当前最小值计算得到；获取最小元素直接返回全局最小值，无需额外辅助栈。
+- Java代码
+```java
+import java.util.Deque;
+import java.util.LinkedList;
+
+class MinStack {
+    // 单栈：存储元素与当前最小值的差值
+    Deque<Long> stack;
+    // 全局最小值变量
+    long min;
+
+    // 初始化堆栈
+    public MinStack() {
+        stack = new LinkedList<>();
+    }
+
+    // 元素入栈
+    public void push(int val) {
+        // 栈空时，直接存入差值0，最小值为当前元素
+        if (stack.isEmpty()) {
+            min = val;
+            stack.push(0L);
+        } else {
+            // 计算差值，使用long避免整型溢出
+            long diff = (long) val - min;
+            stack.push(diff);
+            // 差值小于0，更新最小值
+            if (diff < 0) {
+                min = val;
+            }
+        }
+    }
+
+    // 栈顶元素出栈
+    public void pop() {
+        long diff = stack.pop();
+        // 出栈元素为最小值，恢复上一个最小值
+        if (diff < 0) {
+            min = min - diff;
+        }
+    }
+
+    // 获取栈顶元素
+    public int top() {
+        long diff = stack.peek();
+        // 根据差值计算栈顶实际元素
+        return diff > 0 ? (int) (min + diff) : (int) min;
+    }
+
+    // 获取栈中最小元素
+    public int getMin() {
+        return (int) min;
+    }
+}
+```
+
+### [394. 字符串解码](https://leetcode.cn/problems/decode-string/)
+
+1. 题目描述
+给定一个经过编码的字符串，返回它解码后的字符串。编码规则为: k[encoded_string]，表示其中方括号内部的 encoded_string 正好重复 k 次。注意 k 保证为正整数。你可以认为输入字符串总是有效的；输入字符串中没有额外的空格，且输入的方括号总是符合格式要求的。此外，你可以认为原始数据不包含数字，所有的数字只表示重复的次数 k ，例如不会出现像 3a 或 2[4] 的输入。测试用例保证输出的长度不会超过 105。
+示例 1：输入：s = "3[a]2[bc]" 输出："aaabcbc"
+示例 2：输入：s = "3[a2[c]]" 输出："accaccacc"
+示例 3：输入：s = "2[abc]3[cd]ef" 输出："abcabccdcdcdef"
+示例 4：输入：s = "abc3[cd]xyz" 输出："abccdcdcdxyz"
+提示：1 <= s.length <= 30，s 由小写英文字母、数字和方括号 '[]' 组成，s 保证是一个有效的输入。s 中所有整数的取值范围为 [1, 300]
+
+2. 解法一：栈解法
+- 算法思想：由于字符串存在嵌套的方括号结构，使用栈来存储每一层的重复次数和对应的上层字符串。遍历编码字符串时，数字用于累计重复次数k；遇到左括号[时，将当前的k和已拼接的字符串压入栈，随后重置当前字符串和k；遇到右括号]时，弹出栈顶的重复次数和上层字符串，将当前字符串重复对应次数后拼接到上层字符串后，作为新的当前字符串；遇到普通字母时，直接拼接到当前字符串末尾。遍历完成后，当前字符串即为解码结果。
+- Java代码
+```java
+import java.util.Stack;
+
+public class Solution {
+    public String decodeString(String s) {
+        // 存储每一层的重复次数
+        Stack<Integer> countStack = new Stack<>();
+        // 存储每一层的上层字符串
+        Stack<String> strStack = new Stack<>();
+        // 当前正在拼接的字符串
+        StringBuilder currStr = new StringBuilder();
+        // 累计的重复次数
+        int k = 0;
+
+        // 遍历字符串的每一个字符
+        for (char c : s.toCharArray()) {
+            // 处理数字字符，支持多位数
+            if (Character.isDigit(c)) {
+                k = k * 10 + (c - '0');
+            } 
+            // 遇到左括号，将当前次数和字符串入栈，重置状态
+            else if (c == '[') {
+                countStack.push(k);
+                strStack.push(currStr.toString());
+                // 重置当前字符串和重复次数
+                currStr = new StringBuilder();
+                k = 0;
+            } 
+            // 遇到右括号，出栈并拼接字符串
+            else if (c == ']') {
+                int repeatCount = countStack.pop();
+                String prevStr = strStack.pop();
+                // 将当前字符串重复指定次数后拼接
+                for (int i = 0; i < repeatCount; i++) {
+                    prevStr += currStr;
+                }
+                currStr = new StringBuilder(prevStr);
+            } 
+            // 普通字母直接拼接
+            else {
+                currStr.append(c);
+            }
+        }
+        return currStr.toString();
+    }
+}
+```
+
+3. 解法二：递归解法
+- 算法思想：利用递归处理嵌套的括号结构，定义全局索引记录遍历位置。遍历字符串时，数字累计重复次数k；遇到左括号[时，递归调用函数处理括号内的子串，得到子串后重复k次拼接到结果中；遇到右括号]时，返回当前拼接的字符串，结束当前层递归；遇到普通字母直接拼接到结果中。递归会自动处理嵌套的层级关系，无需手动维护栈结构。
+- Java代码
+```java
+public class Solution {
+    // 全局索引，标记字符串的遍历位置
+    int index = 0;
+
+    public String decodeString(String s) {
+        return dfs(s);
+    }
+
+    // 递归处理字符串解码
+    private String dfs(String s) {
+        StringBuilder result = new StringBuilder();
+        int k = 0;
+
+        while (index < s.length()) {
+            char c = s.charAt(index);
+            // 处理数字，累计重复次数
+            if (Character.isDigit(c)) {
+                k = k * 10 + (c - '0');
+                index++;
+            } 
+            // 遇到左括号，递归处理括号内的子串
+            else if (c == '[') {
+                index++;
+                // 递归获取括号内的解码字符串
+                String subStr = dfs(s);
+                // 将子串重复k次拼接
+                for (int i = 0; i < k; i++) {
+                    result.append(subStr);
+                }
+                k = 0;
+            } 
+            // 遇到右括号，返回当前层的结果
+            else if (c == ']') {
+                index++;
+                return result.toString();
+            } 
+            // 普通字母直接拼接
+            else {
+                result.append(c);
+                index++;
+            }
+        }
+        return result.toString();
+    }
+}
+```
+
+### [739. 每日温度](https://leetcode.cn/problems/daily-temperatures/)
+
+1. 题目描述
+给定一个整数数组 temperatures ，表示每天的温度，返回一个数组 answer ，其中 answer[i] 是指对于第 i 天，下一个更高温度出现在几天后。如果气温在这之后都不会升高，请在该位置用 0 来代替。
+示例 1:
+输入: temperatures = [73,74,75,71,69,72,76,73]
+输出: [1,1,4,2,1,1,0,0]
+示例 2:
+输入: temperatures = [30,40,50,60]
+输出: [1,1,1,0]
+示例 3:
+输入: temperatures = [30,60,90]
+输出: [1,1,0]
+提示：
+1 <= temperatures.length <= 10⁵
+30 <= temperatures[i] <= 100
+
+2. 解法一：暴力解法
+- 算法思想：通过两层for循环遍历数组，外层循环遍历每一天的温度，内层循环从当前天数的下一天开始查找，找到第一个温度高于当前温度的天数，计算两个天数的索引差值即为对应结果；若内层循环遍历结束都未找到更高温度，则结果为0。该方法逻辑简单直观，但时间复杂度为O(n²)，在数据量达到10⁵时会超出时间限制，仅适用于小规模数据测试。
+- 代码
+```java
+class Solution {
+    public int[] dailyTemperatures(int[] temperatures) {
+        int n = temperatures.length;
+        // 结果数组
+        int[] answer = new int[n];
+        // 遍历每一天
+        for (int i = 0; i < n; i++) {
+            // 向后查找第一个更高温度
+            for (int j = i + 1; j < n; j++) {
+                if (temperatures[j] > temperatures[i]) {
+                    answer[i] = j - i;
+                    break;
+                }
+            }
+            // 未找到时，默认赋值0，数组初始化默认就是0，可省略
+        }
+        return answer;
+    }
+}
+```
+
+3. 解法二：单调栈解法（最优解）
+- 算法思想：采用单调递减栈实现，栈中存储数组的下标索引，保证栈内索引对应的温度值始终保持递减顺序。遍历温度数组时，若当前温度大于栈顶索引对应的温度，说明找到了栈顶索引的下一个更高温度，弹出栈顶元素并计算索引差值；重复此操作直到栈为空或栈顶温度不小于当前温度，最后将当前索引压入栈中。遍历完成后，栈中剩余元素没有更高温度，结果默认为0。该方法时间复杂度为O(n)，每个元素仅入栈和出栈一次，空间复杂度为O(n)，可以高效处理题目最大数据量。
+- 代码
+```java
+import java.util.Deque;
+import java.util.LinkedList;
+
+class Solution {
+    public int[] dailyTemperatures(int[] temperatures) {
+        int n = temperatures.length;
+        int[] answer = new int[n];
+        // 初始化单调栈，存储数组索引
+        Deque<Integer> stack = new LinkedList<>();
+        for (int i = 0; i < n; i++) {
+            // 当前温度大于栈顶温度，更新结果
+            while (!stack.isEmpty() && temperatures[i] > temperatures[stack.peek()]) {
+                int index = stack.pop();
+                answer[index] = i - index;
+            }
+            // 当前索引入栈
+            stack.push(i);
+        }
+        return answer;
+    }
+}
+```
+
+
+
 
 
 
