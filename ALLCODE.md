@@ -8922,6 +8922,1426 @@ class Solution {
 }
 ```
 
+### [84. 柱状图中最大的矩形](https://leetcode.cn/problems/largest-rectangle-in-histogram/)
+
+1. 题目描述
+给定 n 个非负整数，用来表示柱状图中各个柱子的高度。每个柱子彼此相邻，且宽度为 1 。求在该柱状图中，能够勾勒出来的矩形的最大面积。
+示例 1:
+输入：heights = [2,1,5,6,2,3]
+输出：10
+解释：最大的矩形为图中红色区域，面积为 10
+示例 2:
+输入： heights = [2,4]
+输出： 4
+提示：
+1 <= heights.length <=105
+0 <= heights[i] <= 104
+
+2. 解法一：暴力枚举法
+- 算法思想：遍历数组中的每一根柱子，将其作为矩形的固定高度，分别向左和向右遍历，找到第一个高度小于当前柱子的位置，以此确定矩形的宽度，通过高度×宽度计算当前矩形面积，遍历过程中记录最大面积。该方法思路直观，但时间复杂度为O(n²)，在数据量较大时会超时，无法通过题目全部测试用例。
+- 代码
+```java
+public class Solution {
+    public int largestRectangleArea(int[] heights) {
+        // 记录最大面积
+        int maxArea = 0;
+        int n = heights.length;
+        // 枚举每一根柱子作为矩形的高度
+        for (int i = 0; i < n; i++) {
+            int currentHeight = heights[i];
+            int left = i;
+            // 向左遍历，找到第一个小于当前高度的柱子
+            while (left > 0 && heights[left - 1] >= currentHeight) {
+                left--;
+            }
+            int right = i;
+            // 向右遍历，找到第一个小于当前高度的柱子
+            while (right < n - 1 && heights[right + 1] >= currentHeight) {
+                right++;
+            }
+            // 计算宽度和面积
+            int width = right - left + 1;
+            maxArea = Math.max(maxArea, currentHeight * width);
+        }
+        return maxArea;
+    }
+}
+```
+
+3. 解法二：单调栈最优解法
+- 算法思想：采用单调递增栈存储柱子的索引，保证栈中索引对应的柱子高度严格递增。遍历数组时，若当前柱子高度小于栈顶索引对应的高度，说明找到了栈顶柱子的右边界，弹出栈顶元素作为矩形的高度，此时新的栈顶索引为左边界，计算矩形面积；遍历完成后，栈中剩余元素仍需按此规则计算面积，为简化边界处理，在数组末尾添加高度为0的哨兵元素。该方法时间复杂度为O(n)，每个元素仅入栈和出栈一次，空间复杂度为O(n)，是本题的最优解法。
+- 代码
+```java
+import java.util.ArrayDeque;
+import java.util.Deque;
+
+public class Solution {
+    public int largestRectangleArea(int[] heights) {
+        // 扩容数组，末尾添加高度为0的哨兵，简化边界处理
+        int[] newHeights = new int[heights.length + 1];
+        System.arraycopy(heights, 0, newHeights, 0, heights.length);
+        newHeights[heights.length] = 0;
+        
+        int maxArea = 0;
+        // 单调递增栈，存储柱子的索引
+        Deque<Integer> stack = new ArrayDeque<>();
+        
+        for (int i = 0; i < newHeights.length; i++) {
+            // 当前高度小于栈顶高度，弹出栈顶计算面积
+            while (!stack.isEmpty() && newHeights[i] < newHeights[stack.peek()]) {
+                // 弹出栈顶，作为矩形的高度索引
+                int heightIndex = stack.pop();
+                int height = newHeights[heightIndex];
+                // 计算宽度，栈空则左边界为-1
+                int width = stack.isEmpty() ? i : i - stack.peek() - 1;
+                // 更新最大面积
+                maxArea = Math.max(maxArea, height * width);
+            }
+            // 当前索引入栈
+            stack.push(i);
+        }
+        return maxArea;
+    }
+}
+```
+
+## 堆
+
+1. 堆的定义：堆是基于完全二叉树实现的树形数据结构，分为大顶堆和小顶堆两类；完全二叉树要求除最后一层外其余层节点全满，且最后一层节点全部靠左排列；堆默认使用数组存储，节点索引遵循固定规则：索引为i的节点，左子节点索引=2i+1，右子节点索引=2i+2，父节点索引=(i-1)/2（整数除法）；大顶堆中每个父节点的值≥子节点值，堆顶为全局最大值；小顶堆中每个父节点的值≤子节点值，堆顶为全局最小值。
+2. 堆的常见操作
+   - 堆化：维持堆结构的核心基础操作，分为向上堆化（子节点向根节点调整）和向下堆化（父节点向子节点调整）
+   - 建堆：将无序数组转换为符合堆特性的结构
+   - 插入元素：向堆尾部添加新元素，通过向上堆化修复堆结构
+   - 删除堆顶：移除根节点，将堆尾元素移至堆顶，通过向下堆化修复堆结构
+   - 获取堆顶：直接读取根节点值，时间复杂度O(1)
+   - 堆排序：基于堆结构实现数组排序，时间复杂度O(nlogn)
+
+以下代码完整实现**大顶堆**的所有常用操作，包含堆化、建堆、插入、删除堆顶、获取堆顶、打印堆、堆排序功能，可直接运行：
+```java
+public class HeapDemo {
+    private int[] heap; // 存储堆的数组
+    private int size;   // 堆当前元素个数
+
+    // 构造方法：初始化堆容量
+    public HeapDemo(int capacity) {
+        heap = new int[capacity];
+        size = 0;
+    }
+
+    // ==================== 核心：堆化操作 ====================
+    // 向上堆化（插入元素使用）：子节点比父节点大，向上交换调整
+    private void siftUp(int index) {
+        // 父节点索引
+        int parentIndex = (index - 1) / 2;
+        // 子节点大于父节点，交换并继续向上调整
+        while (index > 0 && heap[index] > heap[parentIndex]) {
+            swap(index, parentIndex);
+            index = parentIndex;
+            parentIndex = (index - 1) / 2;
+        }
+    }
+
+    // 向下堆化（删除堆顶/建堆使用）：父节点比子节点小，向下交换调整
+    private void siftDown(int index) {
+        // 最大元素索引，初始为当前父节点
+        int largest = index;
+        // 左、右子节点索引
+        int left = 2 * index + 1;
+        int right = 2 * index + 2;
+
+        // 找父节点、左子、右子中的最大值
+        if (left < size && heap[left] > heap[largest]) {
+            largest = left;
+        }
+        if (right < size && heap[right] > heap[largest]) {
+            largest = right;
+        }
+
+        // 最大值不是父节点，交换后继续向下调整
+        if (largest != index) {
+            swap(index, largest);
+            siftDown(largest);
+        }
+    }
+
+    // ==================== 常用操作 ====================
+    // 1. 建堆：将无序数组转为大顶堆
+    public void buildHeap(int[] arr) {
+        if (arr == null || arr.length == 0) return;
+        // 复制数组到堆
+        System.arraycopy(arr, 0, heap, 0, arr.length);
+        size = arr.length;
+        // 从最后一个非叶子节点开始，向下堆化
+        int lastNonLeaf = (size - 2) / 2;
+        for (int i = lastNonLeaf; i >= 0; i--) {
+            siftDown(i);
+        }
+    }
+
+    // 2. 插入元素
+    public void insert(int val) {
+        if (size >= heap.length) {
+            System.out.println("堆已满，无法插入");
+            return;
+        }
+        // 元素添加到堆尾
+        heap[size] = val;
+        // 向上堆化调整
+        siftUp(size);
+        size++;
+    }
+
+    // 3. 删除堆顶元素
+    public Integer removeTop() {
+        if (size == 0) {
+            System.out.println("堆为空，无法删除");
+            return null;
+        }
+        // 堆顶元素
+        int top = heap[0];
+        // 堆尾元素移到堆顶
+        heap[0] = heap[size - 1];
+        size--;
+        // 向下堆化调整
+        siftDown(0);
+        return top;
+    }
+
+    // 4. 获取堆顶元素
+    public Integer getTop() {
+        if (size == 0) return null;
+        return heap[0];
+    }
+
+    // 5. 堆排序
+    public void heapSort() {
+        int tempSize = size;
+        // 循环删除堆顶，放到数组末尾，完成排序
+        while (size > 0) {
+            int top = removeTop();
+            heap[size] = top;
+        }
+        // 恢复堆大小，打印排序结果
+        size = tempSize;
+        System.out.print("堆排序结果：");
+        printHeap();
+    }
+
+    // ==================== 工具方法 ====================
+    // 交换数组两个元素
+    private void swap(int i, int j) {
+        int temp = heap[i];
+        heap[i] = heap[j];
+        heap[j] = temp;
+    }
+
+    // 打印堆
+    public void printHeap() {
+        for (int i = 0; i < size; i++) {
+            System.out.print(heap[i] + " ");
+        }
+        System.out.println();
+    }
+
+    // 测试主方法
+    public static void main(String[] args) {
+        // 初始化堆容量为10
+        HeapDemo maxHeap = new HeapDemo(10);
+        int[] arr = {3, 1, 5, 2, 4};
+
+        // 1. 建堆
+        maxHeap.buildHeap(arr);
+        System.out.print("建堆后大顶堆：");
+        maxHeap.printHeap();
+
+        // 2. 获取堆顶
+        System.out.println("堆顶元素：" + maxHeap.getTop());
+
+        // 3. 插入元素
+        maxHeap.insert(6);
+        System.out.print("插入元素6后：");
+        maxHeap.printHeap();
+
+        // 4. 删除堆顶
+        Integer removed = maxHeap.removeTop();
+        System.out.println("删除的堆顶元素：" + removed);
+        System.out.print("删除堆顶后堆：");
+        maxHeap.printHeap();
+
+        // 5. 堆排序
+        maxHeap.heapSort();
+    }
+}
+```
+
+ 代码运行结果
+
+```
+建堆后大顶堆：5 4 3 2 1 
+堆顶元素：5
+插入元素6后：6 4 5 2 1 3 
+删除的堆顶元素：6
+删除堆顶后堆：5 4 3 2 1 
+堆排序结果：1 2 3 4 5 
+```
+
+1. 堆的核心是**完全二叉树+堆化操作**，大顶堆/小顶堆仅需调整堆化的比较规则即可实现互换；
+2. 堆的高频操作中，**获取堆顶O(1)**，**插入/删除堆顶O(logn)**，**建堆O(n)**，是优先队列、堆排序的核心数据结构；
+3. 上述Demo通过数组实现大顶堆，封装了所有常用操作，逻辑简洁且贴合算法底层原理。
+
+### [215. 数组中的第K个最大元素](https://leetcode.cn/problems/kth-largest-element-in-an-array/)
+
+1. 题目描述：给定整数数组 nums 和整数 k，请返回数组中第 k 个最大的元素。需要找的是数组排序后的第 k 个最大的元素，而不是第 k 个不同的元素。必须设计并实现时间复杂度为 O(n) 的算法解决此问题。
+示例 1: 输入: [3,2,1,5,6,4], k = 2 输出: 5
+示例 2: 输入: [3,2,3,1,2,4,5,5,6], k = 4 输出: 4
+提示：1 <= k <= nums.length <= 10^5，-10^4 <= nums[i] <= 10^4
+
+2. 算法思想+代码
+- 解法一：快速选择算法
+  算法思想：基于快速排序的分区思想，随机选择基准值将数组划分为大于基准、等于基准、小于基准三部分，通过判断第k大元素所在的区间，仅递归处理目标区间，无需对整个数组排序，平均时间复杂度为O(n)，随机选取基准可规避最坏时间复杂度O(n²)，是满足题目时间要求的最优解法之一。
+  Java代码：
+```java
+import java.util.Random;
+
+public class Solution {
+    Random random = new Random();
+
+    public int findKthLargest(int[] nums, int k) {
+        // 第k大元素 = 数组中索引为 len - k 的元素
+        return quickSelect(nums, 0, nums.length - 1, nums.length - k);
+    }
+
+    // 快速选择核心方法
+    private int quickSelect(int[] nums, int left, int right, int targetIndex) {
+        if (left >= right) {
+            return nums[left];
+        }
+        // 随机选取基准值索引
+        int pivotIndex = left + random.nextInt(right - left + 1);
+        // 分区操作，返回基准值最终位置
+        int curIndex = partition(nums, left, right, pivotIndex);
+        // 递归判断目标区间
+        if (curIndex == targetIndex) {
+            return nums[curIndex];
+        } else if (curIndex < targetIndex) {
+            return quickSelect(nums, curIndex + 1, right, targetIndex);
+        } else {
+            return quickSelect(nums, left, curIndex - 1, targetIndex);
+        }
+    }
+
+    // 分区函数：将小于基准的放左边，大于基准的放右边
+    private int partition(int[] nums, int left, int right, int pivotIndex) {
+        int pivot = nums[pivotIndex];
+        // 先把基准值放到最右侧
+        swap(nums, pivotIndex, right);
+        int slow = left;
+        for (int fast = left; fast < right; fast++) {
+            if (nums[fast] < pivot) {
+                swap(nums, slow, fast);
+                slow++;
+            }
+        }
+        // 把基准值放回最终位置
+        swap(nums, slow, right);
+        return slow;
+    }
+
+    // 交换数组元素
+    private void swap(int[] nums, int i, int j) {
+        int temp = nums[i];
+        nums[i] = nums[j];
+        nums[j] = temp;
+    }
+}
+```
+
+- 解法二：计数排序算法
+  算法思想：利用题目限定的数值范围（-10^4 ~ 10^4），创建固定长度的计数数组统计每个数字的出现次数，从最大值向最小值遍历计数数组，累加计数次数直至等于k，当前数字即为第k个最大元素，时间复杂度O(n)，空间复杂度O(1)（计数数组长度固定）。
+  Java代码：
+```java
+public class Solution {
+    public int findKthLargest(int[] nums, int k) {
+        // 数值范围：-10^4 ~ 10^4，总长度20001，偏移量10000处理负数
+        int offset = 10000;
+        int[] count = new int[20001];
+        
+        // 统计每个数字出现次数
+        for (int num : nums) {
+            count[num + offset]++;
+        }
+        
+        // 从大到小遍历，找到第k大元素
+        for (int i = 20000; i >= 0; i--) {
+            k -= count[i];
+            if (k <= 0) {
+                return i - offset;
+            }
+        }
+        return -1;
+    }
+}
+```
+
+### [347. 前 K 个高频元素](https://leetcode.cn/problems/top-k-frequent-elements/)
+
+1. 题目描述
+给你一个整数数组 nums 和一个整数 k ，请你返回其中出现频率前 k 高的元素。你可以按任意顺序返回答案。
+示例 1：输入：nums = [1,1,1,2,2,3], k = 2 输出：[1,2]
+示例 2：输入：nums = [1], k = 1 输出：[1]
+示例 3：输入：nums = [1,2,1,2,1,2,3,1,3,2], k = 2 输出：[1,2]
+提示：1 <= nums.length <= 105；-104 <= nums[i] <= 104；k 的取值范围是 [1, 数组中不相同的元素的个数]；题目数据保证答案唯一，换句话说，数组中前 k 个高频元素的集合是唯一的
+进阶：你所设计算法的时间复杂度必须优于 O(n log n) ，其中 n 是数组大小。
+
+2. 算法思想+代码
+- 解法一：哈希表 + 排序
+  算法思想：通过哈希表统计数组中每个元素的出现频率，将哈希表的键值对转换为列表后，按照元素频率进行降序排序，最后截取排序后列表的前k个元素作为结果。该方法实现简单，时间复杂度为O(n log n)。
+  Java代码：
+  
+  ```java
+  import java.util.*;
+  
+  class Solution {
+      public int[] topKFrequent(int[] nums, int k) {
+          // 哈希表统计每个数字出现的频率
+          Map<Integer, Integer> frequencyMap = new HashMap<>();
+          for (int num : nums) {
+              frequencyMap.put(num, frequencyMap.getOrDefault(num, 0) + 1);
+          }
+  
+          // 将哈希表的键值对转为列表，按频率降序排序
+          List<Map.Entry<Integer, Integer>> frequencyList = new ArrayList<>(frequencyMap.entrySet());
+          frequencyList.sort((entry1, entry2) -> entry2.getValue() - entry1.getValue());
+  
+          // 提取前k个高频元素
+          int[] result = new int[k];
+          for (int i = 0; i < k; i++) {
+              result[i] = frequencyList.get(i).getKey();
+          }
+          return result;
+      }
+  }
+  ```
+- 解法二：哈希表 + 小顶堆（优先队列，进阶解法）
+  算法思想：先通过哈希表统计元素出现频率，再使用小顶堆（优先队列）维护频率最高的k个元素。将堆的大小固定为k，遍历哈希表时，若堆未填满则直接将元素入堆；若当前元素频率大于堆顶元素的频率，弹出堆顶元素后将当前元素入堆。最终堆中存储的就是频率前k高的元素，时间复杂度为O(n log k)，优于O(n log n)，满足进阶要求。
+  Java代码：
+  ```java
+  import java.util.*;
+  
+  class Solution {
+      public int[] topKFrequent(int[] nums, int k) {
+          // 哈希表统计每个数字出现的频率
+          Map<Integer, Integer> frequencyMap = new HashMap<>();
+          for (int num : nums) {
+              frequencyMap.put(num, frequencyMap.getOrDefault(num, 0) + 1);
+          }
+  
+          // 小顶堆：按照元素频率升序排列，堆顶为当前频率最小的元素
+          PriorityQueue<Integer> minHeap = new PriorityQueue<>((num1, num2) -> frequencyMap.get(num1) - frequencyMap.get(num2));
+  
+          // 遍历哈希表，维护堆的大小为k
+          for (Integer num : frequencyMap.keySet()) {
+              minHeap.offer(num);
+              // 堆大小超过k时，弹出频率最小的元素
+              if (minHeap.size() > k) {
+                  minHeap.poll();
+              }
+          }
+  
+          // 提取堆中元素作为结果
+          int[] result = new int[k];
+          for (int i = 0; i < k; i++) {
+              result[i] = minHeap.poll();
+          }
+          return result;
+      }
+  }
+  ```
+  
+
+### [295. 数据流的中位数](https://leetcode.cn/problems/find-median-from-data-stream/)
+
+1. 题目描述
+中位数是有序整数列表中的中间值。如果列表的大小是偶数，则没有中间值，中位数是两个中间值的平均值。例如 arr = [2,3,4] 的中位数是 3 。例如 arr = [2,3] 的中位数是 (2 + 3) / 2 = 2.5 。实现 MedianFinder 类: MedianFinder() 初始化 MedianFinder 对象。void addNum(int num) 将数据流中的整数 num 添加到数据结构中。double findMedian() 返回到目前为止所有元素的中位数。与实际答案相差 10^-5 以内的答案将被接受。
+示例 1：输入["MedianFinder", "addNum", "addNum", "findMedian", "addNum", "findMedian"][[], [1], [2], [], [3], []]输出[null, null, null, 1.5, null, 2.0]解释MedianFinder medianFinder = new MedianFinder();medianFinder.addNum(1);    // arr = [1]medianFinder.addNum(2);    // arr = [1, 2]medianFinder.findMedian(); // 返回 1.5 ((1 + 2) / 2)medianFinder.addNum(3);    // arr[1, 2, 3]medianFinder.findMedian(); // return 2.0提示:-10^5 <= num <= 10^5在调用 findMedian 之前，数据结构中至少有一个元素最多 5 * 10^4 次调用 addNum 和 findMedian
+2. 算法思想+代码
+- 解法一：优先队列（大顶堆+小顶堆，最优解法）
+  算法思想：采用两个堆分割数据流，大顶堆存储较小的一半元素，堆顶为较小半部分的最大值；小顶堆存储较大的一半元素，堆顶为较大半部分的最小值。维护堆的数量平衡：大顶堆元素数量要么与小顶堆相等，要么比小顶堆多1。添加元素时根据数值大小入堆，并调整堆的数量平衡；查找中位数时，总元素数为奇数则取大顶堆堆顶，为偶数则取两个堆堆顶的平均值。该解法添加元素时间复杂度O(logn)，查找中位数O(1)，适配大数据流场景。
+  Java代码：
+```java
+import java.util.PriorityQueue;
+
+class MedianFinder {
+    // 大顶堆：存储数据流中较小的一半元素
+    private PriorityQueue<Integer> maxHeap;
+    // 小顶堆：存储数据流中较大的一半元素
+    private PriorityQueue<Integer> minHeap;
+
+    // 初始化两个堆
+    public MedianFinder() {
+        // 重写比较器实现大顶堆
+        maxHeap = new PriorityQueue<>((a, b) -> b - a);
+        // 默认小顶堆
+        minHeap = new PriorityQueue<>();
+    }
+
+    // 添加元素并维护堆的平衡
+    public void addNum(int num) {
+        // 元素小于等于大顶堆堆顶，放入大顶堆
+        if (maxHeap.isEmpty() || num <= maxHeap.peek()) {
+            maxHeap.offer(num);
+        } else {
+            // 否则放入小顶堆
+            minHeap.offer(num);
+        }
+
+        // 调整平衡：大顶堆最多比小顶堆多1个元素
+        if (maxHeap.size() > minHeap.size() + 1) {
+            minHeap.offer(maxHeap.poll());
+        }
+        // 小顶堆元素不能多于大顶堆
+        if (minHeap.size() > maxHeap.size()) {
+            maxHeap.offer(minHeap.poll());
+        }
+    }
+
+    // 计算并返回中位数
+    public double findMedian() {
+        // 元素总数为奇数，中位数是大顶堆堆顶
+        if (maxHeap.size() > minHeap.size()) {
+            return maxHeap.peek();
+        }
+        // 元素总数为偶数，中位数是两个堆顶的平均值
+        return (maxHeap.peek() + minHeap.peek()) / 2.0;
+    }
+}
+```
+- 解法二：暴力排序法
+  算法思想：使用动态数组存储所有流入元素，addNum方法直接追加元素；findMedian方法先对数组排序，再根据数组长度奇偶性计算中位数。实现简单，但查找中位数需要排序，时间复杂度O(nlogn)，仅适合小数据量场景。
+  Java代码：
+```java
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
+class MedianFinder {
+    // 动态数组存储所有元素
+    private List<Integer> nums;
+
+    // 初始化数组
+    public MedianFinder() {
+        nums = new ArrayList<>();
+    }
+
+    // 直接添加元素到数组末尾
+    public void addNum(int num) {
+        nums.add(num);
+    }
+
+    // 排序后计算中位数
+    public double findMedian() {
+        // 对数组排序
+        Collections.sort(nums);
+        int size = nums.size();
+        // 数组长度为奇数
+        if (size % 2 == 1) {
+            return nums.get(size / 2);
+        }
+        // 数组长度为偶数
+        return (nums.get(size / 2 - 1) + nums.get(size / 2)) / 2.0;
+    }
+}
+```
+
+## 贪心算法
+
+贪心算法是一种在每一步决策中都选择当前状态下局部最优的解决方案，从而期望通过一系列局部最优选择最终得到全局最优解的算法思想；该算法无需回溯和全局规划，执行效率高，但仅适用于满足贪心选择性质（全局最优解可由一系列局部最优选择推导得到）和最优子结构性质（问题的最优解包含其子问题的最优解）的场景，不满足这两个性质的问题无法通过贪心算法得到全局最优解。
+
+贪心算法的常见操作：
+1. 问题有效性校验：分析问题是否满足贪心选择性质和最优子结构性质，这是使用贪心算法的核心前提
+2. 制定贪心策略：根据问题需求定义每一步的局部最优选择规则，这是贪心算法的核心步骤
+3. 迭代执行选择：按照制定的贪心策略，遍历问题元素并逐步选择局部最优解，同时记录选择结果
+4. 终止条件判定：当遍历完所有元素或满足问题的边界约束时，停止选择操作
+5. 结果整合输出：将所有局部最优选择整合，得到最终的问题解
+
+以下代码实现贪心算法最经典的两个场景：活动选择问题（选最多不重叠活动）、零钱兑换问题（用最少硬币凑金额），严格遵循上述常见操作：
+```java
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Comparator;
+import java.util.List;
+
+public class GreedyAlgorithmDemo {
+    public static void main(String[] args) {
+        // 1. 演示活动选择问题（贪心经典场景）
+        System.out.println("===== 活动选择问题 =====");
+        // 定义活动：数组格式[开始时间, 结束时间]
+        int[][] activities = {{1, 3}, {2, 4}, {3, 5}, {4, 6}, {5, 7}};
+        List<int[]> selectActivities = activitySelect(activities);
+        System.out.println("选中的不重叠活动（开始-结束）：");
+        for (int[] act : selectActivities) {
+            System.out.print(act[0] + "-" + act[1] + " ");
+        }
+
+        // 2. 演示零钱兑换问题（贪心常用场景）
+        System.out.println("\n===== 零钱兑换问题 =====");
+        // 硬币面额（降序排列，适配贪心策略）
+        int[] coins = {5, 2, 1};
+        // 目标金额
+        int target = 11;
+        int minCoinNum = coinChange(coins, target);
+        System.out.println("凑成" + target + "元最少需要硬币数量：" + minCoinNum);
+    }
+
+    /**
+     * 活动选择问题 - 贪心实现
+     * 贪心策略：每次选择结束时间最早的活动，预留更多时间给后续活动
+     */
+    public static List<int[]> activitySelect(int[][] activities) {
+        List<int[]> result = new ArrayList<>();
+        if (activities == null || activities.length == 0) {
+            return result;
+        }
+
+        // 步骤1：制定贪心策略 -> 按活动结束时间升序排序
+        Arrays.sort(activities, Comparator.comparingInt(a -> a[1]));
+
+        // 步骤2：迭代选择第一个活动（结束最早）
+        result.add(activities[0]);
+        int lastEndTime = activities[0][1];
+
+        // 步骤3：遍历剩余活动，选择不重叠的局部最优解
+        for (int i = 1; i < activities.length; i++) {
+            int currentStart = activities[i][0];
+            // 校验：当前活动开始时间 >= 上一个选中活动的结束时间
+            if (currentStart >= lastEndTime) {
+                result.add(activities[i]);
+                lastEndTime = activities[i][1];
+            }
+        }
+
+        // 步骤4：返回最终解
+        return result;
+    }
+
+    /**
+     * 零钱兑换问题 - 贪心实现
+     * 贪心策略：每次选择当前最大面额硬币，减少总硬币数
+     * 适用场景：面额满足倍数关系（如人民币）
+     */
+    public static int coinChange(int[] coins, int target) {
+        if (coins == null || coins.length == 0 || target < 0) {
+            return -1;
+        }
+
+        int count = 0;
+        int remaining = target;
+
+        // 步骤1：制定贪心策略 -> 按面额降序遍历
+        for (int coin : coins) {
+            // 步骤2：迭代选择当前最大面额硬币（局部最优）
+            while (remaining >= coin) {
+                remaining -= coin;
+                count++;
+            }
+            // 步骤3：终止条件：金额凑完则退出
+            if (remaining == 0) {
+                break;
+            }
+        }
+
+        // 无法凑出金额返回-1
+        return remaining == 0 ? count : -1;
+    }
+}
+```
+
+代码运行说明：
+- 活动选择问题：通过「按结束时间排序+选不重叠活动」的贪心策略，得到最多可参与的活动数量
+- 零钱兑换问题：通过「优先用大面额硬币」的贪心策略，得到最少硬币数
+- 代码完整覆盖贪心算法的所有常见操作：校验场景、制定策略、迭代选择、终止判定、结果输出
+
+运行结果：
+```
+===== 活动选择问题 =====
+选中的不重叠活动（开始-结束）：
+1-3 3-5 5-7 
+===== 零钱兑换问题 =====
+凑成11元最少需要硬币数量：3
+```
+
+1. 贪心算法核心是**局部最优推导全局最优**，必须满足贪心选择性质和最优子结构
+2. 核心流程固定为：校验场景→制定策略→迭代选择→终止判定→输出结果
+3. Java实现中通过排序、遍历即可完成贪心逻辑，代码简洁、执行效率高
+
+### [121. 买卖股票的最佳时机](https://leetcode.cn/problems/best-time-to-buy-and-sell-stock/)
+
+1. 题目描述
+给定一个数组 prices ，它的第 i 个元素 prices[i] 表示一支给定股票第 i 天的价格。你只能选择某一天买入这只股票，并选择在未来的某一个不同的日子卖出该股票。设计一个算法来计算你所能获取的最大利润。返回你可以从这笔交易中获取的最大利润，如果你不能获取任何利润，返回 0。
+
+2. 算法思想+代码
+- 解法一：暴力枚举法
+  算法思想：通过双重循环枚举所有可能的买入和卖出组合，外层循环遍历买入日期，内层循环遍历卖出日期（卖出日期必须晚于买入日期），计算每一组的利润，不断更新最大利润值；若所有组合利润均为负，最终返回0。该方法逻辑简单直观，但时间复杂度较高，对于大数据量会超时。
+  Java代码：
+  ```java
+  class Solution {
+      public int maxProfit(int[] prices) {
+          int maxProfit = 0;
+          int n = prices.length;
+          // 遍历所有买入日期
+          for (int i = 0; i < n; i++) {
+              // 遍历所有卖出日期（必须在买入之后）
+              for (int j = i + 1; j < n; j++) {
+                  int profit = prices[j] - prices[i];
+                  // 更新最大利润
+                  if (profit > maxProfit) {
+                      maxProfit = profit;
+                  }
+              }
+          }
+          return maxProfit;
+      }
+  }
+  ```
+
+- 解法二：一次遍历法（贪心算法）
+  算法思想：遍历数组的过程中，实时记录当前遇到的最低股票价格，同时计算以当前价格卖出所能获得的利润，用当前利润和历史最大利润对比，更新最大利润。仅需一次遍历数组，时间复杂度为O(n)，空间复杂度为O(1)，能够高效处理题目给定的大数据量。
+  Java代码：
+  ```java
+  class Solution {
+      public int maxProfit(int[] prices) {
+          // 边界处理：天数小于2无法交易，利润为0
+          if (prices == null || prices.length < 2) {
+              return 0;
+          }
+          // 初始化最低价格为第一天的价格
+          int minPrice = prices[0];
+          // 初始化最大利润为0
+          int maxProfit = 0;
+          // 从第二天开始遍历
+          for (int i = 1; i < prices.length; i++) {
+              // 更新遍历过程中的最低价格
+              minPrice = Math.min(minPrice, prices[i]);
+              // 计算当前卖出利润，更新最大利润
+              maxProfit = Math.max(maxProfit, prices[i] - minPrice);
+          }
+          return maxProfit;
+      }
+  }
+  ```
+
+### [55. 跳跃游戏](https://leetcode.cn/problems/jump-game/)
+
+1. 题目描述
+给你一个非负整数数组 nums ，你最初位于数组的第一个下标 。数组中的每个元素代表你在该位置可以跳跃的最大长度。判断你是否能够到达最后一个下标，如果可以，返回 true ；否则，返回 false 。
+示例 1：输入：nums = [2,3,1,1,4]，输出：true，解释：可以先跳 1 步，从下标 0 到达下标 1, 然后再从下标 1 跳 3 步到达最后一个下标。
+示例 2：输入：nums = [3,2,1,0,4]，输出：false，解释：无论怎样，总会到达下标为 3 的位置。但该下标的最大跳跃长度是 0 ， 所以永远不可能到达最后一个下标。
+提示：1 <= nums.length <= 104，0 <= nums[i] <= 105
+
+2. 算法思想+代码
+- 解法一：贪心算法
+  - 算法思想：维护当前能够到达的最远下标位置，遍历数组中的每一个位置，若当前位置在可到达范围内，则更新最远可到达位置；若最远可到达位置大于等于数组最后一个下标，直接返回true；若遍历过程中当前位置超出了最远可到达位置，说明无法继续前进，返回false。该算法时间复杂度为O(n)，空间复杂度为O(1)，是最优解法。
+  - Java代码：
+```java
+public class Solution {
+    public boolean canJump(int[] nums) {
+        // 记录当前能到达的最远位置
+        int maxReach = 0;
+        int n = nums.length;
+        for (int i = 0; i < n; i++) {
+            // 当前位置无法到达，直接返回false
+            if (i > maxReach) {
+                return false;
+            }
+            // 更新最远能到达的位置
+            maxReach = Math.max(maxReach, i + nums[i]);
+            // 已经能到达最后一个下标，提前返回true
+            if (maxReach >= n - 1) {
+                return true;
+            }
+        }
+        // 遍历结束，判断是否能到达最后一位
+        return maxReach >= n - 1;
+    }
+
+    // 测试示例
+    public static void main(String[] args) {
+        Solution solution = new Solution();
+        int[] nums1 = {2,3,1,1,4};
+        System.out.println(solution.canJump(nums1));
+        int[] nums2 = {3,2,1,0,4};
+        System.out.println(solution.canJump(nums2));
+    }
+}
+```
+- 解法二：动态规划
+  - 算法思想：定义布尔类型dp数组，dp[i]表示是否可以到达数组的下标i位置；初始化dp[0] = true（起始位置可达）；遍历数组，对于每个可达的位置i，将其能跳跃到的所有位置j标记为可达；最后判断dp数组最后一个元素的值即可。该算法时间复杂度为O(n²)，空间复杂度为O(n)。
+  - Java代码：
+```java
+public class Solution {
+    public boolean canJump(int[] nums) {
+        int n = nums.length;
+        // dp[i]：是否能到达下标i
+        boolean[] dp = new boolean[n];
+        // 初始位置可达
+        dp[0] = true;
+        for (int i = 0; i < n; i++) {
+            // 当前位置不可达，跳过
+            if (!dp[i]) {
+                continue;
+            }
+            // 标记从i位置能跳跃到的所有位置为可达
+            for (int j = 1; j <= nums[i] && i + j < n; j++) {
+                dp[i + j] = true;
+                // 提前终止：已到达最后一个位置
+                if (i + j == n - 1) {
+                    return true;
+                }
+            }
+        }
+        return dp[n - 1];
+    }
+
+    // 测试示例
+    public static void main(String[] args) {
+        Solution solution = new Solution();
+        int[] nums1 = {2,3,1,1,4};
+        System.out.println(solution.canJump(nums1));
+        int[] nums2 = {3,2,1,0,4};
+        System.out.println(solution.canJump(nums2));
+    }
+}
+```
+
+### [45. 跳跃游戏 II](https://leetcode.cn/problems/jump-game-ii/)
+
+1. 题目描述
+给定一个长度为 n 的 0 索引整数数组 nums。初始位置在下标 0。每个元素 nums[i] 表示从索引 i 向后跳转的最大长度。换句话说，如果你在索引 i 处，可以跳转到任意 (i + j) 处：0 <= j <= nums[i] 且 i + j < n。返回到达 n - 1 的最小跳跃次数。测试用例保证可以到达 n - 1。
+示例 1: 输入: nums = [2,3,1,1,4] 输出: 2 解释: 跳到最后一个位置的最小跳跃数是 2。从下标为 0 跳到下标为 1 的位置，跳 1 步，然后跳 3 步到达数组的最后一个位置。
+示例 2: 输入: nums = [2,3,0,1,4] 输出: 2
+提示: 1 <= nums.length <= 104，0 <= nums[i] <= 1000，题目保证可以到达 n - 1。
+
+2. 算法思想+代码
+- 解法一：贪心算法
+  算法思想：贪心策略的核心是每一步选择能跳得最远的位置，以此保证跳跃次数最少。遍历数组时维护三个变量：跳跃次数count、当前跳跃的边界end、当前能到达的最远位置maxReach。遍历过程中持续更新maxReach，当遍历到边界end时，执行一次跳跃，count加1并将end更新为maxReach。该解法时间复杂度O(n)，空间复杂度O(1)，为最优解法。
+  Java代码：
+  ```java
+  class Solution {
+      public int jump(int[] nums) {
+          // 最小跳跃次数
+          int count = 0;
+          // 当前跳跃的边界
+          int end = 0;
+          // 当前能到达的最远位置
+          int maxReach = 0;
+          // 无需遍历最后一个元素，到达即终止
+          for (int i = 0; i < nums.length - 1; i++) {
+              // 更新最远可达位置
+              maxReach = Math.max(maxReach, i + nums[i]);
+              // 到达当前边界，必须跳跃
+              if (i == end) {
+                  count++;
+                  // 更新边界为最远可达位置
+                  end = maxReach;
+              }
+          }
+          return count;
+      }
+  }
+  ```
+- 解法二：动态规划算法
+  算法思想：定义dp数组，dp[i]表示到达下标i的最小跳跃次数。初始化dp数组为无穷大（代表不可达），起点dp[0]=0。遍历每个索引i，对i能跳跃到的所有位置j，更新dp[j]为dp[j]和dp[i]+1的最小值。最终dp[n-1]即为答案。该解法时间复杂度O(n²)，空间复杂度O(n)。
+  Java代码：
+  
+  ```java
+  class Solution {
+      public int jump(int[] nums) {
+          int n = nums.length;
+          // dp[i]：到达下标i的最小跳跃次数
+          int[] dp = new int[n];
+          // 初始化数组为最大值，表示初始不可达
+          for (int i = 1; i < n; i++) {
+              dp[i] = Integer.MAX_VALUE;
+          }
+          // 起点无需跳跃
+          dp[0] = 0;
+          for (int i = 0; i < n; i++) {
+              // 当前位置不可达，直接跳过
+              if (dp[i] == Integer.MAX_VALUE) continue;
+              // 遍历所有可跳跃到的位置
+              for (int j = i + 1; j <= i + nums[i] && j < n; j++) {
+                  dp[j] = Math.min(dp[j], dp[i] + 1);
+              }
+          }
+          return dp[n - 1];
+      }
+  }
+  ```
+  
+
+### [763. 划分字母区间](https://leetcode.cn/problems/partition-labels/)
+
+1. 题目描述
+给你一个字符串 s 。我们要把这个字符串划分为尽可能多的片段，同一字母最多出现在一个片段中。例如，字符串 "ababcc" 能够被分为 ["abab", "cc"]，但类似 ["aba", "bcc"] 或 ["ab", "ab", "cc"] 的划分是非法的。注意，划分结果需要满足：将所有划分结果按顺序连接，得到的字符串仍然是 s 。返回一个表示每个字符串片段的长度的列表。
+示例 1：输入：s = "ababcbacadefegdehijhklij"，输出：[9,7,8]
+解释：划分结果为 "ababcbaca"、"defegde"、"hijhklij" 。每个字母最多出现在一个片段中。像 "ababcbacadefegde", "hijhklij" 这样的划分是错误的，因为划分的片段数较少。
+示例 2：输入：s = "eccbbbbdec"，输出：[10]
+提示：1 <= s.length <= 500，s 仅由小写英文字母组成
+
+2. 算法思想+代码
+- 算法思想：采用贪心算法实现，核心逻辑与跳跃游戏II的贪心策略一致
+  1. 预处理字符串，创建长度为26的数组存储每个小写字母最后一次出现的下标位置，确保片段包含对应字母的所有出现
+  2. 初始化两个边界变量，start表示当前片段的起始索引，end表示当前片段能覆盖的最远结束索引，同时创建列表存储最终结果
+  3. 遍历字符串的每一个索引i：
+     - 每次遍历更新最远结束索引end，取当前end与当前字符最后出现下标中的最大值
+     - 当遍历到的索引i等于end时，代表当前片段划分完成，将片段长度加入结果列表，并将start更新为i+1，开始下一个片段的划分
+- 代码实现
+```java
+import java.util.ArrayList;
+import java.util.List;
+
+public class Solution {
+    public List<Integer> partitionLabels(String s) {
+        // 存储每个小写字母最后一次出现的索引
+        int[] lastOccurrence = new int[26];
+        int length = s.length();
+        // 遍历字符串，记录每个字符的最后出现位置
+        for (int i = 0; i < length; i++) {
+            lastOccurrence[s.charAt(i) - 'a'] = i;
+        }
+        List<Integer> result = new ArrayList<>();
+        // 初始化片段起始位置和最远结束位置
+        int start = 0;
+        int end = 0;
+        // 遍历字符串划分片段
+        for (int i = 0; i < length; i++) {
+            // 更新当前片段的最远边界
+            end = Math.max(end, lastOccurrence[s.charAt(i) - 'a']);
+            // 到达当前片段的边界，完成一次划分
+            if (i == end) {
+                result.add(end - start + 1);
+                // 更新起始位置为下一个片段的开头
+                start = i + 1;
+            }
+        }
+        return result;
+    }
+}
+```
+
+## 动态规划
+
+1. 动态规划定义：动态规划（DP）是一种求解最优化问题的核心算法思想，它将大规模复杂问题拆解为若干存在关联的小规模子问题，依托**重叠子问题**和**最优子结构**两个关键特性，通过缓存子问题的解避免重复计算，最终逐步推导出原问题的最优解；其中重叠子问题指递归求解时会重复计算相同的子问题，最优子结构指原问题的最优解由子问题的最优解构成。
+2. 动态规划常见操作（标准解题流程）：
+   1. 定义状态：明确dp数组或变量的具体含义，确定每个状态代表的问题场景，是动态规划解题的基础
+   2. 推导状态转移方程：建立当前状态与前置子状态的递推公式，是动态规划的核心逻辑
+   3. 初始化边界值：确定无法通过递推计算的最小子问题的解，作为整个递推过程的起点
+   4. 确定遍历顺序：根据状态之间的依赖关系，选择正向或反向遍历，保证计算当前状态时，所有依赖的前置状态已经完成求解
+   5. 获取最终结果：根据状态的定义，从dp数组中提取出对应原问题的答案
+3. Java实现的动态规划演示Demo，包含经典的爬楼梯问题和斐波那契数列，完整覆盖动态规划所有常用操作，代码可直接运行
+```java
+public class DynamicProgramDemo {
+    public static void main(String[] args) {
+        // 测试爬楼梯问题（动态规划核心案例）
+        int stairNum = 10;
+        System.out.println("爬" + stairNum + "阶楼梯的方法数（DP解法）：" + climbStairs(stairNum));
+        System.out.println("爬" + stairNum + "阶楼梯的方法数（递归暴力解法）：" + climbStairsRecursion(stairNum));
+
+        // 测试斐波那契数列（动态规划基础案例）
+        int fibNum = 10;
+        System.out.println("斐波那契数列第" + fibNum + "项（DP解法）：" + fibonacci(fibNum));
+    }
+
+    /**
+     * 爬楼梯问题 - 动态规划标准实现
+     * 问题：n阶楼梯，每次只能爬1阶或2阶，求总方法数
+     * 严格对应动态规划5个常用操作
+     */
+    public static int climbStairs(int n) {
+        // 边界特殊值处理
+        if (n <= 1) return 1;
+        // 操作1：定义状态 dp[i] = 爬i阶楼梯的总方法数
+        int[] dp = new int[n + 1];
+        // 操作3：初始化边界值（最小子问题的解）
+        dp[1] = 1;
+        dp[2] = 2;
+        // 操作4：确定遍历顺序（正向遍历，依赖前序状态）
+        for (int i = 3; i <= n; i++) {
+            // 操作2：状态转移方程 dp[i] = dp[i-1] + dp[i-2]
+            dp[i] = dp[i - 1] + dp[i - 2];
+        }
+        // 操作5：获取最终结果
+        return dp[n];
+    }
+
+    /**
+     * 爬楼梯 - 递归暴力解法（用于对比，存在大量重复计算）
+     */
+    public static int climbStairsRecursion(int n) {
+        if (n <= 1) return 1;
+        return climbStairsRecursion(n - 1) + climbStairsRecursion(n - 2);
+    }
+
+    /**
+     * 斐波那契数列 - 动态规划基础实现
+     * 定义：F(0)=0，F(1)=1，F(n)=F(n-1)+F(n-2)
+     */
+    public static int fibonacci(int n) {
+        if (n <= 1) return n;
+        // 定义状态
+        int[] dp = new int[n + 1];
+        // 初始化边界
+        dp[0] = 0;
+        dp[1] = 1;
+        // 遍历计算
+        for (int i = 2; i <= n; i++) {
+            dp[i] = dp[i - 1] + dp[i - 2];
+        }
+        return dp[n];
+    }
+}
+```
+4. 代码说明：
+   - 爬楼梯案例是动态规划的经典应用，代码中通过注释标注了每一步对应的动态规划常见操作，直观展示完整解题流程
+   - 斐波那契数列是动态规划的入门案例，用于理解子问题解的缓存和递推逻辑
+   - 提供递归暴力解法做对比，能清晰看到动态规划通过缓存子问题解，彻底解决了递归重复计算的效率问题
+   - 直接运行main方法即可看到结果，修改stairNum和fibNum参数，可测试不同输入的输出结果
+
+1. 动态规划核心是分解子问题+缓存解，依靠最优子结构和重叠子问题优化计算
+2. 解题固定流程：定义状态→推导转移方程→初始化边界→确定遍历顺序→提取结果
+3. 演示代码用Java实现了经典DP案例，严格贴合所有常用操作，可直接复用学习
+
+### [70. 爬楼梯](https://leetcode.cn/problems/climbing-stairs/)
+
+1. 题目描述
+假设你正在爬楼梯，需要 n 阶你才能到达楼顶，每次你可以爬 1 或 2 个台阶，求有多少种不同的方法可以爬到楼顶。
+示例 1：输入 n = 2，输出 2，解释为有两种方法爬到楼顶，分别是1阶 + 1阶、2阶。
+示例 2：输入 n = 3，输出 3，解释为有三种方法爬到楼顶，分别是1阶 + 1阶 + 1阶、1阶 + 2阶、2阶 + 1阶。
+提示：1 <= n <= 45
+
+2. 解法一：暴力递归
+- 算法思想：核心为递推关系，爬到第 n 阶的方法数等于爬到第 n-1 阶的方法数（最后一步爬1阶）加上爬到第 n-2 阶的方法数（最后一步爬2阶）；递归终止条件为 n=1 时只有1种方法，n=2 时有2种方法，该方法存在大量重复计算，效率较低
+- Java代码
+```java
+public class Solution {
+    public int climbStairs(int n) {
+        // 递归终止条件
+        if (n == 1) {
+            return 1;
+        }
+        if (n == 2) {
+            return 2;
+        }
+        // 递推公式
+        return climbStairs(n - 1) + climbStairs(n - 2);
+    }
+}
+```
+
+3. 解法二：记忆化递归
+- 算法思想：针对暴力递归的重复计算问题，使用数组存储已计算的结果，避免重复递归调用，将时间复杂度优化为 O(n)，空间复杂度为 O(n)
+- Java代码
+```java
+public class Solution {
+    public int climbStairs(int n) {
+        // 创建数组存储中间结果
+        int[] memo = new int[n + 1];
+        return dfs(n, memo);
+    }
+    
+    private int dfs(int n, int[] memo) {
+        if (n == 1) {
+            return 1;
+        }
+        if (n == 2) {
+            return 2;
+        }
+        // 若已计算过，直接返回结果
+        if (memo[n] != 0) {
+            return memo[n];
+        }
+        // 计算并存储结果
+        memo[n] = dfs(n - 1, memo) + dfs(n - 2, memo);
+        return memo[n];
+    }
+}
+```
+
+4. 解法三：基础动态规划
+- 算法思想：采用自底向上的动态规划思路，定义 dp 数组，dp[i] 表示爬到第 i 阶的方法数；递推公式为 dp[i] = dp[i-1] + dp[i-2]，初始化 dp[1]=1、dp[2]=2，遍历计算得到 dp[n]，时间复杂度 O(n)，空间复杂度 O(n)
+- Java代码
+```java
+public class Solution {
+    public int climbStairs(int n) {
+        if (n == 1) {
+            return 1;
+        }
+        // 定义dp数组
+        int[] dp = new int[n + 1];
+        // 初始化基础状态
+        dp[1] = 1;
+        dp[2] = 2;
+        // 遍历计算
+        for (int i = 3; i <= n; i++) {
+            dp[i] = dp[i - 1] + dp[i - 2];
+        }
+        return dp[n];
+    }
+}
+```
+
+5. 解法四：滚动数组优化动态规划
+- 算法思想：由于 dp[i] 仅依赖 dp[i-1] 和 dp[i-2] 两个状态，无需维护完整 dp 数组，用两个变量滚动更新前两个状态，将空间复杂度优化为 O(1)，时间复杂度仍为 O(n)
+- Java代码
+```java
+public class Solution {
+    public int climbStairs(int n) {
+        if (n == 1) {
+            return 1;
+        }
+        // 定义两个变量存储前两个状态
+        int first = 1;
+        int second = 2;
+        // 滚动更新
+        for (int i = 3; i <= n; i++) {
+            int third = first + second;
+            first = second;
+            second = third;
+        }
+        return second;
+    }
+}
+```
+
+6. 解法五：数学公式法
+- 算法思想：爬楼梯的递推关系符合斐波那契数列，直接使用斐波那契数列通项公式计算，时间复杂度 O(1)，空间复杂度 O(1)
+- Java代码
+```java
+public class Solution {
+    public int climbStairs(int n) {
+        double sqrt5 = Math.sqrt(5);
+        // 斐波那契通项公式
+        double fibN = Math.pow((1 + sqrt5) / 2, n + 1) - Math.pow((1 - sqrt5) / 2, n + 1);
+        return (int) (fibN / sqrt5);
+    }
+}
+```
+
+### [118. 杨辉三角](https://leetcode.cn/problems/pascals-triangle/)
+
+1. 题目描述
+给定一个非负整数 numRows，生成「杨辉三角」的前 numRows 行。在「杨辉三角」中，每个数是它左上方和右上方的数的和。
+示例 1:
+输入: numRows = 5
+输出: [[1],[1,1],[1,2,1],[1,3,3,1],[1,4,6,4,1]]
+示例 2:
+输入: numRows = 1
+输出: [[1]]
+提示: 1 <= numRows <= 30
+
+2. 算法思想+代码
+- 解法一：迭代法（动态规划）
+  算法思想：杨辉三角的每一行第一个和最后一个元素固定为1，中间的任意元素等于上一行中对应位置的前一个元素与当前位置元素的和。通过外层循环遍历行数，内层循环计算每行的中间元素，逐行构建杨辉三角。
+  Java代码：
+  ```java
+  import java.util.ArrayList;
+  import java.util.List;
+  
+  public class Solution {
+      public List<List<Integer>> generate(int numRows) {
+          // 存储最终结果的二维列表
+          List<List<Integer>> res = new ArrayList<>();
+          // 遍历生成每一行
+          for (int i = 0; i < numRows; i++) {
+              List<Integer> row = new ArrayList<>();
+              // 每行元素个数等于行号+1
+              for (int j = 0; j <= i; j++) {
+                  // 首尾元素赋值为1
+                  if (j == 0 || j == i) {
+                      row.add(1);
+                  } else {
+                      // 中间元素 = 上一行左上方 + 右上方元素之和
+                      row.add(res.get(i-1).get(j-1) + res.get(i-1).get(j));
+                  }
+              }
+              res.add(row);
+          }
+          return res;
+      }
+  }
+  ```
+
+- 解法二：递归法
+  算法思想：递归核心是通过前n-1行的结果推导第n行，递归终止条件为numRows=0返回空列表、numRows=1返回[[1]]。先递归生成前numRows-1行，再基于最后一行计算当前行，最终拼接所有行得到结果。
+  Java代码：
+  ```java
+  import java.util.ArrayList;
+  import java.util.List;
+  
+  public class Solution {
+      public List<List<Integer>> generate(int numRows) {
+          // 递归终止：0行返回空列表
+          if (numRows == 0) {
+              return new ArrayList<>();
+          }
+          // 递归生成前numRows-1行
+          List<List<Integer>> preRows = generate(numRows - 1);
+          // 构建当前行
+          List<Integer> currRow = new ArrayList<>();
+          for (int i = 0; i < numRows; i++) {
+              // 首尾元素为1
+              if (i == 0 || i == numRows - 1) {
+                  currRow.add(1);
+              } else {
+                  // 中间元素通过前一行计算
+                  currRow.add(preRows.get(numRows - 2).get(i - 1) + preRows.get(numRows - 2).get(i));
+              }
+          }
+          preRows.add(currRow);
+          return preRows;
+      }
+  }
+  ```
+
+### [198. 打家劫舍](https://leetcode.cn/problems/house-robber/)
+
+1. 题目描述
+你是一个专业的小偷，计划偷窃沿街的房屋。每间房内都藏有一定的现金，影响你偷窃的唯一制约因素就是相邻的房屋装有相互连通的防盗系统，如果两间相邻的房屋在同一晚上被小偷闯入，系统会自动报警。
+给定一个代表每个房屋存放金额的非负整数数组，计算你不触动警报装置的情况下，一夜之内能够偷窃到的最高金额。
+示例 1：
+输入：[1,2,3,1]
+输出：4
+解释：偷窃 1 号房屋 (金额 = 1) ，然后偷窃 3 号房屋 (金额 = 3)。偷窃到的最高金额 = 1 + 3 = 4 。
+示例 2：
+输入：[2,7,9,3,1]
+输出：12
+解释：偷窃 1 号房屋 (金额 = 2), 偷窃 3 号房屋 (金额 = 9)，接着偷窃 5 号房屋 (金额 = 1)。偷窃到的最高金额 = 2 + 9 + 1 = 12 。
+提示：
+1 <= nums.length <= 100
+0 <= nums[i] <= 400
+2. 算法思想+代码
+- 解法一：动态规划（数组存储状态）
+  算法思想：采用动态规划求解，定义dp数组，dp[i]表示遍历到第i间房屋时，能够偷窃到的最高金额。状态转移规则：对于第i间房屋，有两种选择，偷窃则不能偷第i-1间，总金额为dp[i-2] + nums[i]；不偷窃则总金额为dp[i-1]，取两者最大值作为dp[i]。边界条件：当只有1间房屋时，dp[0] = nums[0]；当有2间房屋时，dp[1] = Math.max(nums[0], nums[1])。最终dp数组最后一个元素即为答案。
+  Java代码：
+```java
+public class Rob {
+    public int rob(int[] nums) {
+        // 处理空数组和单元素数组的边界情况
+        if (nums == null || nums.length == 0) return 0;
+        if (nums.length == 1) return nums[0];
+        // 定义dp数组，存储每一步的最大金额
+        int[] dp = new int[nums.length];
+        dp[0] = nums[0];
+        dp[1] = Math.max(nums[0], nums[1]);
+        // 遍历计算所有房屋的最大偷窃金额
+        for (int i = 2; i < nums.length; i++) {
+            dp[i] = Math.max(dp[i-1], dp[i-2] + nums[i]);
+        }
+        return dp[nums.length - 1];
+    }
+
+    // 测试示例
+    public static void main(String[] args) {
+        Rob rob = new Rob();
+        int[] nums1 = {1,2,3,1};
+        System.out.println(rob.rob(nums1));
+        int[] nums2 = {2,7,9,3,1};
+        System.out.println(rob.rob(nums2));
+    }
+}
+```
+- 解法二：动态规划（空间优化，滚动变量）
+  算法思想：观察解法一的状态转移方程，dp[i]仅依赖dp[i-1]和dp[i-2]两个状态，无需维护整个dp数组，使用两个变量分别存储前两个状态的值，通过滚动更新实现空间复杂度优化，将空间复杂度从O(n)降低至O(1)。定义prev表示dp[i-2]，curr表示dp[i-1]，每次迭代计算新的curr值，最终curr即为答案。
+  Java代码：
+```java
+public class RobOpt {
+    public int rob(int[] nums) {
+        // 处理空数组和单元素数组的边界情况
+        if (nums == null || nums.length == 0) return 0;
+        if (nums.length == 1) return nums[0];
+        // 定义滚动变量，替代dp数组
+        int prev = nums[0];
+        int curr = Math.max(nums[0], nums[1]);
+        // 滚动更新变量，计算最大金额
+        for (int i = 2; i < nums.length; i++) {
+            int temp = curr;
+            curr = Math.max(curr, prev + nums[i]);
+            prev = temp;
+        }
+        return curr;
+    }
+
+    // 测试示例
+    public static void main(String[] args) {
+        RobOpt robOpt = new RobOpt();
+        int[] nums1 = {1,2,3,1};
+        System.out.println(robOpt.rob(nums1));
+        int[] nums2 = {2,7,9,3,1};
+        System.out.println(robOpt.rob(nums2));
+    }
+}
+```
+
+### [279. 完全平方数](https://leetcode.cn/problems/perfect-squares/)
+
+1. 题目描述
+给你一个整数 n ，返回 和为 n 的完全平方数的最少数量 。完全平方数 是一个整数，其值等于另一个整数的平方；换句话说，其值等于一个整数自乘的积。例如，1、4、9 和 16 都是完全平方数，而 3 和 11 不是。
+示例 1：输入：n = 12，输出：3 ，解释：12 = 4 + 4 + 4
+示例 2：输入：n = 13，输出：2，解释：13 = 4 + 9
+提示：1 <= n <= 10^4
+
+2. 算法思想+代码
+- 解法一：动态规划
+  算法思想：定义dp数组，其中dp[i]表示组成数字i的最少完全平方数数量；初始化dp数组为最大值，dp[0] = 0作为边界条件（数字0无需任何完全平方数）；遍历1到n的所有数字，对于每个数字i，再遍历所有小于等于i的完全平方数j*j，通过状态转移方程dp[i] = min(dp[i], dp[i-j*j]+1)更新最小值，最终dp[n]即为答案。
+  ```java
+  import java.util.Arrays;
+  
+  class Solution {
+      public int numSquares(int n) {
+          // dp[i]代表和为i的完全平方数的最少数量
+          int[] dp = new int[n + 1];
+          // 初始化数组为最大值，最大可能数量为n（全用1）
+          Arrays.fill(dp, Integer.MAX_VALUE);
+          // 边界条件：0需要0个完全平方数
+          dp[0] = 0;
+          
+          for (int i = 1; i <= n; i++) {
+              // 遍历所有小于等于i的完全平方数
+              for (int j = 1; j * j <= i; j++) {
+                  dp[i] = Math.min(dp[i], dp[i - j * j] + 1);
+              }
+          }
+          return dp[n];
+      }
+  }
+  ```
+- 解法二：广度优先搜索（BFS）
+  算法思想：将问题转化为图的最短路径问题，每个数字为一个节点，若两个数字相差一个完全平方数，则两节点间存在边；从数字n出发，层级遍历所有节点，每一层代表使用的完全平方数数量，第一次到达数字0时的层级数，就是和为n的完全平方数的最少数量。
+  ```java
+  import java.util.LinkedList;
+  import java.util.Queue;
+  
+  class Solution {
+      public int numSquares(int n) {
+          // 队列存储当前遍历的数字
+          Queue<Integer> queue = new LinkedList<>();
+          // 标记已访问的数字，避免重复遍历
+          boolean[] visited = new boolean[n + 1];
+          queue.offer(n);
+          visited[n] = true;
+          // 记录层级，即完全平方数的最少数量
+          int level = 0;
+          
+          while (!queue.isEmpty()) {
+              int size = queue.size();
+              level++;
+              // 遍历当前层的所有数字
+              for (int i = 0; i < size; i++) {
+                  int num = queue.poll();
+                  // 遍历所有小于当前数字的完全平方数
+                  for (int j = 1; j * j <= num; j++) {
+                      int nextNum = num - j * j;
+                      // 首次到达0，直接返回当前层级
+                      if (nextNum == 0) {
+                          return level;
+                      }
+                      // 未访问过的数字加入队列
+                      if (!visited[nextNum]) {
+                          visited[nextNum] = true;
+                          queue.offer(nextNum);
+                      }
+                  }
+              }
+          }
+          return level;
+      }
+  }
+  ```
+
+### [322. 零钱兑换](https://leetcode.cn/problems/coin-change/)
+
+1. 题目描述：给你一个整数数组 coins ，表示不同面额的硬币；以及一个整数 amount ，表示总金额。计算并返回可以凑成总金额所需的最少的硬币个数 。如果没有任何一种硬币组合能组成总金额，返回 -1 。你可以认为每种硬币的数量是无限的。示例 1：输入：coins = [1, 2, 5], amount = 11，输出：3 ，解释：11 = 5 + 5 + 1；示例 2：输入：coins = [2], amount = 3，输出：-1；示例 3：输入：coins = [1], amount = 0，输出：0。提示：1 <= coins.length <= 12，1 <= coins[i] <= 2^31 - 1，0 <= amount <= 10^4
+2. 解法一：动态规划（自底向上）
+- 算法思想：属于完全背包问题的经典应用，硬币可无限次选取，目标是求凑成总金额的最小硬币数。定义dp数组，其中dp[i]表示凑成金额i所需要的最少硬币数；初始化dp数组为amount+1（一个大于最大可能硬币数的值），dp[0]=0（凑成金额0需要0个硬币）；依次遍历1到amount的所有金额，对每个金额遍历所有硬币，若硬币面额小于等于当前金额，则更新dp[i]为dp[i]和dp[i-coin]+1中的较小值；遍历完成后，若dp[amount]仍大于amount，说明无法凑成总金额，返回-1，否则返回dp[amount]。
+- Java代码：
+```java
+import java.util.Arrays;
+
+public class Solution {
+    public int coinChange(int[] coins, int amount) {
+        // 定义最大初始值，超过amount的最大可能硬币数
+        int max = amount + 1;
+        int[] dp = new int[amount + 1];
+        // 初始化dp数组，所有值设为max
+        Arrays.fill(dp, max);
+        //  base case：金额为0时，需要0个硬币
+        dp[0] = 0;
+        // 遍历所有需要计算的金额
+        for (int i = 1; i <= amount; i++) {
+            // 遍历每种硬币
+            for (int coin : coins) {
+                // 只有硬币面额小于等于当前金额时，才能使用该硬币
+                if (coin <= i) {
+                    dp[i] = Math.min(dp[i], dp[i - coin] + 1);
+                }
+            }
+        }
+        // 判断是否能凑成总金额
+        return dp[amount] > amount ? -1 : dp[amount];
+    }
+}
+```
+3. 解法二：广度优先搜索（BFS）
+- 算法思想：将每个金额视为图的节点，每次添加一种硬币得到的新金额为当前节点的相邻节点，问题转化为求从节点0到节点amount的最短路径（路径长度即为最少硬币数）。使用队列实现BFS遍历，用布尔数组记录已访问的金额避免重复计算；每遍历一层队列代表使用一个硬币，层数即为硬币个数，当遍历到目标金额时，直接返回当前层数；若队列为空仍未找到目标金额，说明无法凑成，返回-1。
+- Java代码：
+```java
+import java.util.LinkedList;
+import java.util.Queue;
+
+public class Solution {
+    public int coinChange(int[] coins, int amount) {
+        // 金额为0直接返回0
+        if (amount == 0) {
+            return 0;
+        }
+        // 队列存储当前遍历到的金额
+        Queue<Integer> queue = new LinkedList<>();
+        // 标记已访问的金额，防止重复遍历
+        boolean[] visited = new boolean[amount + 1];
+        queue.offer(0);
+        visited[0] = true;
+        // 记录使用的硬币个数（BFS的层数）
+        int count = 0;
+        while (!queue.isEmpty()) {
+            int size = queue.size();
+            // 层数加1，对应硬币个数加1
+            count++;
+            // 遍历当前层的所有金额
+            for (int i = 0; i < size; i++) {
+                int current = queue.poll();
+                // 遍历所有硬币，计算下一个金额
+                for (int coin : coins) {
+                    int nextAmount = current + coin;
+                    // 找到目标金额，直接返回硬币个数
+                    if (nextAmount == amount) {
+                        return count;
+                    }
+                    // 下一个金额小于总金额且未被访问，加入队列
+                    if (nextAmount < amount && !visited[nextAmount]) {
+                        visited[nextAmount] = true;
+                        queue.offer(nextAmount);
+                    }
+                }
+            }
+        }
+        // 遍历结束未找到，返回-1
+        return -1;
+    }
+}
+```
+
+
+
 
 
 
