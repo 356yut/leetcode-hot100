@@ -10340,7 +10340,149 @@ public class Solution {
 }
 ```
 
+### [139. 单词拆分](https://leetcode.cn/problems/word-break/)
 
+1. 题目描述
+给你一个字符串 s 和一个字符串列表 wordDict 作为字典。如果可以利用字典中出现的一个或多个单词拼接出 s 则返回 true。
+注意：不要求字典中出现的单词全部都使用，并且字典中的单词可以重复使用。
+示例 1：
+输入: s = "leetcode", wordDict = ["leet", "code"]
+输出: true
+解释: 返回 true 因为 "leetcode" 可以由 "leet" 和 "code" 拼接成。
+示例 2：
+输入: s = "applepenapple", wordDict = ["apple", "pen"]
+输出: true
+解释: 返回 true 因为 "applepenapple" 可以由 "apple" "pen" "apple" 拼接成。注意：你可以重复使用字典中的单词。
+示例 3：
+输入: s = "catsandog", wordDict = ["cats", "dog", "sand", "and", "cat"]
+输出: false
+提示：
+1 <= s.length <= 300
+1 <= wordDict.length <= 1000
+1 <= wordDict[i].length <= 20
+s 和 wordDict[i] 仅由小写英文字母组成
+wordDict 中的所有字符串 互不相同
+
+1. 解法一：动态规划
+- 算法思想：采用动态规划思路，定义布尔类型dp数组，dp[i]表示字符串s的前i个字符（即子串s[0..i-1]）能否由字典中的单词拼接而成；初始化dp[0] = true，代表空字符串可以被拼接；遍历字符串的每个位置i，再遍历0到i-1的位置j，若dp[j]为true且子串s[j..i-1]存在于字典中，则将dp[i]设为true；将字典列表转换为哈希集合，提升单词的查询效率；最终返回dp数组的最后一个元素，即dp[s.length()]。
+```java
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
+public class Solution {
+    public boolean wordBreak(String s, List<String> wordDict) {
+        // 字典转为哈希集合，实现O(1)时间复杂度查询
+        Set<String> wordSet = new HashSet<>(wordDict);
+        int strLength = s.length();
+        // dp数组：dp[i]标记字符串前i个字符是否可拼接
+        boolean[] dp = new boolean[strLength + 1];
+        // 空字符串默认可拼接
+        dp[0] = true;
+        
+        for (int i = 1; i <= strLength; i++) {
+            for (int j = 0; j < i; j++) {
+                // 前j个字符可拼接 + j到i的子串在字典中 → 前i个字符可拼接
+                if (dp[j] && wordSet.contains(s.substring(j, i))) {
+                    dp[i] = true;
+                    break;
+                }
+            }
+        }
+        return dp[strLength];
+    }
+}
+```
+
+1. 解法二：广度优先搜索（BFS）
+- 算法思想：将字符串的索引视为图的节点，若从索引i出发能匹配字典中的单词到达索引j，则i和j之间存在边；使用队列存储待遍历的索引，初始时将索引0加入队列；使用布尔数组标记已访问的索引，避免重复入队导致死循环；遍历队列中的索引，从该索引开始尝试匹配所有字典单词，若匹配后到达字符串末尾则返回true，否则将新的索引加入队列；若队列为空仍未到达末尾，返回false。
+```java
+import java.util.*;
+
+public class Solution {
+    public boolean wordBreak(String s, List<String> wordDict) {
+        Set<String> wordSet = new HashSet<>(wordDict);
+        int strLength = s.length();
+        // 标记已访问的索引，防止重复处理
+        boolean[] visited = new boolean[strLength];
+        Queue<Integer> queue = new LinkedList<>();
+        // 从索引0开始遍历
+        queue.offer(0);
+        
+        while (!queue.isEmpty()) {
+            int start = queue.poll();
+            // 跳过已处理的索引
+            if (visited[start]) {
+                continue;
+            }
+            visited[start] = true;
+            
+            // 遍历所有可能的结束位置
+            for (int end = start + 1; end <= strLength; end++) {
+                String subStr = s.substring(start, end);
+                if (wordSet.contains(subStr)) {
+                    // 匹配到字符串末尾，直接返回true
+                    if (end == strLength) {
+                        return true;
+                    }
+                    // 将新的起始索引加入队列
+                    queue.offer(end);
+                }
+            }
+        }
+        return false;
+    }
+}
+```
+
+1. 解法三：记忆化回溯
+- 算法思想：采用回溯法递归处理字符串，从起始索引开始尝试匹配字典中的所有单词，匹配成功则递归处理剩余子串；普通回溯会重复计算子问题，因此添加记忆化数组存储索引的计算结果，memo[i] = 1代表从i开始的子串可拼接，memo[i] = 0代表不可拼接，memo[i] = -1代表未计算；通过记忆化跳过重复递归，大幅提升算法效率。
+```java
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
+public class Solution {
+    // 记忆化数组：-1未计算，0不可拼接，1可拼接
+    private int[] memo;
+    private Set<String> wordSet;
+
+    public boolean wordBreak(String s, List<String> wordDict) {
+        wordSet = new HashSet<>(wordDict);
+        memo = new int[s.length()];
+        // 初始化所有索引为未计算状态
+        Arrays.fill(memo, -1);
+        return backtrack(s, 0);
+    }
+
+    // 回溯递归函数：判断从start索引开始的子串是否可拼接
+    private boolean backtrack(String s, int start) {
+        // 递归终止：索引到达字符串末尾，说明拼接成功
+        if (start == s.length()) {
+            return true;
+        }
+        // 记忆化剪枝：已计算过直接返回结果
+        if (memo[start] != -1) {
+            return memo[start] == 1;
+        }
+
+        for (int end = start + 1; end <= s.length(); end++) {
+            String subStr = s.substring(start, end);
+            if (wordSet.contains(subStr)) {
+                // 后续子串可拼接，记录结果并返回
+                if (backtrack(s, end)) {
+                    memo[start] = 1;
+                    return true;
+                }
+            }
+        }
+        // 所有单词都无法匹配，记录不可拼接
+        memo[start] = 0;
+        return false;
+    }
+}
+```
 
 
 
