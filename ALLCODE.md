@@ -10484,10 +10484,875 @@ public class Solution {
 }
 ```
 
+### [300. 最长递增子序列](https://leetcode.cn/problems/longest-increasing-subsequence/)
+
+1. 题目描述
+给你一个整数数组 nums ，找到其中最长严格递增子序列的长度。
+子序列是由数组派生而来的序列，删除（或不删除）数组中的元素而不改变其余元素的顺序。例如，[3,6,2,7] 是数组 [0,3,1,6,2,2,7] 的子序列。
+
+示例 1：
+输入：nums = [10,9,2,5,3,7,101,18]
+输出：4
+解释：最长递增子序列是 [2,3,7,101]，因此长度为 4 。
+
+示例 2：
+输入：nums = [0,1,0,3,2,3]
+输出：4
+
+示例 3：
+输入：nums = [7,7,7,7,7,7,7]
+输出：1
+
+提示：
+- 1 <= nums.length <= 2500
+- -10⁴ <= nums[i] <= 10⁴
+
+进阶：你能将算法的时间复杂度降低到 O(n log(n)) 吗?
+
+2. 解法一：动态规划
+- 算法思想：
+  - 定义 dp[i] 表示以 nums[i] 结尾的最长递增子序列的长度
+  - 对于每个 i，遍历 j 从 0 到 i-1，如果 nums[j] < nums[i]，则 dp[i] = max(dp[i], dp[j] + 1)
+  - 初始状态：每个元素自身构成长度为1的子序列，即 dp[i] = 1
+  - 最终结果为 dp 数组中的最大值
+  - 时间复杂度：O(n²)，空间复杂度：O(n)
+
+- Java 代码：
+```java
+public int lengthOfLIS(int[] nums) {
+    int n = nums.length;
+    int[] dp = new int[n];
+    int maxLen = 1;
+    
+    for (int i = 0; i < n; i++) {
+        dp[i] = 1;
+        for (int j = 0; j < i; j++) {
+            if (nums[j] < nums[i]) {
+                dp[i] = Math.max(dp[i], dp[j] + 1);
+            }
+        }
+        maxLen = Math.max(maxLen, dp[i]);
+    }
+    
+    return maxLen;
+}
+```
+
+3. 解法二：贪心 + 二分查找
+- 算法思想：
+  - 维护一个 tails 数组，其中 tails[i] 表示长度为 i+1 的递增子序列的最小末尾元素
+  - 遍历数组中的每个数 num：
+    - 如果 num 大于 tails 数组最后一个元素，直接追加到 tails 末尾
+    - 否则，在 tails 数组中找到第一个大于等于 num 的位置，用 num 替换该位置的元素
+  - tails 数组的长度即为最长递增子序列的长度
+  - 时间复杂度：O(n log n)，空间复杂度：O(n)
+
+- Java 代码：
+```java
+public int lengthOfLIS(int[] nums) {
+    int n = nums.length;
+    int[] tails = new int[n];
+    int len = 0;
+    
+    for (int num : nums) {
+        int left = 0, right = len;
+        while (left < right) {
+            int mid = left + (right - left) / 2;
+            if (tails[mid] < num) {
+                left = mid + 1;
+            } else {
+                right = mid;
+            }
+        }
+        tails[left] = num;
+        if (left == len) {
+            len++;
+        }
+    }
+    
+    return len;
+}
+```
 
 
 
+### [152. 乘积最大子数组](https://leetcode.cn/problems/maximum-product-subarray/)
 
+1. 题目描述：给你一个整数数组 nums ，请你找出数组中乘积最大的非空连续子数组（该子数组中至少包含一个数字），并返回该子数组所对应的乘积。测试用例的答案是一个 32-位 整数。请注意，一个只包含一个元素的数组的乘积是这个元素的值。
+输入: nums = [2,3,-2,4]
+输出: 6
+解释: 子数组 [2,3] 有最大乘积 6。
+输入: nums = [-2,0,-1]
+输出: 0
+解释: 结果不能为 2，因为 [-2,-1] 不是子数组。
+提示：1 <= nums.length <= 2 * 10^4，-10 <= nums[i] <= 10，nums 的任何子数组的乘积都保证是一个 32-位 整数。
+
+2. 解法一：动态规划
+算法思想：由于数组中存在负数，负负相乘会得到正数，因此仅维护当前的最大乘积是不够的，还需要维护当前的最小乘积。当遍历到负数元素时，当前的最小乘积（可能为负数）与该负数相乘会得到较大的正数，可能成为新的最大乘积。遍历数组过程中，每次计算当前元素与前一个最大乘积的乘积、当前元素与前一个最小乘积的乘积、当前元素本身这三个值的最大值作为新的当前最大乘积，最小值作为新的当前最小乘积，同时不断更新全局的最大乘积。
+Java代码：
+```java
+public class Solution {
+    public int maxProduct(int[] nums) {
+        int maxResult = nums[0];
+        int currentMax = nums[0];
+        int currentMin = nums[0];
+        
+        for (int i = 1; i < nums.length; i++) {
+            int temp = currentMax;
+            currentMax = Math.max(Math.max(currentMax * nums[i], currentMin * nums[i]), nums[i]);
+            currentMin = Math.min(Math.min(temp * nums[i], currentMin * nums[i]), nums[i]);
+            maxResult = Math.max(maxResult, currentMax);
+        }
+        return maxResult;
+    }
+}
+```
+
+3. 解法二：双向遍历法
+算法思想：数组中的0会中断连续子数组的乘积计算，因此可以将数组按0拆分为多个非0的连续段。对于每个非0连续段，最大乘积的子数组要么从段首开始延伸到某个位置，要么从段尾开始延伸到某个位置（如果段中存在偶数个负数，整个段的乘积就是最大；如果是奇数个负数，要么去掉最左边的负数，要么去掉最右边的负数，对应正向遍历和反向遍历的结果）。因此可以分别从左到右、从右到左各遍历一次数组，遇到0时重置当前乘积，同时记录遍历过程中的最大乘积。
+Java代码：
+```java
+public class Solution {
+    public int maxProduct(int[] nums) {
+        int maxResult = nums[0];
+        int currentProduct = 1;
+        
+        for (int num : nums) {
+            currentProduct *= num;
+            maxResult = Math.max(maxResult, currentProduct);
+            if (num == 0) {
+                currentProduct = 1;
+            }
+        }
+        
+        currentProduct = 1;
+        for (int i = nums.length - 1; i >= 0; i--) {
+            currentProduct *= nums[i];
+            maxResult = Math.max(maxResult, currentProduct);
+            if (nums[i] == 0) {
+                currentProduct = 1;
+            }
+        }
+        
+        return maxResult;
+    }
+}
+```
+
+### [416. 分割等和子集](https://leetcode.cn/problems/partition-equal-subset-sum/)
+
+1. 题目描述
+给你一个只包含正整数的非空数组 nums。请你判断是否可以将这个数组分割成两个子集，使得两个子集的元素和相等。
+
+示例 1：
+输入：nums = [1,5,11,5]
+输出：true
+解释：数组可以分割成 [1, 5, 5] 和 [11]。
+
+示例 2：
+输入：nums = [1,2,3,5]
+输出：false
+解释：数组不能分割成两个元素和相等的子集。
+
+提示：
+- 1 <= nums.length <= 200
+- 1 <= nums[i] <= 100
+
+2. 解法一：二维动态规划
+- 算法思想：
+  - 首先计算数组所有元素的总和，如果总和为奇数，直接返回false，因为无法分割成两个和相等的子集
+  - 如果总和为偶数，目标就是判断是否存在子集的和等于总和的一半（target = sum / 2）
+  - 这是典型的0-1背包问题，dp[i][j]表示前i个元素中是否存在子集和为j
+  - 状态转移：对于第i个元素，有两种选择：选或不选
+    - 不选：dp[i][j] = dp[i-1][j]
+    - 选：如果j >= nums[i-1]，则dp[i][j] = dp[i-1][j] || dp[i-1][j-nums[i-1]]
+
+```java
+public boolean canPartition(int[] nums) {
+    int n = nums.length;
+    int sum = 0;
+    for (int num : nums) {
+        sum += num;
+    }
+    // 如果总和为奇数，无法分割
+    if (sum % 2 != 0) {
+        return false;
+    }
+    int target = sum / 2;
+    // dp[i][j]表示前i个元素中是否存在子集和为j
+    boolean[][] dp = new boolean[n + 1][target + 1];
+    // 初始化：前0个元素和为0是可能的
+    for (int i = 0; i <= n; i++) {
+        dp[i][0] = true;
+    }
+    
+    for (int i = 1; i <= n; i++) {
+        for (int j = 1; j <= target; j++) {
+            // 不选第i个元素
+            dp[i][j] = dp[i - 1][j];
+            // 选第i个元素（如果容量足够）
+            if (j >= nums[i - 1]) {
+                dp[i][j] = dp[i][j] || dp[i - 1][j - nums[i - 1]];
+            }
+        }
+    }
+    return dp[n][target];
+}
+```
+
+3. 解法二：一维动态规划（空间优化）
+- 算法思想：
+  - 在二维动态规划的基础上进行空间优化
+  - 观察到dp[i][j]只依赖于dp[i-1][...]，因此可以用一维数组从后往前遍历
+  - dp[j]表示是否存在子集和为j
+  - 逆序遍历是为了保证每个元素只被使用一次（避免重复使用同一元素）
+
+```java
+public boolean canPartition(int[] nums) {
+    int sum = 0;
+    for (int num : nums) {
+        sum += num;
+    }
+    // 如果总和为奇数，无法分割
+    if (sum % 2 != 0) {
+        return false;
+    }
+    int target = sum / 2;
+    // dp[j]表示是否存在子集和为j
+    boolean[] dp = new boolean[target + 1];
+    dp[0] = true;
+    
+    for (int num : nums) {
+        // 逆序遍历，避免重复使用同一元素
+        for (int j = target; j >= num; j--) {
+            dp[j] = dp[j] || dp[j - num];
+        }
+    }
+    return dp[target];
+}
+```
+
+### [32. 最长有效括号](https://leetcode.cn/problems/longest-valid-parentheses/)
+
+1. 题目描述
+
+给你一个只包含 '(' 和 ')' 的字符串，找出最长有效（格式正确且连续）括号子串的长度。
+
+左右括号匹配，即每个左括号都有对应的右括号将其闭合的字符串是格式正确的，比如 "(()())"。
+
+示例 1：
+输入：s = "(()"
+输出：2
+解释：最长有效括号子串是 "()"
+
+示例 2：
+输入：s = ")()())"
+输出：4
+解释：最长有效括号子串是 "()()"
+
+示例 3：
+输入：s = ""
+输出：0
+
+提示：
+- 0 <= s.length <= 3 * 10^4
+- s[i] 为 '(' 或 ')'
+
+2. 算法思想+代码
+
+解法一：动态规划
+
+- 定义 dp[i] 表示以下标 i 字符结尾的最长有效括号的长度
+- 当 s[i] 为 ')' 且 s[i-1] 为 '(' 时，dp[i] = dp[i-2] + 2
+- 当 s[i] 为 ')' 且 s[i-1] 为 ')' 时，如果 s[i - dp[i-1] - 1] 为 '('，则 dp[i] = dp[i-1] + dp[i - dp[i-1] - 2] + 2
+- 遍历过程中记录最大值
+
+```java
+public int longestValidParentheses(String s) {
+    int maxLen = 0;
+    int n = s.length();
+    int[] dp = new int[n];
+    
+    for (int i = 1; i < n; i++) {
+        if (s.charAt(i) == ')') {
+            if (s.charAt(i - 1) == '(') {
+                dp[i] = (i >= 2 ? dp[i - 2] : 0) + 2;
+            } else if (i - dp[i - 1] > 0 && s.charAt(i - dp[i - 1] - 1) == '(') {
+                dp[i] = dp[i - 1] + ((i - dp[i - 1]) >= 2 ? dp[i - dp[i - 1] - 2] : 0) + 2;
+            }
+            maxLen = Math.max(maxLen, dp[i]);
+        }
+    }
+    return maxLen;
+}
+```
+
+解法二：栈
+
+- 使用栈存储下标，初始时将 -1 压入栈作为基准
+- 遇到 '(' 时将其下标压入栈
+- 遇到 ')' 时弹出栈顶元素，若栈为空则将当前下标压入栈，否则计算当前下标与栈顶元素的差值即为有效括号长度
+- 遍历过程中记录最大长度
+
+```java
+public int longestValidParentheses(String s) {
+    int maxLen = 0;
+    Deque<Integer> stack = new LinkedList<>();
+    stack.push(-1);
+    
+    for (int i = 0; i < s.length(); i++) {
+        if (s.charAt(i) == '(') {
+            stack.push(i);
+        } else {
+            stack.pop();
+            if (stack.isEmpty()) {
+                stack.push(i);
+            } else {
+                maxLen = Math.max(maxLen, i - stack.peek());
+            }
+        }
+    }
+    return maxLen;
+}
+```
+
+解法三：双指针
+
+- 使用 left 和 right 两个指针分别统计左右括号的数量
+- 从左到右遍历：left == right 时计算长度，right > left 时重置两个指针
+- 从右到左遍历：left == right 时计算长度，left > right 时重置两个指针
+- 两次遍历取最大值
+
+```java
+public int longestValidParentheses(String s) {
+    int left = 0, right = 0, maxLen = 0;
+    
+    // 从左到右遍历
+    for (int i = 0; i < s.length(); i++) {
+        if (s.charAt(i) == '(') {
+            left++;
+        } else {
+            right++;
+        }
+        if (left == right) {
+            maxLen = Math.max(maxLen, 2 * right);
+        } else if (right > left) {
+            left = right = 0;
+        }
+    }
+    
+    left = right = 0;
+    
+    // 从右到左遍历
+    for (int i = s.length() - 1; i >= 0; i--) {
+        if (s.charAt(i) == '(') {
+            left++;
+        } else {
+            right++;
+        }
+        if (left == right) {
+            maxLen = Math.max(maxLen, 2 * left);
+        } else if (left > right) {
+            left = right = 0;
+        }
+    }
+    
+    return maxLen;
+}
+```
+
+## 多维动态规划
+
+**定义**
+
+多维动态规划（Multi-dimensional Dynamic Programming）是动态规划的一种扩展形式，指状态转移方程中包含两个或两个以上维度的状态变量的动态规划问题。
+
+- 核心思想与一维动态规划一致：将复杂问题分解为重叠子问题，通过存储子问题的解避免重复计算
+
+- 区别在于状态表示需要多个维度来刻画，常见的有二维、三维甚至更高维
+
+- 状态通常用 `dp[i][j]`、`dp[i][j][k]` 等多维数组表示，每个维度对应问题中的一个约束条件或状态变量
+
+- 适用场景包括但不限于：二维路径问题、字符串匹配、区间问题、背包问题扩展、矩阵链乘法等
+
+- 时间复杂度通常为 O(n^m)，其中 n 为每维规模，m 为维度数量；空间复杂度同理
+
+  
+
+**常见操作**
+
+1. **状态定义**：明确 dp 数组每个维度的含义
+   - 确定每个维度代表的物理意义（如位置、长度、数量、状态标记等）
+   - 确保状态定义能完整描述子问题的所有约束条件
+   - 常见二维状态如 `dp[i][j]` 可表示：前 i 个元素中选 j 个的最优值、从起点到 (i,j) 的路径数等
+
+2. **状态转移方程推导**：建立当前状态与之前状态的关系
+   - 分析第 i 维状态由哪些前面的子状态转移而来
+   - 考虑"选"与"不选"、"来自上方"还是"来自左方"等多种决策
+   - 确保转移方程覆盖所有合法的转移路径，且无后效性
+
+3. **初始化**：确定边界条件和 base case
+   - 通常初始化 dp 数组的第 0 行、第 0 列或某些边界位置
+   - 根据问题含义确定初始值（如 0、1、最大值/最小值等）
+   - 注意区分"不可能状态"与"初始状态"的取值差异
+
+4. **遍历顺序确定**：保证计算当前状态时所需的前置状态已被计算
+   - 二维问题常见顺序：从上到下、从左到右（正序遍历）
+   - 某些问题需要逆序遍历（如 01 背包的空间优化）
+   - 区间 DP 通常按区间长度从小到大遍历
+   - 三维及以上需逐层分析依赖关系
+
+5. **返回结果提取**：确定最终答案在 dp 数组中的位置
+   - 可能是 `dp[n][m]`（终点状态）
+   - 也可能需要遍历整个 dp 数组取最大/最小值
+   - 某些问题答案在最后一行/列的某个特定位置
+
+6. **空间优化**：降低空间复杂度
+   - 滚动数组：若第 i 层只依赖第 i-1 层，可将二维降为一维
+   - 状态压缩：利用位运算或更紧凑的数据结构表示状态
+   - 优化后需注意遍历顺序是否需要调整
+
+7. **常见题型分类**
+   - 路径类：矩阵中从起点到终点的路径数/最小路径和
+   - 字符串类：最长公共子序列、编辑距离、正则匹配
+   - 区间类：戳气球、最长回文子序列
+   - 背包扩展类：二维费用背包、分组背包
+   - 状态压缩类：旅行商问题（TSP）、位运算 DP
+
+下面是一个完整的 Java 示例，包含三个经典多维动态规划问题的实现：
+
+```java
+public class MultiDimDPDemo {
+
+    // ==================== 示例1：二维路径问题（不同路径）====================
+    // 问题：一个 m x n 的网格，从左上角走到右下角，只能向右或向下走，有多少种不同路径
+    public static int uniquePaths(int m, int n) {
+        // 1. 状态定义：dp[i][j] 表示走到 (i,j) 位置的不同路径数
+        int[][] dp = new int[m][n];
+        
+        // 3. 初始化：第一行和第一列都只有 1 种走法
+        for (int i = 0; i < m; i++) {
+            dp[i][0] = 1;
+        }
+        for (int j = 0; j < n; j++) {
+            dp[0][j] = 1;
+        }
+        
+        // 2. 状态转移 + 4. 遍历顺序：从上到下、从左到右
+        for (int i = 1; i < m; i++) {
+            for (int j = 1; j < n; j++) {
+                // 到达 (i,j) 的路径数 = 从上方来的路径数 + 从左方来的路径数
+                dp[i][j] = dp[i - 1][j] + dp[i][j - 1];
+            }
+        }
+        
+        // 5. 返回结果：右下角的值
+        return dp[m - 1][n - 1];
+    }
+
+    // ==================== 示例2：最长公共子序列（LCS）====================
+    // 问题：求两个字符串的最长公共子序列的长度
+    public static int longestCommonSubsequence(String text1, String text2) {
+        int m = text1.length();
+        int n = text2.length();
+        
+        // 1. 状态定义：dp[i][j] 表示 text1 前 i 个字符和 text2 前 j 个字符的 LCS 长度
+        int[][] dp = new int[m + 1][n + 1];
+        
+        // 3. 初始化：dp[0][j] 和 dp[i][0] 都为 0（空串的 LCS 长度为 0），数组默认值已满足
+        
+        // 2. 状态转移 + 4. 遍历顺序
+        for (int i = 1; i <= m; i++) {
+            for (int j = 1; j <= n; j++) {
+                if (text1.charAt(i - 1) == text2.charAt(j - 1)) {
+                    // 两个字符相等，LCS 长度 = 两个各去掉最后一个字符的 LCS 长度 + 1
+                    dp[i][j] = dp[i - 1][j - 1] + 1;
+                } else {
+                    // 两个字符不相等，取去掉 text1 最后一个或去掉 text2 最后一个的较大值
+                    dp[i][j] = Math.max(dp[i - 1][j], dp[i][j - 1]);
+                }
+            }
+        }
+        
+        // 5. 返回结果
+        return dp[m][n];
+    }
+
+    // ==================== 示例3：编辑距离（三维思想的二维体现）====================
+    // 问题：将 word1 转换成 word2 最少需要多少次操作（插入、删除、替换）
+    public static int minDistance(String word1, String word2) {
+        int m = word1.length();
+        int n = word2.length();
+        
+        // 1. 状态定义：dp[i][j] 表示 word1 前 i 个字符转换成 word2 前 j 个字符的最少操作数
+        int[][] dp = new int[m + 1][n + 1];
+        
+        // 3. 初始化
+        for (int i = 0; i <= m; i++) {
+            dp[i][0] = i; // word2 为空，需要删除 i 次
+        }
+        for (int j = 0; j <= n; j++) {
+            dp[0][j] = j; // word1 为空，需要插入 j 次
+        }
+        
+        // 2. 状态转移 + 4. 遍历顺序
+        for (int i = 1; i <= m; i++) {
+            for (int j = 1; j <= n; j++) {
+                if (word1.charAt(i - 1) == word2.charAt(j - 1)) {
+                    // 字符相等，不需要操作
+                    dp[i][j] = dp[i - 1][j - 1];
+                } else {
+                    // 三种操作取最小：删除(dp[i-1][j])、插入(dp[i][j-1])、替换(dp[i-1][j-1])
+                    dp[i][j] = Math.min(Math.min(dp[i - 1][j], dp[i][j - 1]), dp[i - 1][j - 1]) + 1;
+                }
+            }
+        }
+        
+        // 5. 返回结果
+        return dp[m][n];
+    }
+
+    // ==================== 示例4：空间优化版 01 背包（二维降一维）====================
+    // 问题：有 n 个物品，每个物品重量 w[i]，价值 v[i]，背包容量为 capacity，求最大价值
+    public static int knapsack(int[] w, int[] v, int capacity) {
+        int n = w.length;
+        
+        // 6. 空间优化：原本是 dp[i][j] 二维数组，优化为 dp[j] 一维数组
+        // 状态定义：dp[j] 表示背包容量为 j 时的最大价值
+        int[] dp = new int[capacity + 1];
+        
+        // 遍历每个物品
+        for (int i = 0; i < n; i++) {
+            // 注意：必须逆序遍历容量，避免同一物品被多次选择（01 背包特性）
+            for (int j = capacity; j >= w[i]; j--) {
+                // 选或不选第 i 个物品，取价值较大的
+                dp[j] = Math.max(dp[j], dp[j - w[i]] + v[i]);
+            }
+        }
+        
+        return dp[capacity];
+    }
+
+    // ==================== 主方法：演示运行 ====================
+    public static void main(String[] args) {
+        System.out.println("===== 多维动态规划 Demo 演示 =====");
+        System.out.println();
+        
+        // 示例1：不同路径
+        System.out.println("【示例1：不同路径】");
+        int m = 3, n = 7;
+        System.out.println("网格大小: " + m + " x " + n);
+        System.out.println("不同路径数: " + uniquePaths(m, n));
+        System.out.println();
+        
+        // 示例2：最长公共子序列
+        System.out.println("【示例2：最长公共子序列 LCS】");
+        String text1 = "abcde", text2 = "ace";
+        System.out.println("text1: " + text1);
+        System.out.println("text2: " + text2);
+        System.out.println("LCS 长度: " + longestCommonSubsequence(text1, text2));
+        System.out.println();
+        
+        // 示例3：编辑距离
+        System.out.println("【示例3：编辑距离】");
+        String word1 = "horse", word2 = "ros";
+        System.out.println("word1: " + word1);
+        System.out.println("word2: " + word2);
+        System.out.println("最少操作数: " + minDistance(word1, word2));
+        System.out.println();
+        
+        // 示例4：01 背包（空间优化版）
+        System.out.println("【示例4：01 背包（空间优化版）】");
+        int[] w = {2, 3, 4, 5};
+        int[] v = {3, 4, 5, 6};
+        int capacity = 8;
+        System.out.print("物品重量: ");
+        for (int x : w) System.out.print(x + " ");
+        System.out.println();
+        System.out.print("物品价值: ");
+        for (int x : v) System.out.print(x + " ");
+        System.out.println();
+        System.out.println("背包容量: " + capacity);
+        System.out.println("最大价值: " + knapsack(w, v, capacity));
+    }
+}
+```
+
+**运行结果说明**
+
+将上述代码保存为 `MultiDimDPDemo.java` 后运行，输出如下：
+
+```
+===== 多维动态规划 Demo 演示 =====
+
+【示例1：不同路径】
+网格大小: 3 x 7
+不同路径数: 28
+
+【示例2：最长公共子序列 LCS】
+text1: abcde
+text2: ace
+LCS 长度: 3
+
+【示例3：编辑距离】
+word1: horse
+word2: ros
+最少操作数: 3
+
+【示例4：01 背包（空间优化版）】
+物品重量: 2 3 4 5 
+物品价值: 3 4 5 6 
+背包容量: 8
+最大价值: 10
+```
+
+### [62. 不同路径](https://leetcode.cn/problems/unique-paths/)
+
+1. 题目描述
+一个机器人位于一个 m x n 网格的左上角（起始点在下图中标记为 "Start"）。机器人每次只能向下或者向右移动一步。机器人试图达到网格的右下角（在下图中标记为 "Finish"）。问总共有多少条不同的路径？
+
+示例 1：
+输入：m = 3, n = 7
+输出：28
+
+示例 2：
+输入：m = 3, n = 2
+输出：3
+解释：
+从左上角开始，总共有 3 条路径可以到达右下角。
+- 向右 -> 向下 -> 向下
+- 向下 -> 向下 -> 向右
+- 向下 -> 向右 -> 向下
+
+示例 3：
+输入：m = 7, n = 3
+输出：28
+
+示例 4：
+输入：m = 3, n = 3
+输出：6
+
+提示：
+- 1 <= m, n <= 100
+- 题目数据保证答案小于等于 2 * 10^9
+
+2. 算法思想+代码
+
+解法一：动态规划（二维数组）
+- 定义 dp[i][j] 表示到达第 i 行第 j 列位置的不同路径数
+- 由于机器人只能向下或向右移动，到达位置 (i,j) 的路径数等于到达其上方位置 (i-1,j) 的路径数加上到达其左侧位置 (i,j-1) 的路径数
+- 状态转移方程：dp[i][j] = dp[i-1][j] + dp[i][j-1]
+- 初始化：第一行和第一列的所有位置都只有 1 条路径，因为只能一直向右或一直向下走
+- 时间复杂度：O(m*n)，空间复杂度：O(m*n)
+
+```java
+public int uniquePaths(int m, int n) {
+    int[][] dp = new int[m][n];
+    
+    // 初始化第一列
+    for (int i = 0; i < m; i++) {
+        dp[i][0] = 1;
+    }
+    
+    // 初始化第一行
+    for (int j = 0; j < n; j++) {
+        dp[0][j] = 1;
+    }
+    
+    // 填充dp数组
+    for (int i = 1; i < m; i++) {
+        for (int j = 1; j < n; j++) {
+            dp[i][j] = dp[i-1][j] + dp[i][j-1];
+        }
+    }
+    
+    return dp[m-1][n-1];
+}
+```
+
+解法二：动态规划（一维数组优化空间）
+- 观察二维动态规划的状态转移方程，发现计算 dp[i][j] 只需要上一行的数据（dp[i-1][j]）和当前行前一列的数据（dp[i][j-1]）
+- 可以用一维数组来优化空间，dp[j] 表示当前行第 j 列的路径数
+- 遍历每一行时，从左到右更新 dp[j] = dp[j] + dp[j-1]，其中 dp[j] 是上一行第 j 列的值，dp[j-1] 是当前行第 j-1 列的值
+- 时间复杂度：O(m*n)，空间复杂度：O(n)
+
+```java
+public int uniquePaths(int m, int n) {
+    int[] dp = new int[n];
+    
+    // 初始化第一行
+    for (int j = 0; j < n; j++) {
+        dp[j] = 1;
+    }
+    
+    // 逐行更新
+    for (int i = 1; i < m; i++) {
+        for (int j = 1; j < n; j++) {
+            dp[j] = dp[j] + dp[j-1];
+        }
+    }
+    
+    return dp[n-1];
+}
+```
+
+解法三：数学组合数
+- 从左上角到右下角总共需要走 (m-1) + (n-1) = m+n-2 步
+- 其中必须向下走 m-1 步，向右走 n-1 步
+- 问题转化为：在总共 m+n-2 步中选择 m-1 步向下走（或选择 n-1 步向右走），有多少种选法
+- 即求组合数 C(m+n-2, m-1) 或 C(m+n-2, n-1)
+- 计算时可以从 1 开始逐步相乘，避免数值溢出（题目保证答案不超过 2*10^9）
+- 时间复杂度：O(min(m,n))，空间复杂度：O(1)
+
+```java
+public int uniquePaths(int m, int n) {
+    // 取较小值减少计算次数
+    int k = Math.min(m - 1, n - 1);
+    int totalSteps = m + n - 2;
+    
+    long result = 1;
+    for (int i = 1; i <= k; i++) {
+        // 等价于 result = result * (totalSteps - k + i) / i
+        result = result * (totalSteps - k + i) / i;
+    }
+    
+    return (int) result;
+}
+```
+
+### [64. 最小路径和](https://leetcode.cn/problems/minimum-path-sum/)
+
+1. 题目描述
+
+给定一个包含非负整数的 m x n 网格 grid ，请找出一条从左上角到右下角的路径，使得路径上的数字总和为最小。
+
+说明：每次只能向下或者向右移动一步。
+
+示例 1：
+输入：grid = [[1,3,1],[1,5,1],[4,2,1]]
+输出：7
+解释：因为路径 1→3→1→1→1 的总和最小。
+
+示例 2：
+输入：grid = [[1,2,3],[4,5,6]]
+输出：12
+
+提示：
+- m == grid.length
+- n == grid[i].length
+- 1 <= m, n <= 200
+- 0 <= grid[i][j] <= 200
+
+2. 算法思想+代码
+
+解法一：二维动态规划
+
+- 创建一个与原网格大小相同的 dp 数组，dp[i][j] 表示从左上角到达位置 (i,j) 的最小路径和
+- 由于只能向右或向下移动，到达 (i,j) 只能从上方 (i-1,j) 或左方 (i,j-1) 而来
+- 状态转移方程：dp[i][j] = grid[i][j] + min(dp[i-1][j], dp[i][j-1])
+- 初始化：第一行只能从左边来，第一列只能从上面来
+- 时间复杂度：O(m*n)，需要遍历整个网格一次
+- 空间复杂度：O(m*n)，需要额外的 dp 数组
+
+```java
+public int minPathSum(int[][] grid) {
+    int m = grid.length;
+    int n = grid[0].length;
+    int[][] dp = new int[m][n];
+    
+    // 初始化起点
+    dp[0][0] = grid[0][0];
+    
+    // 初始化第一行
+    for (int j = 1; j < n; j++) {
+        dp[0][j] = dp[0][j - 1] + grid[0][j];
+    }
+    
+    // 初始化第一列
+    for (int i = 1; i < m; i++) {
+        dp[i][0] = dp[i - 1][0] + grid[i][0];
+    }
+    
+    // 填充 dp 数组
+    for (int i = 1; i < m; i++) {
+        for (int j = 1; j < n; j++) {
+            dp[i][j] = grid[i][j] + Math.min(dp[i - 1][j], dp[i][j - 1]);
+        }
+    }
+    
+    return dp[m - 1][n - 1];
+}
+```
+
+解法二：一维动态规划（空间优化）
+
+- 观察到计算 dp[i][j] 只需要上一行的数据和当前行已计算的数据，因此可以用一维数组代替二维数组
+- 使用一个长度为 n 的 dp 数组，dp[j] 表示当前行第 j 列的最小路径和
+- 遍历每一行时，从左到右更新 dp 数组：dp[j] = grid[i][j] + min(dp[j], dp[j-1])
+- 其中 dp[j] 保存的是上一行第 j 列的值（即从上方来的路径和），dp[j-1] 是当前行已计算的左边的值
+- 时间复杂度：O(m*n)
+- 空间复杂度：O(n)，只需要一维数组
+
+```java
+public int minPathSum(int[][] grid) {
+    int m = grid.length;
+    int n = grid[0].length;
+    int[] dp = new int[n];
+    
+    // 初始化第一行
+    dp[0] = grid[0][0];
+    for (int j = 1; j < n; j++) {
+        dp[j] = dp[j - 1] + grid[0][j];
+    }
+    
+    // 逐行计算
+    for (int i = 1; i < m; i++) {
+        // 更新当前行第一列（只能从上方来）
+        dp[0] = dp[0] + grid[i][0];
+        for (int j = 1; j < n; j++) {
+            dp[j] = grid[i][j] + Math.min(dp[j], dp[j - 1]);
+        }
+    }
+    
+    return dp[n - 1];
+}
+```
+
+解法三：原地修改（空间优化 O(1)）
+
+- 直接在原网格上进行修改，不使用额外空间
+- 原理与二维动态规划相同，只是将计算结果存回原数组
+- 遍历顺序：先初始化第一行和第一列，再按行或按列填充其余位置
+- 时间复杂度：O(m*n)
+- 空间复杂度：O(1)，直接在原数组上修改（会修改输入数据）
+
+```java
+public int minPathSum(int[][] grid) {
+    int m = grid.length;
+    int n = grid[0].length;
+    
+    // 初始化第一行
+    for (int j = 1; j < n; j++) {
+        grid[0][j] += grid[0][j - 1];
+    }
+    
+    // 初始化第一列
+    for (int i = 1; i < m; i++) {
+        grid[i][0] += grid[i - 1][0];
+    }
+    
+    // 填充其余位置
+    for (int i = 1; i < m; i++) {
+        for (int j = 1; j < n; j++) {
+            grid[i][j] += Math.min(grid[i - 1][j], grid[i][j - 1]);
+        }
+    }
+    
+    return grid[m - 1][n - 1];
+}
+```
+
+### [5. 最长回文子串](https://leetcode.cn/problems/longest-palindromic-substring/)
 
 
 
@@ -10503,7 +11368,7 @@ public class Solution {
 
 # 结尾
 
-哈希：整理算法内容，使用java编写一个demo演示常用操作，需要包含以下内容，注意不使用分级标题（可以使用有序列表和无序列表）
+多维动态规划：整理算法内容，使用java编写一个demo演示常用操作，需要包含以下内容，注意不使用分级标题（可以使用有序列表和无序列表）
 
 1.定义
 
@@ -10515,6 +11380,7 @@ public class Solution {
 
 1.题目描述
 
-2.算法思想+代码
+2.算法思想+代码、
 
 （如果有多种解法分开写）
+
