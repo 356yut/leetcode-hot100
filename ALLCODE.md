@@ -11354,6 +11354,839 @@ public int minPathSum(int[][] grid) {
 
 ### [5. 最长回文子串](https://leetcode.cn/problems/longest-palindromic-substring/)
 
+1. 题目描述
+
+给你一个字符串 s，找到 s 中最长的回文子串。
+
+示例 1：
+输入：s = "babad"
+输出："bab"
+解释："aba" 同样是符合题意的答案。
+
+示例 2：
+输入：s = "cbbd"
+输出："bb"
+
+提示：
+- 1 <= s.length <= 1000
+- s 仅由数字和英文字母组成
+
+2. 算法思想+代码
+
+解法一：中心扩展法
+
+算法思想：回文串是中心对称的，可以以每个字符或每两个相邻字符作为中心，向左右两边扩展，直到两边字符不相等为止，记录每次扩展得到的回文串长度，最终取最长的那个。由于回文串长度可能为奇数或偶数，需要分别处理两种情况：奇数长度回文以单个字符为中心，偶数长度回文以两个相邻字符为中心。
+
+```java
+public class Solution {
+    public String longestPalindrome(String s) {
+        if (s == null || s.length() < 1) {
+            return "";
+        }
+        int start = 0, end = 0;
+        for (int i = 0; i < s.length(); i++) {
+            // 奇数长度回文
+            int len1 = expandAroundCenter(s, i, i);
+            // 偶数长度回文
+            int len2 = expandAroundCenter(s, i, i + 1);
+            int len = Math.max(len1, len2);
+            if (len > end - start) {
+                start = i - (len - 1) / 2;
+                end = i + len / 2;
+            }
+        }
+        return s.substring(start, end + 1);
+    }
+    
+    private int expandAroundCenter(String s, int left, int right) {
+        while (left >= 0 && right < s.length() && s.charAt(left) == s.charAt(right)) {
+            left--;
+            right++;
+        }
+        return right - left - 1;
+    }
+}
+```
+
+解法二：动态规划
+
+算法思想：定义 dp[i][j] 表示字符串 s 从下标 i 到 j 的子串是否为回文串。状态转移方程为：当 s[i] == s[j] 且 (j - i < 2 或 dp[i+1][j-1] 为 true) 时，dp[i][j] 为 true。先初始化所有长度为 1 的子串都是回文串，再依次判断长度为 2、3...的子串，记录最长回文子串的起始位置和长度。
+
+```java
+public class Solution {
+    public String longestPalindrome(String s) {
+        int n = s.length();
+        if (n < 2) {
+            return s;
+        }
+        boolean[][] dp = new boolean[n][n];
+        int maxLen = 1;
+        int start = 0;
+        
+        // 长度为1的子串都是回文
+        for (int i = 0; i < n; i++) {
+            dp[i][i] = true;
+        }
+        
+        // 按子串长度从小到大遍历
+        for (int len = 2; len <= n; len++) {
+            for (int i = 0; i <= n - len; i++) {
+                int j = i + len - 1;
+                if (s.charAt(i) == s.charAt(j)) {
+                    if (len == 2) {
+                        dp[i][j] = true;
+                    } else {
+                        dp[i][j] = dp[i + 1][j - 1];
+                    }
+                } else {
+                    dp[i][j] = false;
+                }
+                if (dp[i][j] && len > maxLen) {
+                    maxLen = len;
+                    start = i;
+                }
+            }
+        }
+        return s.substring(start, start + maxLen);
+    }
+}
+```
+
+解法三：Manacher 算法（马拉车算法）
+
+算法思想：在每个字符之间插入特殊分隔符（如 #），将原字符串转换为一个新字符串，使得所有回文串长度都变为奇数，统一处理奇偶情况。利用回文串的对称性，用一个数组 P 记录以每个位置为中心的回文半径。维护当前最右边界的回文中心 C 和右边界 R，当 i < R 时，利用对称性找到 i 的镜像位置，直接取 P[mirror] 和 R-i 的较小值作为初始半径，再继续扩展；当 i >= R 时，从 1 开始扩展。每次扩展后更新 C 和 R，并记录最大回文半径及对应中心。
+
+```java
+public class Solution {
+    public String longestPalindrome(String s) {
+        if (s == null || s.length() < 1) {
+            return "";
+        }
+        // 预处理字符串，插入特殊字符
+        StringBuilder sb = new StringBuilder();
+        sb.append('#');
+        for (int i = 0; i < s.length(); i++) {
+            sb.append(s.charAt(i));
+            sb.append('#');
+        }
+        String t = sb.toString();
+        int n = t.length();
+        int[] P = new int[n];
+        int C = 0, R = 0;
+        int maxLen = 0, centerIndex = 0;
+        
+        for (int i = 0; i < n; i++) {
+            int mirror = 2 * C - i;
+            if (i < R) {
+                P[i] = Math.min(R - i, P[mirror]);
+            }
+            // 尝试扩展
+            int a = i + P[i] + 1;
+            int b = i - P[i] - 1;
+            while (a < n && b >= 0 && t.charAt(a) == t.charAt(b)) {
+                P[i]++;
+                a++;
+                b--;
+            }
+            // 更新C和R
+            if (i + P[i] > R) {
+                C = i;
+                R = i + P[i];
+            }
+            // 记录最大回文
+            if (P[i] > maxLen) {
+                maxLen = P[i];
+                centerIndex = i;
+            }
+        }
+        // 转换回原字符串的起始位置
+        int start = (centerIndex - maxLen) / 2;
+        return s.substring(start, start + maxLen);
+    }
+}
+```
+
+### [1143. 最长公共子序列](https://leetcode.cn/problems/longest-common-subsequence/)
+
+1. 题目描述
+
+给定两个字符串 text1 和 text2，返回这两个字符串的最长公共子序列的长度。如果不存在公共子序列，返回 0。
+
+一个字符串的子序列是指这样一个新的字符串：它是由原字符串在不改变字符的相对顺序的情况下删除某些字符（也可以不删除任何字符）后组成的新字符串。
+
+例如，"ace" 是 "abcde" 的子序列，但 "aec" 不是 "abcde" 的子序列。
+两个字符串的公共子序列是这两个字符串所共同拥有的子序列。
+
+示例 1：
+输入：text1 = "abcde", text2 = "ace"
+输出：3
+解释：最长公共子序列是 "ace"，它的长度为 3。
+
+示例 2：
+输入：text1 = "abc", text2 = "abc"
+输出：3
+解释：最长公共子序列是 "abc"，它的长度为 3。
+
+示例 3：
+输入：text1 = "abc", text2 = "def"
+输出：0
+解释：两个字符串没有公共子序列，返回 0。
+
+提示：
+- 1 <= text1.length, text2.length <= 1000
+- text1 和 text2 仅由小写英文字符组成。
+
+2. 算法思想 + 代码
+
+解法一：动态规划（二维 DP 数组）
+
+使用二维数组 dp[i][j] 表示 text1 的前 i 个字符和 text2 的前 j 个字符的最长公共子序列长度。
+
+状态转移：
+- 当 text1[i-1] == text2[j-1] 时，说明两个字符串的当前字符相同，最长公共子序列长度等于两个字符串各去掉当前字符后的最长公共子序列长度加 1，即 dp[i][j] = dp[i-1][j-1] + 1
+- 当 text1[i-1] != text2[j-1] 时，最长公共子序列长度等于 text1 去掉当前字符或 text2 去掉当前字符两种情况中的较大值，即 dp[i][j] = max(dp[i-1][j], dp[i][j-1])
+
+初始状态：dp[0][j] = 0，dp[i][0] = 0，即空字符串与任意字符串的最长公共子序列长度都为 0。
+
+时间复杂度：O(m × n)，其中 m 和 n 分别为两个字符串的长度
+空间复杂度：O(m × n)
+
+```java
+public int longestCommonSubsequence(String text1, String text2) {
+    int m = text1.length();
+    int n = text2.length();
+    int[][] dp = new int[m + 1][n + 1];
+    
+    for (int i = 1; i <= m; i++) {
+        for (int j = 1; j <= n; j++) {
+            if (text1.charAt(i - 1) == text2.charAt(j - 1)) {
+                dp[i][j] = dp[i - 1][j - 1] + 1;
+            } else {
+                dp[i][j] = Math.max(dp[i - 1][j], dp[i][j - 1]);
+            }
+        }
+    }
+    
+    return dp[m][n];
+}
+```
+
+解法二：动态规划（空间优化，一维 DP 数组）
+
+观察状态转移方程，dp[i][j] 只依赖于 dp[i-1][j-1]、dp[i-1][j] 和 dp[i][j-1]，即只依赖于上一行和当前行前一个位置的值。因此可以用一维数组来优化空间，将空间复杂度从 O(m × n) 降低到 O(min(m, n))。
+
+使用一维数组 dp，长度为较短字符串的长度加 1。遍历过程中用变量 prev 记录 dp[i-1][j-1] 的值（即左上角的值），因为在更新 dp[j] 之前，dp[j] 保存的是上一行的值（对应 dp[i-1][j]），dp[j-1] 保存的是当前行已更新的值（对应 dp[i][j-1]），而 prev 保存的是左上角的值（对应 dp[i-1][j-1]）。
+
+时间复杂度：O(m × n)
+空间复杂度：O(min(m, n))
+
+```java
+public int longestCommonSubsequence(String text1, String text2) {
+    // 确保 text1 是较长的字符串，text2 是较短的字符串，以最小化空间
+    if (text1.length() < text2.length()) {
+        return longestCommonSubsequence(text2, text1);
+    }
+    
+    int m = text1.length();
+    int n = text2.length();
+    int[] dp = new int[n + 1];
+    
+    for (int i = 1; i <= m; i++) {
+        int prev = 0; // 记录 dp[i-1][j-1]
+        for (int j = 1; j <= n; j++) {
+            int temp = dp[j]; // 保存当前 dp[j]，作为下一轮的 prev
+            if (text1.charAt(i - 1) == text2.charAt(j - 1)) {
+                dp[j] = prev + 1;
+            } else {
+                dp[j] = Math.max(dp[j], dp[j - 1]);
+            }
+            prev = temp;
+        }
+    }
+    
+    return dp[n];
+}
+```
+
+### [72. 编辑距离](https://leetcode.cn/problems/edit-distance/)
+
+1. 题目描述
+
+给你两个单词 word1 和 word2，请返回将 word1 转换成 word2 所使用的最少操作数。
+
+你可以对一个单词进行如下三种操作：
+- 插入一个字符
+- 删除一个字符
+- 替换一个字符
+
+示例 1：
+- 输入：word1 = "horse", word2 = "ros"
+- 输出：3
+- 解释：
+  - horse -> rorse（将 'h' 替换为 'r'）
+  - rorse -> rose（删除 'r'）
+  - rose -> ros（删除 'e'）
+
+示例 2：
+- 输入：word1 = "intention", word2 = "execution"
+- 输出：5
+- 解释：
+  - intention -> inention（删除 't'）
+  - inention -> enention（将 'i' 替换为 'e'）
+  - enention -> exention（将 'n' 替换为 'x'）
+  - exention -> exection（将 'n' 替换为 'c'）
+  - exection -> execution（插入 'u'）
+
+提示：
+- 0 <= word1.length, word2.length <= 500
+- word1 和 word2 由小写英文字母组成
+
+2. 算法思想 + 代码
+
+解法一：动态规划（二维数组）
+
+算法思想：
+- 定义 dp[i][j] 表示将 word1 的前 i 个字符转换成 word2 的前 j 个字符所需的最少操作数
+- 初始化：
+  - dp[i][0] = i，表示将 word1 的前 i 个字符全部删除，需要 i 次操作
+  - dp[0][j] = j，表示在 word1 中插入 word2 的前 j 个字符，需要 j 次操作
+- 状态转移：
+  - 如果 word1[i-1] == word2[j-1]，则 dp[i][j] = dp[i-1][j-1]，当前字符相同，不需要额外操作
+  - 如果 word1[i-1] != word2[j-1]，则取以下三种操作的最小值加 1：
+    - 替换操作：dp[i-1][j-1] + 1
+    - 删除操作：dp[i-1][j] + 1
+    - 插入操作：dp[i][j-1] + 1
+
+Java 代码：
+```java
+public class EditDistance {
+    public int minDistance(String word1, String word2) {
+        int m = word1.length();
+        int n = word2.length();
+        int[][] dp = new int[m + 1][n + 1];
+        
+        // 初始化第一列
+        for (int i = 0; i <= m; i++) {
+            dp[i][0] = i;
+        }
+        // 初始化第一行
+        for (int j = 0; j <= n; j++) {
+            dp[0][j] = j;
+        }
+        
+        for (int i = 1; i <= m; i++) {
+            for (int j = 1; j <= n; j++) {
+                if (word1.charAt(i - 1) == word2.charAt(j - 1)) {
+                    dp[i][j] = dp[i - 1][j - 1];
+                } else {
+                    dp[i][j] = Math.min(
+                        Math.min(dp[i - 1][j - 1], dp[i - 1][j]), 
+                        dp[i][j - 1]
+                    ) + 1;
+                }
+            }
+        }
+        
+        return dp[m][n];
+    }
+}
+```
+
+解法二：动态规划（空间优化，一维数组）
+
+算法思想：
+- 由于计算 dp[i][j] 只需要用到上一行（i-1 行）的数据和当前行左边的数据，可以将二维数组优化为一维数组，空间复杂度从 O(m*n) 降为 O(min(m,n))
+- 用 prev 变量保存 dp[i-1][j-1] 的值（左上角的值），因为 dp[j] 更新前代表 dp[i-1][j]（上方的值），dp[j-1] 代表 dp[i][j-1]（左方的值）
+
+Java 代码：
+```java
+public class EditDistance {
+    public int minDistance(String word1, String word2) {
+        // 确保 word2 是较短的字符串，以优化空间
+        if (word1.length() < word2.length()) {
+            return minDistance(word2, word1);
+        }
+        
+        int m = word1.length();
+        int n = word2.length();
+        int[] dp = new int[n + 1];
+        
+        // 初始化第一行
+        for (int j = 0; j <= n; j++) {
+            dp[j] = j;
+        }
+        
+        for (int i = 1; i <= m; i++) {
+            int prev = dp[0]; // 保存 dp[i-1][0] 的值，即左上角的值
+            dp[0] = i; // 更新当前行的第一个元素
+            
+            for (int j = 1; j <= n; j++) {
+                int temp = dp[j]; // 保存当前 dp[j]（即上一行的 dp[j]），作为下一次的 prev
+                if (word1.charAt(i - 1) == word2.charAt(j - 1)) {
+                    dp[j] = prev;
+                } else {
+                    dp[j] = Math.min(Math.min(prev, dp[j]), dp[j - 1]) + 1;
+                }
+                prev = temp; // 更新 prev 为当前位置左上角的值
+            }
+        }
+        
+        return dp[n];
+    }
+}
+```
+
+## 技巧
+
+### [136. 只出现一次的数字](https://leetcode.cn/problems/single-number/)
+
+1. 题目描述
+
+给你一个非空整数数组 nums ，除了某个元素只出现一次以外，其余每个元素均出现两次。找出那个只出现了一次的元素。
+
+你必须设计并实现线性时间复杂度的算法来解决此问题，且该算法只使用常量额外空间。
+
+示例 1：
+输入：nums = [2,2,1]
+输出：1
+
+示例 2：
+输入：nums = [4,1,2,1,2]
+输出：4
+
+示例 3：
+输入：nums = [1]
+输出：1
+
+提示：
+- 1 <= nums.length <= 3 * 10^4
+- -3 * 10^4 <= nums[i] <= 3 * 10^4
+- 除了某个元素只出现一次以外，其余每个元素均出现两次
+
+2. 算法思想+代码
+
+解法一：位运算（异或）
+
+算法思想：利用异或运算的性质——任何数和自身异或结果为0，任何数和0异或结果为自身，且异或满足交换律和结合律。将数组中所有数字依次进行异或运算，出现两次的数字会相互抵消（异或结果为0），最终剩下的就是只出现一次的数字。时间复杂度O(n)，空间复杂度O(1)。
+
+```java
+public int singleNumber(int[] nums) {
+    int result = 0;
+    for (int num : nums) {
+        result ^= num;
+    }
+    return result;
+}
+```
+
+解法二：哈希表
+
+算法思想：遍历数组，用哈希表记录每个数字出现的次数，再遍历哈希表找到出现次数为1的数字。时间复杂度O(n)，空间复杂度O(n)，不满足题目常量额外空间的要求，但作为一种思路可以参考。
+
+```java
+public int singleNumber(int[] nums) {
+    Map<Integer, Integer> map = new HashMap<>();
+    for (int num : nums) {
+        map.put(num, map.getOrDefault(num, 0) + 1);
+    }
+    for (Map.Entry<Integer, Integer> entry : map.entrySet()) {
+        if (entry.getValue() == 1) {
+            return entry.getKey();
+        }
+    }
+    return -1;
+}
+```
+
+解法三：数学求和
+
+算法思想：利用集合去重后，集合中所有元素之和的2倍减去原数组所有元素之和，差值就是只出现一次的数字。原理是重复元素在集合中只算一次，乘以2后减去原数组，出现两次的元素刚好抵消。时间复杂度O(n)，空间复杂度O(n)，同样不满足常量空间要求。
+
+```java
+public int singleNumber(int[] nums) {
+    Set<Integer> set = new HashSet<>();
+    int sum = 0;
+    int setSum = 0;
+    for (int num : nums) {
+        sum += num;
+        if (set.add(num)) {
+            setSum += num;
+        }
+    }
+    return 2 * setSum - sum;
+}
+```
+
+### [169. 多数元素](https://leetcode.cn/problems/majority-element/)
+
+1. 题目描述
+给定一个大小为 n 的数组 nums ，返回其中的多数元素。多数元素是指在数组中出现次数大于 ⌊ n/2 ⌋ 的元素。
+可以假设数组是非空的，并且给定的数组总是存在多数元素。
+示例1：输入nums = [3,2,3]，输出3
+示例2：输入nums = [2,2,1,1,1,2,2]，输出2
+提示：
+- n == nums.length
+- 1 <= n <= 5 * 104
+- -109 <= nums[i] <= 109
+- 输入保证数组中一定有一个多数元素
+进阶要求：设计时间复杂度 O(n)、空间复杂度 O(1) 的解法
+
+2. 算法思想+代码
+解法一：哈希表统计法
+- 算法思想：利用HashMap存储每个数字出现的次数，遍历数组更新计数，遍历过程中判断当前数字计数是否大于数组长度一半，满足则直接返回该数字。时间复杂度O(n)，空间复杂度O(n)。
+```java
+import java.util.HashMap;
+import java.util.Map;
+
+public class Solution {
+    public int majorityElement(int[] nums) {
+        Map<Integer, Integer> countMap = new HashMap<>();
+        int half = nums.length / 2;
+        for (int num : nums) {
+            countMap.put(num, countMap.getOrDefault(num, 0) + 1);
+            if (countMap.get(num) > half) {
+                return num;
+            }
+        }
+        return -1;
+    }
+}
+```
+
+解法二：排序法
+- 算法思想：将数组升序排序，由于多数元素出现次数大于数组长度一半，数组中间位置的元素一定是多数元素。时间复杂度O(n log n)，空间复杂度O(1)（原地排序）。
+```java
+import java.util.Arrays;
+
+public class Solution {
+    public int majorityElement(int[] nums) {
+        Arrays.sort(nums);
+        return nums[nums.length / 2];
+    }
+}
+```
+
+解法三：摩尔投票法（满足进阶O(n)、O(1)要求）
+- 算法思想：设置候选数字与票数，初始票数为0。遍历数组：票数为0时将当前数字设为候选；当前数字等于候选则票数+1，否则票数-1。因题目保证存在多数元素，遍历结束后候选即为答案。时间复杂度O(n)，空间复杂度O(1)。
+```java
+public class Solution {
+    public int majorityElement(int[] nums) {
+        int candidate = 0;
+        int count = 0;
+        for (int num : nums) {
+            if (count == 0) {
+                candidate = num;
+            }
+            if (num == candidate) {
+                count++;
+            } else {
+                count--;
+            }
+        }
+        return candidate;
+    }
+}
+```
+
+### [75. 颜色分类](https://leetcode.cn/problems/sort-colors/)
+
+1. 题目描述
+- 给定数组nums，数组元素仅包含0、1、2，分别代表红、白、蓝三种颜色，要求原地排序，使数组按0、1、2顺序排列，不可调用内置排序函数。
+- 数据范围：数组长度n满足1 ≤ n ≤ 300，每个元素只取值0、1、2。
+- 进阶要求：实现常数额外空间、仅遍历一次数组的算法。
+- 示例1：输入nums = [2,0,2,1,1,0]，排序后结果为[0,0,1,1,2,2]
+- 示例2：输入nums = [2,0,1]，排序后结果为[0,1,2]
+
+2. 解法一：计数排序（两次遍历）
+- 算法思想
+  1. 遍历数组，分别统计0、1、2出现的次数count0、count1、count2。
+  2. 再次遍历数组，先填充count0个0，再填充count1个1，最后填充count2个2，完成原地覆盖。
+  3. 空间复杂度O(1)，需要两次数组遍历，不满足进阶一趟扫描要求。
+- Java代码
+```java
+class Solution {
+    public void sortColors(int[] nums) {
+        int count0 = 0, count1 = 0, count2 = 0;
+        // 第一次遍历统计数量
+        for (int num : nums) {
+            if (num == 0) {
+                count0++;
+            } else if (num == 1) {
+                count1++;
+            } else {
+                count2++;
+            }
+        }
+        // 第二次遍历覆盖原数组
+        int index = 0;
+        while (count0 > 0) {
+            nums[index++] = 0;
+            count0--;
+        }
+        while (count1 > 0) {
+            nums[index++] = 1;
+            count1--;
+        }
+        while (count2 > 0) {
+            nums[index++] = 2;
+            count2--;
+        }
+    }
+}
+```
+
+3. 解法二：三指针（荷兰国旗问题，一趟扫描，满足进阶）
+- 算法思想
+  1. 定义三个指针：low指向0区域的下一位，high指向2区域的前一位，curr为当前遍历指针。
+  2. 遍历数组：
+     - 若nums[curr] == 0：交换nums[curr]与nums[low]，low右移，curr右移。
+     - 若nums[curr] == 1：仅curr右移，1本身处于中间区间无需交换。
+     - 若nums[curr] == 2：交换nums[curr]与nums[high]，仅high左移，curr不移动，交换过来的元素需要再次判断。
+  3. 终止条件curr > high，全程仅一次遍历，额外空间为常数，符合进阶要求。
+- Java代码
+```java
+class Solution {
+    public void sortColors(int[] nums) {
+        int low = 0;
+        int high = nums.length - 1;
+        int curr = 0;
+        while (curr <= high) {
+            if (nums[curr] == 0) {
+                // 和low位置交换，0区间扩充
+                swap(nums, curr, low);
+                low++;
+                curr++;
+            } else if (nums[curr] == 1) {
+                curr++;
+            } else {
+                // 和high位置交换，2区间扩充
+                swap(nums, curr, high);
+                high--;
+            }
+        }
+    }
+    // 数组交换辅助方法
+    private void swap(int[] arr, int i, int j) {
+        int temp = arr[i];
+        arr[i] = arr[j];
+        arr[j] = temp;
+    }
+}
+```
+
+### [31. 下一个排列](https://leetcode.cn/problems/next-permutation/)
+
+1. 题目描述
+
+整数数组的一个排列就是将其所有成员以序列或线性顺序排列。例如，arr = [1,2,3] 的排列有 [1,2,3]、[1,3,2]、[3,1,2]、[2,3,1] 等。
+
+整数数组的下一个排列是指其整数的下一个字典序更大的排列。如果数组的所有排列根据字典顺序从小到大排列在一个容器中，那么下一个排列就是在这个有序容器中排在它后面的那个排列。如果不存在下一个更大的排列，则数组必须重排为字典序最小的排列（元素按升序排列）。
+
+给你一个整数数组 nums，找出 nums 的下一个排列。必须原地修改，只允许使用额外常数空间。
+
+示例 1：
+- 输入：nums = [1,2,3]
+- 输出：[1,3,2]
+
+示例 2：
+- 输入：nums = [3,2,1]
+- 输出：[1,2,3]
+
+示例 3：
+- 输入：nums = [1,1,5]
+- 输出：[1,5,1]
+
+提示：
+- 1 <= nums.length <= 100
+- 0 <= nums[i] <= 100
+
+2. 算法思想 + 代码
+
+解法：两次扫描 + 反转
+
+算法思想：
+- 从数组末尾向前查找第一个位置 i，使得 nums[i] < nums[i+1]。此时 i 之后的子数组是降序排列，已经是最大排列
+- 如果找到了这样的 i，再从数组末尾向前查找第一个位置 j，使得 nums[j] > nums[i]
+- 交换 nums[i] 和 nums[j]
+- 将 i 之后的子数组反转，使其变为升序（即最小排列）
+- 如果没有找到这样的 i（整个数组是降序），直接反转整个数组得到最小排列
+
+时间复杂度：O(n)，最多扫描两次数组加一次反转
+空间复杂度：O(1)，原地修改
+
+```java
+public void nextPermutation(int[] nums) {
+    int n = nums.length;
+    int i = n - 2;
+    
+    // 从后向前找第一个 nums[i] < nums[i+1]
+    while (i >= 0 && nums[i] >= nums[i + 1]) {
+        i--;
+    }
+    
+    if (i >= 0) {
+        int j = n - 1;
+        // 从后向前找第一个 nums[j] > nums[i]
+        while (j >= 0 && nums[j] <= nums[i]) {
+            j--;
+        }
+        // 交换 nums[i] 和 nums[j]
+        swap(nums, i, j);
+    }
+    
+    // 反转 i+1 到末尾的部分
+    reverse(nums, i + 1, n - 1);
+}
+
+private void swap(int[] nums, int i, int j) {
+    int temp = nums[i];
+    nums[i] = nums[j];
+    nums[j] = temp;
+}
+
+private void reverse(int[] nums, int left, int right) {
+    while (left < right) {
+        swap(nums, left, right);
+        left++;
+        right--;
+    }
+}
+```
+
+### [287. 寻找重复数](https://leetcode.cn/problems/find-the-duplicate-number/)
+
+1. 题目描述
+
+给定一个包含 n + 1 个整数的数组 nums，其数字都在 [1, n] 范围内（包括 1 和 n），可知至少存在一个重复的整数。假设 nums 只有一个重复的整数，返回这个重复的数。要求不修改数组 nums 且只用常量级 O(1) 的额外空间。
+
+示例 1：
+输入：nums = [1,3,4,2,2]
+输出：2
+
+示例 2：
+输入：nums = [3,1,3,4,2]
+输出：3
+
+示例 3：
+输入：nums = [3,3,3,3,3]
+输出：3
+
+提示：
+- 1 <= n <= 10^5
+- nums.length == n + 1
+- 1 <= nums[i] <= n
+- nums 中只有一个整数出现两次或多次，其余整数均只出现一次
+
+2. 算法思想+代码
+
+解法一：二分查找法
+
+算法思想：
+利用数字范围在 [1, n] 的特性，对数值进行二分查找。对于中间值 mid，统计数组中小于等于 mid 的数的个数。如果个数大于 mid，说明重复数在 [1, mid] 区间内；否则在 [mid+1, n] 区间内。不断缩小区间范围，最终找到重复的数。
+
+时间复杂度：O(n log n)，每次二分需要遍历数组统计一次，共 log n 次
+空间复杂度：O(1)
+
+```java
+public int findDuplicate(int[] nums) {
+    int left = 1;
+    int right = nums.length - 1;
+    
+    while (left < right) {
+        int mid = left + (right - left) / 2;
+        int count = 0;
+        
+        for (int num : nums) {
+            if (num <= mid) {
+                count++;
+            }
+        }
+        
+        if (count > mid) {
+            right = mid;
+        } else {
+            left = mid + 1;
+        }
+    }
+    
+    return left;
+}
+```
+
+解法二：快慢指针法（弗洛伊德循环查找）
+
+算法思想：
+将数组看作一个链表，每个位置 i 的下一个节点是 nums[i]。由于存在重复数字，必然形成环。问题转化为寻找链表环的入口点。使用快慢指针，快指针每次走两步，慢指针每次走一步，相遇后将快指针移到起点，然后两个指针每次都走一步，再次相遇的位置就是环的入口，即重复的数字。
+
+时间复杂度：O(n)
+空间复杂度：O(1)
+
+```java
+public int findDuplicate(int[] nums) {
+    int slow = nums[0];
+    int fast = nums[0];
+    
+    // 第一步：快慢指针相遇
+    do {
+        slow = nums[slow];
+        fast = nums[nums[fast]];
+    } while (slow != fast);
+    
+    // 第二步：找环的入口
+    fast = nums[0];
+    while (slow != fast) {
+        slow = nums[slow];
+        fast = nums[fast];
+    }
+    
+    return slow;
+}
+```
+
+解法三：位运算法
+
+算法思想：
+统计每一位上，数组中所有数字在该位上出现 1 的次数，与 1 到 n 这些数字在该位上出现 1 的次数进行比较。如果数组中该位 1 的次数更多，说明重复数的该位是 1。逐位确定后组合出最终的重复数。
+
+时间复杂度：O(n log n)，需要处理 log n 位，每一位遍历数组一次
+空间复杂度：O(1)
+
+```java
+public int findDuplicate(int[] nums) {
+    int n = nums.length - 1;
+    int result = 0;
+    int bitMax = 31;
+    
+    // 找到最高有效位
+    while ((n >> bitMax) == 0) {
+        bitMax--;
+    }
+    
+    for (int bit = 0; bit <= bitMax; bit++) {
+        int mask = 1 << bit;
+        int countNums = 0;
+        int countRange = 0;
+        
+        for (int i = 0; i <= n; i++) {
+            if ((nums[i] & mask) != 0) {
+                countNums++;
+            }
+            if ((i & mask) != 0) {
+                countRange++;
+            }
+        }
+        
+        if (countNums > countRange) {
+            result |= mask;
+        }
+    }
+    
+    return result;
+}
+```
+
+
+
 
 
 
