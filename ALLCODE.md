@@ -4644,7 +4644,7 @@ public class BinaryTreeDemo {
   }
   ```
   
-  ### [104. 二叉树的最大深度](https://leetcode.cn/problems/maximum-depth-of-binary-tree/)
+### [104. 二叉树的最大深度](https://leetcode.cn/problems/maximum-depth-of-binary-tree/)
   
   104. 二叉树的最大深度
 1. 题目描述
