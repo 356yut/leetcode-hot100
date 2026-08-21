@@ -46,6 +46,102 @@ new_nums = sorted(nums)     # 返回新列表
 nums.reverse()              # 原地反转
 ```
 
+### 数据排序
+
+`sort()` 会修改原列表，`sorted()` 不修改原列表，而是返回一个新列表。
+
+```python
+nums = [3, 1, 2]
+
+nums.sort()                         # 原地升序: [1, 2, 3]
+nums.sort(reverse=True)             # 原地降序: [3, 2, 1]
+
+new_nums = sorted(nums)             # 返回新列表
+new_nums_desc = sorted(nums, reverse=True)
+```
+
+二维数组默认会先比较第一个元素，第一个元素相同再比较第二个元素。
+
+```python
+arr = [[3, 5], [1, 9], [2, 4], [1, 3]]
+
+arr.sort()
+# [[1, 3], [1, 9], [2, 4], [3, 5]]
+```
+
+如果只想按某一列排序，使用 `key`。
+
+```python
+arr = [[3, 5], [1, 9], [2, 4]]
+
+arr.sort(key=lambda x: x[0])         # 按第 1 个数字升序
+# [[1, 9], [2, 4], [3, 5]]
+
+arr.sort(key=lambda x: x[1])         # 按第 2 个数字升序
+# [[2, 4], [3, 5], [1, 9]]
+
+arr.sort(key=lambda x: x[0], reverse=True)  # 按第 1 个数字降序
+```
+
+多条件排序可以让 `key` 返回一个元组。
+
+```python
+arr = [[1, 9], [1, 3], [2, 4], [2, 1]]
+
+# 先按第 1 个数字升序；如果相同，再按第 2 个数字升序
+arr.sort(key=lambda x: (x[0], x[1]))
+# [[1, 3], [1, 9], [2, 1], [2, 4]]
+
+# 先按第 1 个数字升序；如果相同，再按第 2 个数字降序
+arr.sort(key=lambda x: (x[0], -x[1]))
+# [[1, 9], [1, 3], [2, 4], [2, 1]]
+```
+
+### 翻转数组
+
+```python
+nums = [1, 2, 3, 4, 5]
+
+nums.reverse()       # 原地翻转
+# [5, 4, 3, 2, 1]
+
+new_nums = nums[::-1]  # 返回翻转后的新列表
+```
+
+翻转区间 `[0, k]` 时，右端点 `k` 包含在区间内。
+
+```python
+nums = [1, 2, 3, 4, 5]
+k = 2
+
+# 使用切片翻转
+nums[:k + 1] = reversed(nums[:k + 1])
+# [3, 2, 1, 4, 5]
+```
+
+也可以使用双指针原地翻转，更适合刷题。
+
+```python
+nums = [1, 2, 3, 4, 5]
+k = 2
+left, right = 0, k
+
+while left < right:
+    nums[left], nums[right] = nums[right], nums[left]
+    left += 1
+    right -= 1
+# [3, 2, 1, 4, 5]
+```
+
+翻转任意区间 `[left, right]`：
+
+```python
+while left < right:
+    nums[left], nums[right] = nums[right], nums[left]
+    left += 1
+    right -= 1
+```
+
 ### 常见刷题场景
 
 - 双指针
@@ -139,6 +235,33 @@ for key, value in mp.items():
 
 for value in mp.values():
     print(value)
+```
+
+### 排序
+
+`dict` 本身按插入顺序保存元素。刷题时如果需要排序，通常对 `mp.items()` 排序，结果是列表。
+
+```python
+mp = {"b": 2, "a": 3, "c": 1}
+
+# 按 key 升序
+by_key = sorted(mp.items())
+# [('a', 3), ('b', 2), ('c', 1)]
+
+# 按 key 降序
+by_key_desc = sorted(mp.items(), reverse=True)
+# [('c', 1), ('b', 2), ('a', 3)]
+
+# 按 value 升序
+by_value = sorted(mp.items(), key=lambda item: item[1])
+# [('c', 1), ('b', 2), ('a', 3)]
+
+# 按 value 降序
+by_value_desc = sorted(mp.items(), key=lambda item: item[1], reverse=True)
+# [('a', 3), ('b', 2), ('c', 1)]
+
+# 如果还想转回 dict，Python 3.7+ 会保留插入顺序
+sorted_mp = dict(by_value)
 ```
 
 ### 计数
@@ -558,4 +681,3 @@ import heapq
 | `deque` | 两端插入 / 删除 | `O(1)` |
 | `heapq` | 插入 / 删除堆顶 | `O(log n)` |
 | `Counter` | 统计 n 个元素 | `O(n)` |
-
