@@ -163,7 +163,231 @@ left, right = 1, 3
 range_sum = prefix[right + 1] - prefix[left]
 ```
 
-## 2. tuple 元组
+## 2. 矩阵（二维 list）
+
+Python 中通常使用嵌套 `list` 表示矩阵。`matrix[i][j]` 表示第 `i` 行、第 `j` 列的元素，下标都从 `0` 开始。
+
+### 创建矩阵
+
+```python
+# 直接创建
+matrix = [
+    [1, 2, 3],
+    [4, 5, 6],
+]
+
+m = len(matrix)                # 行数
+n = len(matrix[0]) if m else 0 # 列数，注意空矩阵
+
+# 创建 m 行 n 列的全 0 矩阵
+matrix = [[0] * n for _ in range(m)]
+```
+
+不要使用 `[[0] * n] * m` 创建矩阵，因为每一行引用的是同一个列表，修改一行会影响其他行。
+
+```python
+matrix = [[0] * 3] * 2
+matrix[0][0] = 1
+# [[1, 0, 0], [1, 0, 0]]
+
+matrix = [[0] * 3 for _ in range(2)]
+matrix[0][0] = 1
+# [[1, 0, 0], [0, 0, 0]]
+```
+
+### 访问和修改元素
+
+```python
+matrix = [[1, 2, 3], [4, 5, 6]]
+
+matrix[0][1]       # 第 0 行、第 1 列: 2
+matrix[-1][-1]     # 最后一行、最后一列: 6
+
+matrix[0][1] = 9   # 修改元素
+row = matrix[0]    # 获取第 0 行
+```
+
+### 遍历矩阵
+
+需要修改元素或使用坐标时，遍历下标；只读取元素时，可以直接遍历每一行。
+
+```python
+# 按行遍历
+for row in matrix:
+    for value in row:
+        print(value)
+
+# 带下标遍历
+for i in range(len(matrix)):
+    for j in range(len(matrix[0])):
+        matrix[i][j] += 1
+
+# 使用 enumerate 同时获取下标和元素
+for i, row in enumerate(matrix):
+    for j, value in enumerate(row):
+        print(i, j, value)
+```
+
+### 行、列和边界
+
+```python
+matrix = [[1, 2, 3], [4, 5, 6]]
+
+row = matrix[0]                          # 第 0 行: [1, 2, 3]
+column = [matrix[i][1] for i in range(2)] # 第 1 列: [2, 5]
+
+# 判断坐标是否在矩阵内
+def in_bounds(i, j, m, n):
+    return 0 <= i < m and 0 <= j < n
+```
+
+矩阵可能为空，或者行数不为零但列数为零，因此使用 `matrix[0]` 前应先判断 `matrix` 是否为空。以下写法适用于规则矩阵：
+
+```python
+m = len(matrix)
+n = len(matrix[0]) if m else 0
+```
+
+### 方向数组和相邻位置
+
+```python
+# 上、右、下、左，常用于网格 BFS / DFS 和螺旋遍历
+directions = [(-1, 0), (0, 1), (1, 0), (0, -1)]
+
+for di, dj in directions:
+    ni = i + di
+    nj = j + dj
+    if 0 <= ni < m and 0 <= nj < n:
+        # matrix[ni][nj] 是合法相邻位置
+        pass
+```
+
+如果需要包含对角线，可以使用 8 个方向：
+
+```python
+directions = [
+    (-1, -1), (-1, 0), (-1, 1),
+    (0, -1),           (0, 1),
+    (1, -1),  (1, 0),  (1, 1),
+]
+```
+
+### 转置矩阵
+
+转置会交换行和列。`zip(*matrix)` 可以按列取出元素，但返回的是元组，通常用 `map(list, ...)` 转为列表。
+
+```python
+matrix = [[1, 2, 3], [4, 5, 6]]
+
+transposed = [list(row) for row in zip(*matrix)]
+# [[1, 4], [2, 5], [3, 6]]
+```
+
+方阵可以原地转置，只交换主对角线一侧的元素：
+
+```python
+n = len(matrix)
+
+for i in range(n):
+    for j in range(i + 1, n):
+        matrix[i][j], matrix[j][i] = matrix[j][i], matrix[i][j]
+```
+
+### 顺时针旋转 90 度
+
+方阵顺时针旋转 90 度等价于“先转置，再将每一行反转”，可以原地完成。
+
+```python
+def rotate(matrix):
+    n = len(matrix)
+
+    # 转置
+    for i in range(n):
+        for j in range(i + 1, n):
+            matrix[i][j], matrix[j][i] = matrix[j][i], matrix[i][j]
+
+    # 每行反转
+    for row in matrix:
+        row.reverse()
+```
+
+### 螺旋遍历
+
+用四个边界表示当前未遍历区域：上边界 `top`、下边界 `bottom`、左边界 `left`、右边界 `right`。每遍历完一条边，都要收缩对应边界；遍历下边和左边前要再次判断边界，避免重复访问。
+
+```python
+def spiral_order(matrix):
+    if not matrix or not matrix[0]:
+        return []
+
+    top, bottom = 0, len(matrix) - 1
+    left, right = 0, len(matrix[0]) - 1
+    ans = []
+
+    while top <= bottom and left <= right:
+        for j in range(left, right + 1):
+            ans.append(matrix[top][j])
+        top += 1
+
+        for i in range(top, bottom + 1):
+            ans.append(matrix[i][right])
+        right -= 1
+
+        if top <= bottom:
+            for j in range(right, left - 1, -1):
+                ans.append(matrix[bottom][j])
+            bottom -= 1
+
+        if left <= right:
+            for i in range(bottom, top - 1, -1):
+                ans.append(matrix[i][left])
+            left += 1
+
+    return ans
+```
+
+### 矩阵置零
+
+如果某个元素为 `0`，将其所在行和列全部置为 `0`。需要原地修改时，可以用第一行和第一列记录标记，额外空间为 `O(1)`。
+
+```python
+def set_zeroes(matrix):
+    m, n = len(matrix), len(matrix[0])
+    first_row_zero = any(matrix[0][j] == 0 for j in range(n))
+    first_col_zero = any(matrix[i][0] == 0 for i in range(m))
+
+    # 用首行、首列记录其他行列是否需要置零
+    for i in range(1, m):
+        for j in range(1, n):
+            if matrix[i][j] == 0:
+                matrix[i][0] = 0
+                matrix[0][j] = 0
+
+    for i in range(1, m):
+        for j in range(1, n):
+            if matrix[i][0] == 0 or matrix[0][j] == 0:
+                matrix[i][j] = 0
+
+    if first_row_zero:
+        for j in range(n):
+            matrix[0][j] = 0
+
+    if first_col_zero:
+        for i in range(m):
+            matrix[i][0] = 0
+```
+
+### 常见刷题场景
+
+- 网格 BFS / DFS：用 `(i, j)` 表示坐标，用方向数组访问邻居
+- 矩阵旋转：转置、反转行或列
+- 螺旋矩阵：维护四个边界
+- 搜索二维有序矩阵：根据行列单调性移动指针
+- 原地标记：利用首行、首列或特殊值记录状态
+
+矩阵遍历通常需要 `O(m * n)` 时间；转置、旋转和置零若原地操作，额外空间可以做到 `O(1)`（不计算输出结果或递归栈）。
+
+## 3. tuple 元组
 
 `tuple` 有序、不可变，常用于表示固定结构的数据，比如坐标、状态、字典的 key。
 
@@ -203,7 +427,7 @@ for dx, dy in directions:
     ny = y + dy
 ```
 
-## 3. dict 字典
+## 4. dict 字典
 
 `dict` 是哈希表，存储键值对。查询、插入、删除平均时间复杂度为 `O(1)`。
 
@@ -309,7 +533,7 @@ def subarray_sum(nums, k):
     return ans
 ```
 
-## 4. set 集合
+## 5. set 集合
 
 `set` 是哈希集合，元素不重复，常用于去重和快速判断元素是否存在。
 
@@ -372,7 +596,7 @@ def longest_consecutive(nums):
     return ans
 ```
 
-## 5. str 字符串
+## 6. str 字符串
 
 `str` 是不可变字符序列。很多字符串题会结合列表、哈希表、双指针来做。
 
@@ -432,7 +656,7 @@ def is_palindrome(s):
     return True
 ```
 
-## 6. collections.deque 双端队列
+## 7. collections.deque 双端队列
 
 `deque` 支持两端快速插入和删除，适合队列、单调队列、BFS、滑动窗口。
 
@@ -490,7 +714,7 @@ def max_sliding_window(nums, k):
     return ans
 ```
 
-## 7. collections.Counter 计数器
+## 8. collections.Counter 计数器
 
 `Counter` 是专门用来统计元素出现次数的字典子类。
 
@@ -536,7 +760,7 @@ def group_anagrams(strs):
     return list(groups.values())
 ```
 
-## 8. collections.defaultdict 默认字典
+## 9. collections.defaultdict 默认字典
 
 `defaultdict` 可以给不存在的 key 自动创建默认值，常用于分组、计数、建图。
 
@@ -570,7 +794,7 @@ for a, b in edges:
 - 字符串分组
 - 哈希表计数
 
-## 9. heapq 堆
+## 10. heapq 堆
 
 `heapq` 默认是小根堆，堆顶永远是最小元素。常用于优先队列、Top K、合并多个有序链表。
 
@@ -629,7 +853,7 @@ def top_k_frequent(nums, k):
 - 合并 K 个有序链表
 - 数据流中位数
 
-## 10. queue.Queue / PriorityQueue
+## 11. queue.Queue / PriorityQueue
 
 `queue` 模块提供线程安全队列，普通算法题中用得比 `deque` 少。刷题时一般优先使用 `deque` 和 `heapq`。
 
@@ -647,7 +871,7 @@ pq.put((1, "task1"))
 pq.get()            # (1, "task1")
 ```
 
-## 11. 常见选择建议
+## 12. 常见选择建议
 
 | 需求 | 推荐结构 |
 | --- | --- |
@@ -662,14 +886,14 @@ pq.get()            # (1, "task1")
 | 固定状态，如坐标 | `tuple` |
 | 字符序列 | `str` |
 
-## 12. Hot100 常用导入模板
+## 13. Hot100 常用导入模板
 
 ```python
 from collections import defaultdict, Counter, deque
 import heapq
 ```
 
-## 13. 时间复杂度速查
+## 14. 时间复杂度速查
 
 | 数据结构 | 常见操作 | 平均复杂度 |
 | --- | --- | --- |
